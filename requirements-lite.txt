@@ -1,0 +1,9 @@
+numpy==1.24.0
+opencv-python-headless==4.4.0.46
+PyQt5==5.15.2
+QtPy
+pydicom
+python-gdcm
+pyinstaller-versionfile
+PyYAML
+onnxruntime==1.14.1
