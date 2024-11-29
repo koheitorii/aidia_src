@@ -17,7 +17,6 @@ from aidia import aidia_logger
 from aidia import qt
 from aidia import utils
 from aidia import errors
-from aidia.ai import ai_utils
 from aidia.ai.config import AIConfig
 from aidia.ai.dataset import Dataset
 from aidia.ai.test import TestModel
@@ -63,19 +62,9 @@ class AITrainDialog(QtWidgets.QDialog):
         self.val_steps = 0
 
         self.fig, self.ax = plt.subplots(figsize=(12, 6))
-        self.ax.text(0.5, 0.5, 'Learning Curve Area',
-                     horizontalalignment='center',
-                     verticalalignment='center',
-                     transform=self.ax.transAxes,
-                     fontsize=20)
         self.ax.axis("off")
         
         self.fig2, self.ax2 = plt.subplots(figsize=(6, 6))
-        self.ax2.text(0.5, 0.5, 'Label Distribution Area',
-                     horizontalalignment='center',
-                     verticalalignment='center',
-                     transform=self.ax2.transAxes,
-                     fontsize=20)
         self.ax2.axis("off")
 
         plt.rcParams["font.size"] = 15
@@ -156,7 +145,7 @@ You cannot set existed experiment names."""
         self.input_dataset_pattern.addItems(["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4", "Pattern 5"])
         self.input_dataset_pattern.setToolTip(self.tr(
             """Select the dataset pattern.
-Aidia splits the data into a 8:2 ratio (train:test) depend on the selected pattern.
+Aidia splits the data into a 4:1 ratio (train:test) depend on the selected pattern.
 You can use this function for 5-fold cross-validation."""
         ))
         def _validate(text):
@@ -380,7 +369,7 @@ The labels are separated with line breaks."""))
         def _validate(text):
             if text.isdigit() and 0 < int(text) < self.config.INPUT_SIZE:
                 self.config.RANDOM_SHIFT = int(text)
-                self.unit_shift.setText(self.tr("({} to {} px)").format(
+                self.unit_shift.setText(self.tr("({} to +{} px)").format(
                     - int(text), int(text)
                 ))
             else:
@@ -636,7 +625,7 @@ The labels are separated with line breaks."""))
             "loss": self.loss,
             "val_loss": self.val_loss
         }
-        ai_utils.save_dict_to_excel(df_dic, os.path.join(self.config.log_dir, "loss.xlsx"))
+        utils.save_dict_to_excel(df_dic, os.path.join(self.config.log_dir, "loss.xlsx"))
 
         # save figure
         self.fig.savefig(os.path.join(self.config.log_dir, "loss.png"))
@@ -1087,6 +1076,10 @@ class AITrainThread(QtCore.QThread):
         try:
             model.train(cb)
         except tf.errors.ResourceExhaustedError as e:
+            self.notifyMessage.emit(self.tr("Memory error. Please reduce the input size or batch size."))
+            aidia_logger.error(e, exc_info=True)
+            return
+        except tf.errors.NotFoundError as e:
             self.notifyMessage.emit(self.tr("Memory error. Please reduce the input size or batch size."))
             aidia_logger.error(e, exc_info=True)
             return

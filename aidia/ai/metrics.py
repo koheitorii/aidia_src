@@ -71,6 +71,13 @@ def mIoU(c_matrix) -> float:
     miou = np.mean(iou)
     return miou
 
+def multi_confusion_matrix(y_true, y_pred, num_classes):
+    matrix = np.zeros((num_classes, num_classes))
+
+    for yt, yp in zip(y_true, y_pred):
+        matrix[yt, yp] += 1
+
+    return matrix
 
 def iou(box1, box2):
     """Calculates IoU of box1 and box2.

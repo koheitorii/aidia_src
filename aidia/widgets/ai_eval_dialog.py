@@ -1,13 +1,12 @@
 
 import os
 import logging
-from PyQt5.QtGui import QDragEnterEvent
 import cv2
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from onnxruntime import InferenceSession
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets, QtGui
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
@@ -16,7 +15,6 @@ from aidia import qt
 from aidia import utils
 from aidia import aidia_logger
 from aidia import HOME_DIR, CLS, DET, SEG
-from aidia.ai import ai_utils
 from aidia.ai.config import AIConfig
 from aidia.ai.dataset import Dataset
 from aidia.ai.det import DetectionModel
@@ -65,25 +63,8 @@ class AIEvalDialog(QtWidgets.QDialog):
         # self.class_names = []
         self.task = None
 
-        # self.fig, self.axes = plt.subplots(1, 2, figsize=(20, 8))
-        # self.fig, self.ax = plt.subplots(1, 1, figsize=(10, 8))
-        # plt.subplots_adjust(wspace=0.5)
-
-        self.fig, self.ax = plt.subplots(figsize=(10, 8))
-        self.ax.text(0.5, 0.5, 'Confusion Matrix Area',
-                     horizontalalignment='center',
-                     verticalalignment='center',
-                     transform=self.ax.transAxes,
-                     fontsize=20)
+        self.fig, self.ax = plt.subplots(figsize=(6, 6))
         self.ax.axis("off")
-        
-        self.fig2, self.ax2 = plt.subplots(figsize=(6, 6))
-        self.ax2.text(0.5, 0.5, 'Label Distribution Area',
-                     horizontalalignment='center',
-                     verticalalignment='center',
-                     transform=self.ax2.transAxes,
-                     fontsize=20)
-        self.ax2.axis("off")
 
         plt.rcParams["font.size"] = 15
 
@@ -96,27 +77,17 @@ class AIEvalDialog(QtWidgets.QDialog):
         self.tag_name = QtWidgets.QLabel(self.tr("Name"))
         self.input_name = QtWidgets.QComboBox()
         self.input_name.setMinimumWidth(200)
-        def _validate(text):
-            logdir = os.path.join(self.dataset_dir, "data", text)
-            if self._check_datadir(logdir):
-                self._set_ok(self.tag_name)
-                self.log_dir = logdir
-                self.button_export_data.setEnabled(True)
-                _wlist = os.path.join(logdir, "weights", "*.h5")
-                _wpath = sorted(glob.glob(_wlist), reverse=True)
-                _wname = [os.path.basename(w) for w in _wpath]
-                self.input_weights.clear()
-                self.input_weights.addItems(_wname)
-                self._switch_enable_by_onnx()
-            else:
-                self._set_error(self.tag_name)
-                self.disable_all()
-        self.input_name.currentTextChanged.connect(_validate)
+        self.input_name.currentTextChanged.connect(self.input_name_changed)
         self._add_basic_params(self.tag_name, self.input_name)
 
         # select weights box
         self.tag_weights = QtWidgets.QLabel(self.tr("Select Weights"))
         self.input_weights = QtWidgets.QComboBox()
+        self.input_weights.setToolTip(self.tr(
+            '''Select weights.
+If you selected "Save Only the Best Weights", you can only set "best_weights.h5" got the best validation loss.
+If you did not select it, you can set "last_model.h5" or "****.h5" saved at the **** epochs.'''
+        ))
         self.input_weights.setMinimumWidth(200)
         def _validate(text):
             self.weights_path = os.path.join(self.log_dir, "weights", text)
@@ -145,7 +116,7 @@ class AIEvalDialog(QtWidgets.QDialog):
         self._layout.addWidget(self.button_eval, row, 1, 1, 1)
 
         # predict button
-        self.button_pred = QtWidgets.QPushButton(self.tr("Predict"))
+        self.button_pred = QtWidgets.QPushButton(self.tr("Predict Test"))
         self.button_pred.setToolTip(self.tr(
             """Predict images in the directory you selected."""
         ))
@@ -153,11 +124,11 @@ class AIEvalDialog(QtWidgets.QDialog):
         self._layout.addWidget(self.button_pred, row, 2, 1, 1)
 
         # export data button
-        self.button_export_data = QtWidgets.QPushButton(self.tr("Save Results"))
+        self.button_export_data = QtWidgets.QPushButton(self.tr("Open Result Directory"))
         self.button_export_data.setToolTip(self.tr(
-            """Save the evaluation data."""
+            '''Open the experiment result directory.'''
         ))
-        self.button_export_data.clicked.connect(self.export_data)
+        self.button_export_data.clicked.connect(self.open_log_dir)
         self._layout.addWidget(self.button_export_data, row, 3, 1, 1)
 
         # export model button
@@ -170,7 +141,9 @@ class AIEvalDialog(QtWidgets.QDialog):
         row += 1
 
         # figure area
-        self.image_widget = ImageWidget(self)
+        _bg = np.zeros((200, 300, 3), np.uint8)
+        _bg.fill(255)
+        self.image_widget = ImageWidget(self, _bg)
         self._layout.addWidget(self.image_widget, row, 1, 1, 4)
         row += 1
 
@@ -255,11 +228,10 @@ class AIEvalDialog(QtWidgets.QDialog):
             targets = []
             for name in os.listdir(data_dir):
                 logdir = os.path.join(self.dataset_dir, "data", name)
-                if self._check_datadir(logdir):
+                if self._check_logdir(logdir):
                     targets.append(name)
             if len(targets):
                 self.input_name.addItems(targets)
-                self.enable_all()
             else:
                 self.disable_all()
         else:
@@ -275,6 +247,9 @@ class AIEvalDialog(QtWidgets.QDialog):
     def ai_pred_finished(self):
         self.enable_all()
         self.aiRunning.emit(False)
+
+        # open prediction result directory
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self._predicted_dir))
 
     def disable_all(self):
         for x in self.input_fields:
@@ -299,11 +274,37 @@ class AIEvalDialog(QtWidgets.QDialog):
             self.disable_all()
 
     def _plt2img2(self):
-        self.fig2.canvas.draw()
-        data = self.fig2.canvas.tostring_rgb()
-        w, h = self.fig2.canvas.get_width_height()
+        self.fig.canvas.draw()
+        data = self.fig.canvas.tostring_rgb()
+        w, h = self.fig.canvas.get_width_height()
         c = len(data) // (w * h)
         return np.frombuffer(data, dtype=np.uint8).reshape(h, w, c)
+    
+    def get_log_dirpath(self, name):
+        return os.path.join(self.dataset_dir, "data", name)
+    
+    def get_weights_dirpath(self):
+        return os.path.join(self.log_dir, "weights")
+    
+    ### Callback Functions ###
+    def input_name_changed(self, name):
+        logdir = self.get_log_dirpath(name)
+        if self._check_logdir(logdir):
+            self._set_ok(self.tag_name)
+            self.enable_all()
+
+            # activate select weights
+            _wlist = os.path.join(self.get_weights_dirpath(), "*.h5")
+            _wpath = sorted(glob.glob(_wlist), reverse=True)
+            _wname = [os.path.basename(w) for w in _wpath]
+            self.input_weights.clear()
+            if len(_wname):
+                self.input_weights.addItems(_wname)
+            else:
+                self.input_weights.setEnabled(False)
+        else:
+            self._set_error(self.tag_name)
+            self.disable_all()
     
     def update_images(self, images):
         self.iw1.loadPixmap(images[0])
@@ -356,11 +357,13 @@ class AIEvalDialog(QtWidgets.QDialog):
         self.text_dataset.setText(text)
 
         # update label distribution
-        self.ax2.clear()
-        self.ax2.pie(num_per_class,
-                     labels=class_names,
-                     autopct="%1.1f%%",
-                     wedgeprops={'linewidth': 1, 'edgecolor':"white"})
+        self.ax.clear()
+        self.ax.pie(
+            num_per_class,
+            labels=class_names,
+            # autopct="%1.1f%%",
+            wedgeprops={'linewidth': 1, 'edgecolor':"white"},
+            textprops={'color': "black", 'weight': "bold"})
         self.image_widget2.loadPixmap(self._plt2img2())
 
         # write dataset information
@@ -377,8 +380,6 @@ class AIEvalDialog(QtWidgets.QDialog):
 
 
     def update_results(self, value:dict):
-        self.ax.clear()
-
         text = ""
         for k, v in value.items():
             if k == "img":
@@ -391,14 +392,16 @@ class AIEvalDialog(QtWidgets.QDialog):
                 "Metrics": list(value.keys()),
                 "Values": list(value.values()),
             }
-            ai_utils.save_dict_to_excel(save_dict, os.path.join(self.log_dir, "eval.xlsx"))
+            utils.save_dict_to_excel(save_dict, os.path.join(self.log_dir, "eval.xlsx"))
         elif self.task == SEG:
             img = value.pop("img")
             self.image_widget.loadPixmap(img)
         
 
     def _add_basic_params(self, tag:QtWidgets.QLabel, widget, right=False, reverse=False, custom_size=None):
+        # add dict [tag:flag]
         self.error_flags[tag.text()] = 0
+
         self.input_fields.append(widget)
         row = self.left_row
         pos = [1, 2]
@@ -463,12 +466,7 @@ class AIEvalDialog(QtWidgets.QDialog):
             self.text_status.setText(self.tr("Dataset file was not found."))
             return
         
-        # set parameters
         self.task = config.TASK
-        # self.class_names = config.LABELS.copy()
-        # if config.TASK == SEG:
-        #     self.class_names.insert(0, "background")
-        # self.class_names.insert(0, "all")
 
         self.disable_all()
         self.reset_state()
@@ -515,6 +513,7 @@ class AIEvalDialog(QtWidgets.QDialog):
         target_path = target_path.replace("/", os.sep)
         if not target_path:
             return
+        self._predicted_dir = os.path.join(target_path, 'AI_results')
         
         if not len(os.listdir(target_path)):
             self.text_status.setText(self.tr("The Directory is empty."))
@@ -533,24 +532,23 @@ class AIEvalDialog(QtWidgets.QDialog):
         self.ai_pred.start()
         self.aiRunning.emit(True)
     
-    
-    def export_data(self):
-        opendir = HOME_DIR
-        target_path = str(QtWidgets.QFileDialog.getExistingDirectory(
-            self,
-            self.tr("Select Output Directory"),
-            opendir,
-            QtWidgets.QFileDialog.ShowDirsOnly |
-            QtWidgets.QFileDialog.DontResolveSymlinks))
-        if not target_path:
-            return None
-        target_path = target_path.replace('/', os.sep)
+    def open_log_dir(self):
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.log_dir))
+        # opendir = HOME_DIR
+        # target_path = str(QtWidgets.QFileDialog.getExistingDirectory(
+        #     self,
+        #     self.tr("Select Output Directory"),
+        #     opendir,
+        #     QtWidgets.QFileDialog.ShowDirsOnly |
+        #     QtWidgets.QFileDialog.DontResolveSymlinks))
+        # if not target_path:
+        #     return None
+        # target_path = target_path.replace('/', os.sep)
 
-        cd = CopyDataDialog(self, self.log_dir, target_path)
-        cd.popup()
+        # cd = CopyDataDialog(self, self.log_dir, target_path)
+        # cd.popup()
 
-        self.text_status.setText(self.tr("Export data to {}").format(target_path))
-    
+        # self.text_status.setText(self.tr("Export data to {}").format(target_path))
 
     def export_model(self):
         opendir = HOME_DIR
@@ -579,15 +577,20 @@ class AIEvalDialog(QtWidgets.QDialog):
             self.button_export_model.setEnabled(False)
             self.button_pred.setEnabled(False)
 
-    @staticmethod
-    def _check_datadir(logdir):
+    def _check_logdir(self, logdir):
         config_path = os.path.join(logdir, "config.json")
         dataset_path = os.path.join(logdir, "dataset.json")
         weights_path = os.path.join(logdir, "weights")
-        if (os.path.exists(config_path) and
-            os.path.exists(dataset_path) and
-            len(os.listdir(weights_path))):
-            return True
+        onnx_path = os.path.join(logdir, 'model.onnx')
+        if os.path.exists(config_path) and os.path.exists(dataset_path):
+            if os.path.exists(weights_path) and len(os.listdir(weights_path)):
+                self.log_dir = logdir
+                return True
+            elif os.path.exists(onnx_path):
+                self.log_dir = logdir
+                return True
+            else:
+                return False
         else:
             return False
 
@@ -685,7 +688,7 @@ class AIEvalThread(QtCore.QThread):
             # continue if output already exists
             if os.path.exists(save_path):
                 self.progressValue.emit(int(i / n * 100))
-                # update latest 5 images to the widget
+                # update 5 images to the widget
                 if len(predicts) <= 5:
                     w = self.config.image_size[1]
                     result_img = image.imread(save_path)
@@ -694,7 +697,8 @@ class AIEvalThread(QtCore.QThread):
                     predicts.append(result_img)
                 else:
                     self.predictList.emit(predicts)
-                    predicts = []
+                    # predicts = []
+                    break
                 continue
 
             try:

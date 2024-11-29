@@ -63,9 +63,7 @@ class Dataset(object):
             self.load_data()
             self.prepare()
 
-    ################################
     ### General Dataset Function ###
-    ################################
     def add_class(self, class_id, class_name):
         self.class_info.append({
             "id": class_id,
@@ -173,6 +171,7 @@ class Dataset(object):
             if data.get("shapes") is None:
                 continue
 
+            _multi_label_flag = False
             new_shapes = []
             for shape in data["shapes"]:
                 if not shape["shape_type"] in self.target_shape:
@@ -189,7 +188,13 @@ class Dataset(object):
                     shape["label"] = new_label
                     new_shapes.append(shape)
                     self.num_shapes += 1
+                    if len(new_label) > 1:
+                        _multi_label_flag = True
             if len(new_shapes) == 0:
+                continue
+
+            # skip multi label data
+            if not self.config.IS_MULTI_LABEL and _multi_label_flag:
                 continue
 
             name = os.path.splitext(json_path)[0]
@@ -274,11 +279,7 @@ class Dataset(object):
         if self.train_steps == 0 or self.val_steps == 0:
             raise errors.DataFewError
         
-        
-
-    #############################
     ### Data Loading Function ###
-    #############################
     def load_image(self, image_id, is_resize=True):
         img_path = self.image_info[image_id]["path"]
 
@@ -297,20 +298,6 @@ class Dataset(object):
         
         img = image.read_image(img_path)
 
-        # if dicom.is_dicom(img_path) or utils.extract_ext(img_path) == ".dcm":
-        #     dicom_data = dicom.DICOM(img_path)
-        #     img = dicom_data.load_image()
-        #     img = image.dicom_transform(
-        #         img,
-        #         dicom_data.wc,
-        #         dicom_data.ww,
-        #         dicom_data.bits
-        #     )
-        #     img = image.convert_dtype(img)
-        #     img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
-        # else:
-        #     img = image.imread(img_path)
-        
         if is_resize:
             img = cv2.resize(img, self.config.image_size)
         return img
@@ -320,7 +307,6 @@ class Dataset(object):
         annotations = self.image_info[image_id]["annotations"]
 
         masks = []
-
         if self.num_classes > 1:
             h = image_info["height"]
             w = image_info["width"]
@@ -337,19 +323,31 @@ class Dataset(object):
                 _m = cv2.resize(_m, self.config.image_size,
                                 interpolation=cv2.INTER_NEAREST)
                 _m = _m[:, :, 0]
-                foreground += _m
-                class_id = self.config.LABELS.index(a["label"][0]) + 1
-                if class_id not in list(range(self.num_classes + 1)):
-                    raise IndexError(f"{class_id} is out of range. {a['label'][0]}")
-                mask_per_class[class_id] += _m
-            foreground = np.where(foreground >= 1, 1, 0).astype(np.uint8)
-            background = np.where(foreground == 1, 0, 1).astype(np.uint8)
+                foreground += _m  # to create background mask
+
+                if self.config.IS_MULTI_LABEL:
+                    for l in a['label']:
+                        class_id = self.config.LABELS.index(l) + 1
+                        if class_id not in list(range(self.num_classes + 1)):
+                            raise IndexError(f"{class_id} is out of range. {a['label'][0]}")
+                        mask_per_class[class_id] += _m
+                else:
+                    class_id = self.config.LABELS.index(a["label"][0]) + 1
+                    if class_id not in list(range(self.num_classes + 1)):
+                        raise IndexError(f"{class_id} is out of range. {a['label'][0]}")
+                    mask_per_class[class_id] += _m
+            
+            # create background mask
+            _foreground = np.where(foreground >= 1, 1, 0).astype(np.uint8)
+            background = np.where(_foreground == 1, 0, 1).astype(np.uint8)
+
+            # marge masks, (background, class 1, class 2, ...)
             mask_per_class[0] += background
             for i in range(self.num_classes):
                 mask_per_class[i + 1] = np.where(mask_per_class[i + 1] >= 1, 1, 0).astype(np.uint8)
             masks = np.stack(mask_per_class, axis=2)
             return masks
-        else: # 1 class
+        else: # 1 class (2 class including background)
             h = image_info["height"]
             w = image_info["width"]
             foreground = np.zeros(shape=self.config.image_size, dtype=np.uint8)

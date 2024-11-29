@@ -5,8 +5,6 @@ import glob
 import random
 import imgaug
 import tf2onnx
-from sklearn.metrics import precision_recall_curve, average_precision_score
-from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 import matplotlib
@@ -21,7 +19,6 @@ from aidia.ai.dataset import Dataset
 from aidia.ai.config import AIConfig
 from aidia.ai.models.unet import UNet
 from aidia.ai import metrics
-from aidia.ai import ai_utils
 
 
 class SegmentationModel(object):
@@ -65,9 +62,9 @@ class SegmentationModel(object):
 
 
     def train(self, custom_callbacks=None):
-        checkpoint_dir = os.path.join(self.config.log_dir, "weights")
-        if not os.path.exists(checkpoint_dir):
-            os.makedirs(checkpoint_dir)
+        checkpoint_dir = utils.get_dirpath_with_mkdir(
+            self.config.log_dir, "weights"
+        )
         if self.config.SAVE_BEST:
             checkpoint_path = os.path.join(checkpoint_dir, "best_model.h5")
         else:
@@ -79,7 +76,7 @@ class SegmentationModel(object):
                 monitor='val_loss',
                 save_best_only=self.config.SAVE_BEST,
                 save_weights_only=True,
-                period=1 if self.config.SAVE_BEST else 50,
+                period=1 if self.config.SAVE_BEST else 20, # TODO:user setting
             ),
         ]
         if custom_callbacks:
@@ -117,202 +114,156 @@ class SegmentationModel(object):
     def stop_training(self):
         self.model.stop_training = True
 
-
     def evaluate(self, cb_widget):
         res = {}
         fig, ax = plt.subplots(1, 1, figsize=(10, 8))
 
-        THRESH = 0.5
         eval_dict = {}
         eval_dict["Metrics"] = [
             "Accuracy", "Precision", "Recall", "Specificity",
             "F1", "ROC Curve AUC", "Average Precision",
-            # "Precision (Detection)", "Recall (Detection)", "F1 (Detection)",
-            # "mIoU",
         ]
 
-        count_per_class = np.zeros((self.config.num_classes, 4), int)
-        eval_per_class = np.zeros((self.config.num_classes, len(eval_dict["Metrics"])), float)
-        cls_true = np.zeros((self.dataset.num_test, self.config.num_classes), int)
-        cls_pred = np.zeros((self.dataset.num_test, self.config.num_classes), float)
+        # prepare labels
+        num_classes = self.config.num_classes + 1
+        labels = self.config.LABELS[:]
+        labels.insert(0, 'no label')
+
+        eval_dir = utils.get_dirpath_with_mkdir(
+            self.config.log_dir, 'evaluation'
+        )
+        roc_pr_dir = utils.get_dirpath_with_mkdir(
+            eval_dir, 'roc_pr_fig'
+        )
+
+        tptnfpfn_per_class = np.zeros((num_classes, 9,  4), int)
+        eval_per_class = np.zeros((num_classes, len(eval_dict["Metrics"])), float)
+        cm_multi_class = np.zeros((num_classes, num_classes), float)
 
         # predict all test data
         for i, image_id in enumerate(self.dataset.test_ids):
             cb_widget.notifyMessage.emit(f"Evaluating... {i+1} / {self.dataset.num_test}")
             cb_widget.progressValue.emit(int((i+1) / self.dataset.num_test * 99))
 
-            # if i == 50:
-            #     break
-
             # predict
             img = self.dataset.load_image(image_id)
             mask = self.dataset.load_masks(image_id)
             inputs = image.preprocessing(img, is_tensor=True)
-            p = self.model.predict_on_batch(inputs)[0]
-            y_true = mask[..., 1:] # exclude background
-            y_pred = p[..., 1:]
-            y_true = np.array(y_true)
-            y_pred = np.array(y_pred)
+            pred = self.model.predict_on_batch(inputs)[0]
+            y_true = np.array(mask)
+            y_pred = np.array(pred)
 
-            # count TP, TN, FP, FN and get classification results per class
-            yt_encoded = np.zeros((self.config.num_classes), int)
-            yp_max_prob = np.zeros((self.config.num_classes), float)
+            # multiclass confusion matrix
+            yt_label = y_true.argmax(axis=2).ravel()
+            yp_label = y_pred.argmax(axis=2).ravel()
+            cm_multi_class += metrics.multi_confusion_matrix(yt_label, yp_label, num_classes)
 
-            for class_id in range(self.config.num_classes):
-                # get result by class
-                yt_class = y_true[..., class_id]
-                yp_class = y_pred[..., class_id]
+            # calculate tp tn fp fn per class
+            for i, th in enumerate([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]):
+                for class_id in range(num_classes):
+                    # get result by class
+                    yt_class = y_true[..., class_id]
+                    yp_class = y_pred[..., class_id]
 
-                # generate one-hot
-                if np.max(yt_class) > 0:
-                    yt_encoded[class_id] = 1
-                yp_max_prob[class_id] = np.max(yp_class)
+                    # thresholding
+                    yp_class[yp_class >= th] = 1
+                    yp_class[yp_class < th] = 0
+                    yp_class = yp_class.astype(np.uint8)
 
-                # thresholding
-                yp_class[yp_class >= THRESH] = 1
-                yp_class[yp_class < THRESH] = 0
-                yp_class = yp_class.astype(np.uint8)
+                    if np.max(yt_class) == 0 and np.max(yp_class) == 0: # no ground truth
+                        tn, fp, fn, tp = self.config.INPUT_SIZE**2, 0, 0, 0
+                    else:
+                        cm = confusion_matrix(yt_class.ravel(), yp_class.ravel())
+                        tn, fp, fn, tp = cm.ravel()
+                    _cm = np.array([tp, tn, fp, fn])
+                    tptnfpfn_per_class[class_id, i] += _cm
 
-                # pre_det, rec_det, f1_det = metrics.eval_on_iou(y_true, y_pred)
-                # sum_pre_det += pre_det
-                # sum_rec_det += rec_det
-                # sum_f1_det += f1_det
-                if np.max(yt_class) == 0 and np.max(yp_class) == 0:
-                    tn, fp, fn, tp = self.config.INPUT_SIZE**2, 0, 0, 0
-                else:
-                    cm = confusion_matrix(yt_class.ravel(), yp_class.ravel())
-                    tn, fp, fn, tp = cm.ravel()
-                _cm = np.array([tp, tn, fp, fn])
-                count_per_class[class_id] += _cm
-     
-            cls_true[i] = yt_encoded
-            cls_pred[i] = yp_max_prob
+        # calculate evaluation values per class
+        for class_id in range(len(labels)):
+            class_name = labels[class_id]
+            fpr = [0.0]
+            tpr = [0.0]
+            pres = [1.0]
+            recs = [0.0]
+            auc = 0
+            ap = 0
+            result_at_05 = None
+            for i in range(9):
+                tp, tn, fp, fn = tptnfpfn_per_class[class_id, i]
+                accuracy, precision, recall, specificity, fscore = metrics.common_metrics(tp, tn, fp, fn)
+                fpr.append(1 - specificity)
+                tpr.append(recall)
+                pres.append(precision)
+                recs.append(recall)
+                auc += abs(fpr[i+1] - fpr[i]) * tpr[i+1]
+                ap += abs(recs[i+1] - recs[i]) * pres[i]
+
+                # save result at threshold=0.5
+                if i == 4:
+                    result_at_05 = [accuracy, precision, recall, specificity, fscore]
+                  
+            # add the last value
+            fpr.append(1.0)
+            tpr.append(1.0)
+            auc += abs(fpr[-1] - fpr[-2]) * tpr[-1]
+
+            pres.append(0.0)
+            recs.append(1.0)
+            ap += abs(recs[-1] - recs[-2]) * pres[-2]
+
+            # draw curves
+            ax.plot(fpr, tpr)
+            ax.set_title(f"ROC Curve ({class_name})")
+            ax.set_xlabel('FPR')
+            ax.set_ylabel('TPR')
+            ax.grid()
+            fig.savefig(os.path.join(roc_pr_dir, f"{class_name}_roc.png"))
+            ax.clear()
+
+            ax.plot(recs, pres)
+            ax.set_title(f"PR Curve ({class_name})")
+            ax.set_xlabel('Recall')
+            ax.set_ylabel('Precision')
+            ax.grid()
+            fig.savefig(os.path.join(roc_pr_dir, f"{class_name}_pr.png"))
+            ax.clear()
+
+            # add result per class
+            eval_dict[class_name] = result_at_05 + [auc, ap]
+            eval_per_class[class_id] = result_at_05 + [auc, ap]
         
-        # ROC curve and PR curve per class
-        delete_class_id = []
-        for class_id in range(self.config.num_classes):
-            # prepare class result directories
-            class_name = self.config.LABELS[class_id]
-            class_dir = os.path.join(self.config.log_dir, class_name)
-            if not os.path.exists(class_dir):
-                os.mkdir(class_dir)
-
-            yt_flat = cls_true[..., class_id].ravel()
-            yp_flat_prob = cls_pred[..., class_id].ravel()
-
-            auc = ap = 0
-            if np.max(yt_flat) == 0:  # skip no ground truth
-                delete_class_id.append(class_id)
-                continue
-            elif np.sum(yt_flat) == len(yt_flat):  # skip only one class
-                pass
-            else:
-                fpr, tpr, thresholds = roc_curve(yt_flat, yp_flat_prob)
-                ax.plot(fpr, tpr)
-                ax.set_title(f"ROC Curve ({class_name})")
-                ax.set_xlabel('FPR')
-                ax.set_ylabel('TPR')
-                ax.grid()
-                fig.savefig(os.path.join(class_dir, "roc.png"))
-                ax.clear()
-
-                pres, recs, thresholds = precision_recall_curve(yt_flat, yp_flat_prob)
-                ax.plot(pres, recs)
-                ax.set_title(f"PR Curve ({class_name})")
-                ax.set_xlabel('Recall')
-                ax.set_ylabel('Precision')
-                ax.grid()
-                fig.savefig(os.path.join(class_dir, "pr.png"))
-                ax.clear()
-
-                auc = roc_auc_score(yt_flat, yp_flat_prob)
-                ap = average_precision_score(yt_flat, yp_flat_prob)
-        
-            tp, tn, fp, fn = count_per_class[class_id]
-            acc, pre, rec, spe, f1 = metrics.common_metrics(tp, tn, fp, fn)
-
-            # add result by class
-            eval_dict[class_name] = [acc, pre, rec, spe, f1, auc, ap]
-            eval_per_class[class_id] = [acc, pre, rec, spe, f1, auc, ap]
-        
-        # delete data has no ground truth
-        cls_true = np.delete(cls_true, delete_class_id, axis=-1)
-        cls_pred = np.delete(cls_pred, delete_class_id, axis=-1)
-        eval_per_class = np.delete(eval_per_class, delete_class_id, axis=0)
-        labels = self.config.LABELS[:]
-        for i in sorted(delete_class_id, reverse=True):
-            labels.pop(i)
-
         # macro mean
         acc = np.mean(eval_per_class[..., 0])
         pre = np.mean(eval_per_class[..., 1])
         rec = np.mean(eval_per_class[..., 2])
         spe = np.mean(eval_per_class[..., 3])
-        f1 = np.mean(eval_per_class[..., 4])
+        fscore = np.mean(eval_per_class[..., 4])
         auc = np.mean(eval_per_class[..., 5])
         ap = np.mean(eval_per_class[..., 6])
-        
-        # add npl
-        labels += ["no label"]
-        n_labels = len(labels)
 
         # confusion matrix
-        # cls_true = np.argmax(cls_true, axis=-1)
-        # cls_pred = np.argmax(cls_pred, axis=-1)
-        # cm = confusion_matrix(cls_true.ravel(), cls_pred.ravel())
-
-        # multi-label confusion matrix (https://ieeexplore.ieee.org/document/9711932)
-        cm = np.zeros((n_labels, n_labels), int)
-        for label_true, label_pred in zip(cls_true, cls_pred):
-            label_pred[label_pred >= THRESH] = 1
-            label_pred[label_pred < THRESH] = 0
-            label_pred = label_pred.astype(np.uint8)
-            skip_label_id = []
-            if np.sum(label_pred) == 0:  # NPL
-                for i, t in enumerate(label_true):
-                    cm[i, -1] += 1
-                continue
-
-            x = 0
-            for t, p in zip(label_true, label_pred):  # TP
-                if t == 1 and p == 1:
-                    cm[x, x] += 1
-                    skip_label_id.append(x)
-                x += 1
-
-            for i, t in enumerate(label_true):  # FN
-                if i in skip_label_id:
-                    continue
-                for j, p in enumerate(label_pred):
-                    if p == 1 and t == 1:
-                        cm[i, j] += 1
-
-        # cm = cm / (np.sum(cm, axis=1) + 1e-12)[:, None]
+        cm_multi_class = cm_multi_class / (np.sum(cm_multi_class, axis=1) + 1e-12)[:, None]
 
         # figure of confusion matrix
-        cm_disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+        cm_disp = ConfusionMatrixDisplay(confusion_matrix=cm_multi_class,
                                          display_labels=labels)
         cm_disp.plot(ax=ax)
-        filename = os.path.join(self.config.log_dir, "confusion_matrix.png")
+        filename = os.path.join(eval_dir, "confusion_matrix.png")
         fig.savefig(filename)
         img = image.fig2img(fig)
 
         # save eval dict
-        eval_dict["(Macro Mean)"] = [acc, pre, rec, spe, f1, auc, ap]
-        ai_utils.save_dict_to_excel(eval_dict, os.path.join(self.config.log_dir, "eval.xlsx"))
-           
+        eval_dict["(Macro Mean)"] = [acc, pre, rec, spe, fscore, auc, ap]
+        utils.save_dict_to_excel(eval_dict, os.path.join(eval_dir, "scores.xlsx"))
+
         res = {
             "Accuracy": acc,
             "Precision": pre,
             "Recall": rec,
             "Specificity": spe,
-            "F1": f1,
+            "F-Score": fscore,
             "ROC Curve AUC": auc,
             "Average Precision": ap,
-            # "Precision (Detection)": pre_det,
-            # "Recall (Detection)": rec_det,
-            # "F1 (Detection)": f1_det,
-            # "mIoU": miou,
             "img": img,
         }
 

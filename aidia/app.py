@@ -1,10 +1,4 @@
-# coding: utf-8
-"""Anotee for Dental Segmentation App
-
-The main implementation.
-
-written by Kohei Torii
-"""
+'''Copyright (C) 2023 Kohei Torii'''
 
 import functools
 import re
@@ -41,6 +35,7 @@ from aidia.dicom import DICOM, is_dicom
 if not LITE:
     from aidia.widgets.ai_train_dialog import AITrainDialog
     from aidia.widgets.ai_eval_dialog import AIEvalDialog
+    from aidia.ai.config import AIConfig
 from aidia.widgets.ai_test_widget import AITestWidget
 
 
@@ -128,9 +123,8 @@ class MainWindow(QtWidgets.QMainWindow):
     
         if not LITE:
             self.ai_train_dialog = AITrainDialog(parent=self)
-            self.ai_eval_dialog = AIEvalDialog(parent=self)
-
             self.ai_train_dialog.aiRunning.connect(self.callback_ai_train_running)
+            self.ai_eval_dialog = AIEvalDialog(parent=self)
             self.ai_eval_dialog.aiRunning.connect(self.callback_ai_eval_running)
 
         # initialize AI test widget
@@ -1015,6 +1009,12 @@ class MainWindow(QtWidgets.QMainWindow):
         # set menubar on window top
         self.menuBar().setNativeMenuBar(False)
 
+        # popup gpu info
+        if not LITE and not AIConfig.is_gpu_available():
+            self.info_message(self.tr(
+                '''No GPU is available.
+Please keep in mind that many times takes in training AI.'''
+            ))
 
     def init_dir(self):
         if self.work_dir is not None and os.path.exists(self.work_dir):
@@ -1022,13 +1022,11 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.work_dir = HOME_DIR
 
-
     def menu(self, title, actions=None):
         menu = self.menuBar().addMenu(title)
         if actions:
             qt.addActions(menu, actions)
         return menu
-    
     
     def toolbar_menu(self):
         m = QtWidgets.QMenu()
@@ -1054,7 +1052,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.addToolBar(Qt.LeftToolBarArea, toolbar)
         return toolbar
 
-
+    ### Override Functions ###
     def closeEvent(self, event):
         if not self.may_continue_unsaved():
             event.ignore()
@@ -1082,10 +1080,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # ask the use for where to save the labels
         # self.settings.setValue("window/geometry", self.saveGeometry())
 
-
     def noShapes(self):
         return not len(self.labelList)
-
 
     def populateModeActions(self):
         tool, menu = self.actions.tool, self.actions.canvas_menu
@@ -1725,6 +1721,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.reset_cursor()
 
+        # init AI functions
+        if not LITE:
+            self.ai_train_dialog.reset_state()
+            self.ai_eval_dialog.reset_state()
+
         return True
 
     
@@ -2054,6 +2055,11 @@ class MainWindow(QtWidgets.QMainWindow):
                                 msg,
                                 mb.Ok, mb.Cancel)
             if answer == mb.Ok:
+                # terminate processing
+                if self.ai_train_dialog.ai.isRunning():
+                    self.ai_train_dialog.ai.terminate()  # TODO:need more secure process
+                if self.ai_eval_dialog.ai.isRunning():
+                    self.ai_eval_dialog.ai.terminate()
                 return True
             else:
                 return False

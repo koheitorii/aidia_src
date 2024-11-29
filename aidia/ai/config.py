@@ -36,6 +36,7 @@ class AIConfig(object):
         self.USE_MULTI_GPUS = False
         self.NAME = 'test'
         self.TASK = "Segmentation"
+        self.IS_MULTI_LABEL = False
         self.DATASET_NUM = 1
         self.SEED = 12345
 
@@ -146,3 +147,9 @@ class AIConfig(object):
                 1.0 - self.RANDOM_CONTRAST,
                 1.0 + self.RANDOM_CONTRAST)))
         return iaa.Sequential(factors, random_order=True)
+
+    @staticmethod
+    def is_gpu_available():
+        if len(tf.config.list_logical_devices('GPU')):
+            return True
+        return False
