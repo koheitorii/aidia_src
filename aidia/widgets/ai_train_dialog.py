@@ -12,7 +12,7 @@ from qtpy import QtCore, QtWidgets
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
 
-from aidia import CLS, DET, SEG, MNIST, DET_MODEL, SEG_MODEL, CLEAR, ERROR
+from aidia import CLS, DET, SEG, MNIST, DET_MODEL, SEG_MODEL, CLEAR, ERROR, AI_DIR_NAME
 from aidia import aidia_logger
 from aidia import qt
 from aidia import utils
@@ -122,9 +122,9 @@ You cannot set existed experiment names."""
         # self.input_name.setAlignment(QtCore.Qt.AlignCenter)
         def _validate(text):
             # check trained data in log directory
-            p1 = os.path.join(self.dataset_dir, "data", text, "weights")
-            p2 = os.path.join(self.dataset_dir, "data", text, "dataset.json")
-            p3 = os.path.join(self.dataset_dir, "data", text, "config.json")
+            p1 = os.path.join(self.dataset_dir, AI_DIR_NAME, text, "weights")
+            p2 = os.path.join(self.dataset_dir, AI_DIR_NAME, text, "dataset.json")
+            p3 = os.path.join(self.dataset_dir, AI_DIR_NAME, text, "config.json")
             if (len(text)
                 and not os.path.exists(p1)
                 and not os.path.exists(p2)
@@ -542,12 +542,12 @@ The labels are separated with line breaks."""))
             self.tag_directory.setText(self.tr("Target Directory:\n{}").format(dataset_dir))
 
         # create data directory
-        if not os.path.exists(os.path.join(dataset_dir, "data")):
-            os.mkdir(os.path.join(dataset_dir, "data"))
+        if not os.path.exists(os.path.join(dataset_dir, AI_DIR_NAME)):
+            os.mkdir(os.path.join(dataset_dir, AI_DIR_NAME))
 
         # load config parameters
         self.config = AIConfig(dataset_dir)
-        config_path = os.path.join(dataset_dir, "data", "config.json")
+        config_path = os.path.join(dataset_dir, AI_DIR_NAME, "config.json")
         if os.path.exists(config_path):
             try:
                 self.config.load(config_path)
@@ -592,7 +592,7 @@ The labels are separated with line breaks."""))
         self.input_contrast.setText(str(self.config.RANDOM_CONTRAST))
 
         self.exec_()
-        if os.path.exists(os.path.join(dataset_dir, "data")):
+        if os.path.exists(os.path.join(dataset_dir, AI_DIR_NAME)):
             self.config.save(config_path)
     
     def ai_finished(self):
@@ -940,7 +940,7 @@ The labels are separated with line breaks."""))
 
         self.config.build_params()  # update parameters
 
-        config_path = os.path.join(self.dataset_dir, "data", "config.json")
+        config_path = os.path.join(self.dataset_dir, AI_DIR_NAME, "config.json")
         self.config.save(config_path)
         self.ai.set_config(self.config)
         self.start_time = time.time()
@@ -1081,7 +1081,7 @@ class AITrainThread(QtCore.QThread):
         
         # save all training setting and used data
         if isinstance(model.dataset, Dataset):
-            config_path = os.path.join(self.config.dataset_dir, "data", "config.json")
+            config_path = os.path.join(self.config.dataset_dir, AI_DIR_NAME, "config.json")
             shutil.copy(config_path, self.config.log_dir)
             p = os.path.join(self.config.log_dir, "dataset.json")
             model.dataset.save(p)

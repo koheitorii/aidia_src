@@ -11,7 +11,7 @@ from glob import glob
 from qtpy import QtCore, QtGui, QtWidgets
 from qtpy.QtCore import Qt
 
-from aidia import __appname__, __version__, PRETRAINED_DIR, LABEL_COLORMAP, HOME_DIR, LITE, EXTS
+from aidia import __appname__, __version__, PRETRAINED_DIR, LABEL_COLORMAP, HOME_DIR, LITE, EXTS, AI_DIR_NAME
 from aidia import S_EPSILON, S_AREA_LIMIT
 from aidia import qt
 from aidia import utils
@@ -1019,8 +1019,8 @@ Please keep in mind that many times takes in training AI.'''
     def init_dir(self):
         if self.work_dir is not None and os.path.exists(self.work_dir):
             self.import_from_dir(self.work_dir)
-        # else:
-            # self.work_dir = HOME_DIR
+        else:
+            self.work_dir = HOME_DIR
 
     def menu(self, title, actions=None):
         menu = self.menuBar().addMenu(title)
@@ -2212,9 +2212,7 @@ Please keep in mind that many times takes in training AI.'''
             return
         
         # create data directory
-        data_dirpath = os.path.join(dirpath, "data")
-        if not os.path.exists(data_dirpath):
-            os.mkdir(data_dirpath)
+        data_dirpath = utils.get_dirpath_with_mkdir(AI_DIR_NAME)
         self.canvas.reset_params()
 
         is_get_all_labels = False
@@ -2390,7 +2388,7 @@ Please keep in mind that many times takes in training AI.'''
         # dir_list = glob(os.path.join(parent_dir, "**"))
         
         # for subdir_path in dir_list:
-        #     if utils.get_basename(subdir_path) == "data":
+        #     if utils.get_basename(subdir_path) == AI_DIR_NAME:
         #         continue
         #     subdir_jsons = glob(os.path.join(subdir_path, "*.json"))
         #     for p in subdir_jsons:

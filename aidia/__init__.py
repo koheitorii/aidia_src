@@ -11,6 +11,8 @@ __version__ = "1.3.9"
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 HOME_DIR = os.path.expanduser("~")
 
+AI_DIR_NAME = 'aidia_data'
+
 app_cfg_dir = os.path.join(HOME_DIR, ".aidia")
 if not os.path.exists(app_cfg_dir):
     os.mkdir(app_cfg_dir)

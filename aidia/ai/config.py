@@ -4,6 +4,8 @@ import logging
 import imgaug
 import imgaug.augmenters as iaa
 
+from aidia import AI_DIR_NAME
+
 # TensorFlow global setting
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf
@@ -83,7 +85,7 @@ class AIConfig(object):
         else:
             self.total_batchsize = self.BATCH_SIZE
         if self.dataset_dir is not None:
-            self.log_dir = os.path.join(self.dataset_dir, "data", self.NAME)
+            self.log_dir = os.path.join(self.dataset_dir, AI_DIR_NAME, self.NAME)
         self.image_size = (self.INPUT_SIZE, self.INPUT_SIZE)
         self.num_classes = len(self.LABELS)
 
