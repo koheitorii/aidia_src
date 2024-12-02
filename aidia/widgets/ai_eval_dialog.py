@@ -63,10 +63,8 @@ class AIEvalDialog(QtWidgets.QDialog):
         # self.class_names = []
         self.task = None
 
-        self.fig, self.ax = plt.subplots(figsize=(6, 6))
-        self.ax.axis("off")
-
-        plt.rcParams["font.size"] = 15
+        self.fig, self.ax_pie = plt.subplots(figsize=(6, 6))
+        self.ax_pie.axis("off")
 
         self.error_flags = {}
         self.input_fields = []
@@ -124,12 +122,12 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         self._layout.addWidget(self.button_pred, row, 2, 1, 1)
 
         # export data button
-        self.button_export_data = QtWidgets.QPushButton(self.tr("Open Result Directory"))
-        self.button_export_data.setToolTip(self.tr(
+        self.button_open_logdir = QtWidgets.QPushButton(self.tr("Open Result Directory"))
+        self.button_open_logdir.setToolTip(self.tr(
             '''Open the experiment result directory.'''
         ))
-        self.button_export_data.clicked.connect(self.open_log_dir)
-        self._layout.addWidget(self.button_export_data, row, 3, 1, 1)
+        self.button_open_logdir.clicked.connect(self.open_log_dir)
+        self._layout.addWidget(self.button_open_logdir, row, 3, 1, 1)
 
         # export model button
         self.button_export_model = QtWidgets.QPushButton(self.tr("Save Model"))
@@ -256,15 +254,15 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
             x.setEnabled(False)
         self.button_eval.setEnabled(False)
         self.button_pred.setEnabled(False)
-        self.button_export_data.setEnabled(False)
+        self.button_open_logdir.setEnabled(False)
         self.button_export_model.setEnabled(False)
     
     def enable_all(self):
         for x in self.input_fields:
             x.setEnabled(True)
         self.button_eval.setEnabled(True)
-        self.button_export_data.setEnabled(True)
-        self._switch_enable_by_onnx()
+        self.button_open_logdir.setEnabled(True)
+        self._switch_enables()
 
     def closeEvent(self, event):
         self.input_name.clear()
@@ -304,7 +302,7 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
                 self.input_weights.setEnabled(False)
         else:
             self._set_error(self.tag_name)
-            self.disable_all()
+            # self.disable_all()
     
     def update_images(self, images):
         self.iw1.loadPixmap(images[0])
@@ -357,13 +355,14 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         self.text_dataset.setText(text)
 
         # update label distribution
-        self.ax.clear()
-        self.ax.pie(
+        self.ax_pie.clear()
+        self.ax_pie.set_title('Label Distribution', fontsize=20)
+        self.ax_pie.pie(
             num_per_class,
             labels=class_names,
             # autopct="%1.1f%%",
             wedgeprops={'linewidth': 1, 'edgecolor':"white"},
-            textprops={'color': "black", 'weight': "bold"})
+            textprops={'color': "black", 'fontsize': 16})
         self.image_widget2.loadPixmap(self._plt2img2())
 
         # write dataset information
@@ -387,13 +386,15 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
             text += f"{k}: {v:.6f}\n"
         self.text_results.setText(text)
         
-        if self.task == DET:
-            save_dict = {
-                "Metrics": list(value.keys()),
-                "Values": list(value.values()),
-            }
-            utils.save_dict_to_excel(save_dict, os.path.join(self.log_dir, "eval.xlsx"))
-        elif self.task == SEG:
+        # if self.task == DET:
+        #     save_dict = {
+        #         "Metrics": list(value.keys()),
+        #         "Values": list(value.values()),
+        #     }
+        #     utils.save_dict_to_excel(save_dict, os.path.join(self.log_dir, "eval.xlsx"))
+
+        # get confusion matrix
+        if self.task == SEG:
             img = value.pop("img")
             self.image_widget.loadPixmap(img)
         
@@ -448,6 +449,12 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         self.iw5.clear()
 
     def evaluate(self):
+        if not os.path.exists(self.log_dir):
+            self.parent().error_message(self.tr(
+                '''The directory was not found.'''
+            ))
+            return
+
         error = sum(self.error_flags.values())
         if error > 0:
             self.text_status.setText(self.tr("Please check parameters."))
@@ -468,6 +475,9 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         
         self.task = config.TASK
 
+        # for update new log dir
+        config.log_dir = self.log_dir
+
         self.disable_all()
         self.reset_state()
 
@@ -476,6 +486,12 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         self.aiRunning.emit(True)
     
     def predict_unknown(self):
+        if not os.path.exists(self.log_dir):
+            self.parent().error_message(self.tr(
+                '''The directory was not found.'''
+            ))
+            return
+
         error = sum(self.error_flags.values())
         if error > 0:
             self.text_status.setText(self.tr("Please check parameters."))
@@ -513,7 +529,8 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         target_path = target_path.replace("/", os.sep)
         if not target_path:
             return
-        self._predicted_dir = os.path.join(target_path, 'AI_results')
+        # self._predicted_dir = os.path.join(target_path, 'AI_results')
+        self._predicted_dir = os.path.join(self.log_dir, 'predict_images', utils.get_basename(target_path))
         
         if not len(os.listdir(target_path)):
             self.text_status.setText(self.tr("The Directory is empty."))
@@ -528,12 +545,20 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         self.progress.setValue(0)
         # self.reset_state()
 
+        # for update new log dir
+        config.log_dir = self.log_dir
+
         self.ai_pred.set_params(config, target_path, onnx_path)
         self.ai_pred.start()
         self.aiRunning.emit(True)
     
     def open_log_dir(self):
-        QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.log_dir))
+        if os.path.exists(self.log_dir):
+            QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.log_dir))
+        else:
+            self.parent().error_message(self.tr(
+                '''The directory was not found.'''
+            ))
         # opendir = HOME_DIR
         # target_path = str(QtWidgets.QFileDialog.getExistingDirectory(
         #     self,
@@ -551,6 +576,12 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         # self.text_status.setText(self.tr("Export data to {}").format(target_path))
 
     def export_model(self):
+        if not os.path.exists(self.log_dir):
+            self.parent().error_message(self.tr(
+                '''The directory was not found.'''
+            ))
+            return
+
         opendir = HOME_DIR
         target_path = str(QtWidgets.QFileDialog.getExistingDirectory(
             self,
@@ -568,7 +599,7 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         self.text_status.setText(self.tr("Export data to {}").format(target_path))
 
     
-    def _switch_enable_by_onnx(self):
+    def _switch_enables(self):
         onnx_path = os.path.join(self.log_dir, "model.onnx")
         if os.path.exists(onnx_path):
             self.button_export_model.setEnabled(True)
@@ -576,6 +607,12 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         else:
             self.button_export_model.setEnabled(False)
             self.button_pred.setEnabled(False)
+        
+        # evaldir_path = os.path.join(self.log_dir, 'evaluation')
+        # if os.path.exists(evaldir_path):
+        #     self.button_open_logdir.setEnabled(True)
+        # else:
+        #     self.button_open_logdir.setEnabled(False)
 
     def _check_logdir(self, logdir):
         config_path = os.path.join(logdir, "config.json")
@@ -590,8 +627,10 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
                 self.log_dir = logdir
                 return True
             else:
+                self.log_dir = ''
                 return False
         else:
+            self.log_dir = ''
             return False
 
     
@@ -667,9 +706,11 @@ class AIEvalThread(QtCore.QThread):
 
         self.notifyMessage.emit(self.tr("Generate test result images..."))
 
-        save_dir = os.path.join(self.config.log_dir, "test_preds")
-        if not os.path.exists(save_dir):
-            os.mkdir(save_dir)
+        # save_dir = os.path.join(self.config.log_dir, "test_preds")
+        # if not os.path.exists(save_dir):
+        #     os.mkdir(save_dir)
+        save_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'evaluation', 'test_images')
+
         n = model.dataset.num_test
         predicts = []
         for i in range(n):
@@ -749,9 +790,10 @@ class AIPredThread(QtCore.QThread):
         self.onnx_path = onnx_path
     
     def run(self):
-        savedir = os.path.join(self.target_path, "AI_results")
-        if not os.path.exists(savedir):
-            os.mkdir(savedir)
+        # savedir = os.path.join(self.target_path, "AI_results")
+        # if not os.path.exists(savedir):
+        #     os.mkdir(savedir)
+        savedir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'predict_images', utils.get_basename(self.target_path))
 
         n = len(os.listdir(self.target_path))
         model = InferenceSession(self.onnx_path)

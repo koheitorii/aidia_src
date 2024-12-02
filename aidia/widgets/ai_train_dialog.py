@@ -61,13 +61,11 @@ class AITrainDialog(QtWidgets.QDialog):
         self.train_steps = 0
         self.val_steps = 0
 
-        self.fig, self.ax = plt.subplots(figsize=(12, 6))
-        self.ax.axis("off")
+        self.fig, self.ax_loss = plt.subplots(figsize=(12, 6))
+        self.ax_loss.axis("off")
         
-        self.fig2, self.ax2 = plt.subplots(figsize=(6, 6))
-        self.ax2.axis("off")
-
-        plt.rcParams["font.size"] = 15
+        self.fig2, self.ax_pie = plt.subplots(figsize=(6, 6))
+        self.ax_pie.axis("off")
 
         self.default_style = "QLabel{ color: black; }"
         self.error_style = "QLabel{ color: red; }"
@@ -524,6 +522,7 @@ The labels are separated with line breaks."""))
         self.ai = AITrainThread(self)
         self.ai.fitStarted.connect(self.callback_fit_started)
         self.ai.notifyMessage.connect(self.update_status)
+        self.ai.errorMessage.connect(self.popup_error)
         self.ai.datasetInfo.connect(self.update_dataset)
         self.ai.epochLogList.connect(self.update_logs)
         self.ai.batchLogList.connect(self.update_batch)
@@ -773,23 +772,24 @@ The labels are separated with line breaks."""))
         self.error_flags[tag.text()] = CLEAR
 
     def update_figure(self):
-        self.ax.clear()
+        self.ax_loss.clear()
+        self.ax_loss.set_title('Loss Curve', fontsize=20)
         if len(self.epoch):
             if len(self.loss):
-                self.ax.plot(self.epoch, self.loss, color="red", linestyle = "solid", label="Training")
+                self.ax_loss.plot(self.epoch, self.loss, color="red", linestyle="solid", label="Training")
             if len(self.val_loss):
-                self.ax.plot(self.epoch, self.val_loss, color="green", linestyle = "solid", label="Validation")
-            self.ax.set_xlabel("Epoch")
-            self.ax.set_ylabel("Loss")
-            self.ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+                self.ax_loss.plot(self.epoch, self.val_loss, color="green", linestyle="solid", label="Validation")
+            self.ax_loss.set_xlabel("Epoch", fontsize=16)
+            self.ax_loss.set_ylabel("Loss", fontsize=16)
+            self.ax_loss.xaxis.set_major_locator(MaxNLocator(integer=True))
             mx = min((len(self.epoch) // 10 + 1) * 10, self.config.EPOCHS)
-            self.ax.set_xlim([1, mx])
+            self.ax_loss.set_xlim([1, mx])
             if len(self.val_loss) > 1:
                 top_limit = np.max(self.val_loss[1:])
                 # top_limit = np.mean(self.val_loss[1:]) * 1.5
-                self.ax.set_ylim([0, top_limit])
-            self.ax.legend()
-            self.ax.grid()
+                self.ax_loss.set_ylim([0, top_limit])
+            self.ax_loss.legend(fontsize=16)
+            self.ax_loss.grid()
             self.image_widget.loadPixmap(self._plt2img())
 
     def _plt2img(self):
@@ -850,15 +850,20 @@ The labels are separated with line breaks."""))
         self.text_dataset.setText(text)
 
         # update label distribution
-        self.ax2.clear()
-        self.ax2.pie(num_per_class,
-                     labels=class_names,
-                     autopct="%1.1f%%",
-                     wedgeprops={'linewidth': 1, 'edgecolor':"white"})
+        self.ax_pie.clear()
+        self.ax_pie.set_title('Label Distribusion', fontsize=20)
+        self.ax_pie.pie(num_per_class,
+                    labels=class_names,
+                    #  autopct="%1.1f%%",
+                    wedgeprops={'linewidth': 1, 'edgecolor':"white"},
+                    textprops={'color': "black", 'fontsize': 16})
         self.image_widget2.loadPixmap(self._plt2img2())
 
     def update_status(self, value):
         self.text_status.setText(str(value))
+
+    def popup_error(self, text):
+        self.parent().error_message(text)
 
     def update_batch(self, value):
         epoch = len(self.epoch) + 1
@@ -958,6 +963,7 @@ class AITrainThread(QtCore.QThread):
     epochLogList = QtCore.Signal(dict)
     batchLogList = QtCore.Signal(dict)
     notifyMessage = QtCore.Signal(str)
+    errorMessage = QtCore.Signal(str)
     datasetInfo = QtCore.Signal(dict)
 
     def __init__(self, parent):
@@ -981,7 +987,7 @@ class AITrainThread(QtCore.QThread):
 
     def run(self):
         if self.config is None:
-            self.notifyMessage.emit(self.tr("Not configured. Terminated."))
+            self.errorMessage.emit(self.tr("Not configured. Terminated."))
             return
 
         model = None
@@ -992,7 +998,7 @@ class AITrainThread(QtCore.QThread):
         elif self.config.TASK == SEG:
             model = SegmentationModel(self.config)
         else:
-            self.notifyMessage.emit(self.tr("Model error. Terminated."))
+            self.errorMessage.emit(self.tr("Model error. Terminated."))
             return
         self.model = model
         
@@ -1000,15 +1006,15 @@ class AITrainThread(QtCore.QThread):
         try:
             model.build_dataset()
         except errors.DataLoadingError as e:
-            self.notifyMessage.emit(self.tr("Failed to load data."))
+            self.errorMessage.emit(self.tr("Failed to load data. Please check the settings or data."))
             aidia_logger.error(e, exc_info=True)
             return
         except errors.DataFewError as e:
-            self.notifyMessage.emit(self.tr("Failed to split data because of the few data."))
+            self.errorMessage.emit(self.tr("Failed to split data because of the few data."))
             aidia_logger.error(e, exc_info=True)
             return
         except Exception as e:
-            self.notifyMessage.emit(self.tr("Failed to build dataset."))
+            self.errorMessage.emit(self.tr("Failed to build dataset. Please check the settings or data."))
             aidia_logger.error(e, exc_info=True)
             return
         
@@ -1036,25 +1042,6 @@ class AITrainThread(QtCore.QThread):
                 _info_dict["num_val_subdir"] = model.dataset.num_val_subdir
                 _info_dict["num_test_subdir"] = model.dataset.num_test_subdir
             self.datasetInfo.emit(_info_dict)
-        else:  # MNIST Test
-            _info_dict = {
-                "dataset_num": 1,
-                "num_images": 60000,
-                "num_shapes": 0,
-                "num_classes": 0,
-                "num_per_class": 0,
-                "num_train": 48000,
-                "num_val": 12000,
-                "num_test": 0,
-                "class_ids": [0],
-                "class_names": [""],
-                "train_per_class": [0],
-                "val_per_class": [0],
-                "test_per_class": [0],
-                "train_steps": int(48000 / self.config.total_batchsize),
-                "val_steps": int(12000 / self.config.total_batchsize)
-            }
-            self.datasetInfo.emit(_info_dict)
 
         self.notifyMessage.emit(self.tr("Model building..."))
         if self.config.gpu_num > 1 and self.config.USE_MULTI_GPUS: # apply multiple GPU support
@@ -1076,26 +1063,26 @@ class AITrainThread(QtCore.QThread):
         try:
             model.train(cb)
         except tf.errors.ResourceExhaustedError as e:
-            self.notifyMessage.emit(self.tr("Memory error. Please reduce the input size or batch size."))
+            self.errorMessage.emit(self.tr("Memory error. Please reduce the input size or batch size."))
             aidia_logger.error(e, exc_info=True)
             return
         except tf.errors.NotFoundError as e:
-            self.notifyMessage.emit(self.tr("Memory error. Please reduce the input size or batch size."))
+            self.errorMessage.emit(self.tr("Memory error. Please reduce the input size or batch size."))
             aidia_logger.error(e, exc_info=True)
             return
         except errors.LossGetNanError as e:
-            self.notifyMessage.emit(self.tr("Loss got NaN. Please adjust the learning rate."))
+            self.errorMessage.emit(self.tr("Loss got NaN. Please adjust the learning rate."))
             aidia_logger.error(e, exc_info=True)
             return
         except Exception as e:
-            self.notifyMessage.emit(self.tr("Failed to train."))
+            self.errorMessage.emit(self.tr("Failed to train."))
             aidia_logger.error(e, exc_info=True)
             return
         
         # save all training setting and used data
-        config_path = os.path.join(self.config.dataset_dir, "data", "config.json")
-        shutil.copy(config_path, self.config.log_dir)
         if isinstance(model.dataset, Dataset):
+            config_path = os.path.join(self.config.dataset_dir, "data", "config.json")
+            shutil.copy(config_path, self.config.log_dir)
             p = os.path.join(self.config.log_dir, "dataset.json")
             model.dataset.save(p)
 

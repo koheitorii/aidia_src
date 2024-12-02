@@ -2,6 +2,7 @@ import os
 import base64
 import unicodedata
 import openpyxl
+import shutil
 
 
 def is_full_width(text):
@@ -64,5 +65,5 @@ def save_dict_to_excel(data, file_path):
 def get_dirpath_with_mkdir(*args):
     p = os.path.join(*args)
     if not os.path.exists(p):
-        os.mkdir(p)
+        os.makedirs(p)
     return p

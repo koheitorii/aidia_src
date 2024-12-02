@@ -10,7 +10,6 @@ from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use("agg")
-plt.rcParams["font.size"] = 15
 np.set_printoptions(suppress=True)
 
 from aidia import image
@@ -121,7 +120,7 @@ class SegmentationModel(object):
         eval_dict = {}
         eval_dict["Metrics"] = [
             "Accuracy", "Precision", "Recall", "Specificity",
-            "F1", "ROC Curve AUC", "Average Precision",
+            "F1", "ROC Curve AUC", "PR Curve AUC (Average Precision)",
         ]
 
         # prepare labels
@@ -129,14 +128,13 @@ class SegmentationModel(object):
         labels = self.config.LABELS[:]
         labels.insert(0, 'no label')
 
-        eval_dir = utils.get_dirpath_with_mkdir(
-            self.config.log_dir, 'evaluation'
-        )
-        roc_pr_dir = utils.get_dirpath_with_mkdir(
-            eval_dir, 'roc_pr_fig'
-        )
+        eval_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'evaluation')
+        roc_pr_dir = utils.get_dirpath_with_mkdir(eval_dir, 'roc_pr_fig')
 
-        tptnfpfn_per_class = np.zeros((num_classes, 9,  4), int)
+        # THRESHOLDS = [0.00001, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99999]
+        THRESHOLDS = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
+
+        tptnfpfn_per_class = np.zeros((num_classes, len(THRESHOLDS),  4), int)
         eval_per_class = np.zeros((num_classes, len(eval_dict["Metrics"])), float)
         cm_multi_class = np.zeros((num_classes, num_classes), float)
 
@@ -144,6 +142,10 @@ class SegmentationModel(object):
         for i, image_id in enumerate(self.dataset.test_ids):
             cb_widget.notifyMessage.emit(f"Evaluating... {i+1} / {self.dataset.num_test}")
             cb_widget.progressValue.emit(int((i+1) / self.dataset.num_test * 99))
+
+            # for DEBUG
+            # if i > 50:
+            #     break
 
             # predict
             img = self.dataset.load_image(image_id)
@@ -159,21 +161,22 @@ class SegmentationModel(object):
             cm_multi_class += metrics.multi_confusion_matrix(yt_label, yp_label, num_classes)
 
             # calculate tp tn fp fn per class
-            for i, th in enumerate([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]):
-                for class_id in range(num_classes):
-                    # get result by class
-                    yt_class = y_true[..., class_id]
-                    yp_class = y_pred[..., class_id]
+            for class_id in range(num_classes):
+                # get result by class
+                yt_class = y_true[..., class_id]
+                yp_class = y_pred[..., class_id]
 
+                for i, th in enumerate(THRESHOLDS):
                     # thresholding
-                    yp_class[yp_class >= th] = 1
-                    yp_class[yp_class < th] = 0
-                    yp_class = yp_class.astype(np.uint8)
+                    _yp_class = np.copy(yp_class)
+                    _yp_class[_yp_class >= th] = 1
+                    _yp_class[_yp_class < th] = 0
+                    _yp_class = _yp_class.astype(np.uint8)
 
-                    if np.max(yt_class) == 0 and np.max(yp_class) == 0: # no ground truth
+                    if np.max(yt_class) == 0 and np.max(_yp_class) == 0: # no ground truth
                         tn, fp, fn, tp = self.config.INPUT_SIZE**2, 0, 0, 0
                     else:
-                        cm = confusion_matrix(yt_class.ravel(), yp_class.ravel())
+                        cm = confusion_matrix(yt_class.ravel(), _yp_class.ravel())
                         tn, fp, fn, tp = cm.ravel()
                     _cm = np.array([tp, tn, fp, fn])
                     tptnfpfn_per_class[class_id, i] += _cm
@@ -188,42 +191,67 @@ class SegmentationModel(object):
             auc = 0
             ap = 0
             result_at_05 = None
-            for i in range(9):
+            for i, thresh in enumerate(THRESHOLDS):
                 tp, tn, fp, fn = tptnfpfn_per_class[class_id, i]
                 accuracy, precision, recall, specificity, fscore = metrics.common_metrics(tp, tn, fp, fn)
-                fpr.append(1 - specificity)
+
+                 # save result at threshold=0.5
+                if thresh == 0.5:
+                    result_at_05 = [accuracy, precision, recall, specificity, fscore]
+
+                if precision == 0 and recall == 0:
+                    precision = 1
+
                 tpr.append(recall)
+                fpr.append(fpr[-1])
+                tpr.append(recall)
+                fpr.append(1 - specificity)
+
+                pres.append(pres[-1])
+                recs.append(recall)
                 pres.append(precision)
                 recs.append(recall)
-                auc += abs(fpr[i+1] - fpr[i]) * tpr[i+1]
-                ap += abs(recs[i+1] - recs[i]) * pres[i]
 
-                # save result at threshold=0.5
-                if i == 4:
-                    result_at_05 = [accuracy, precision, recall, specificity, fscore]
+                auc += abs(fpr[-1] - fpr[-3]) * tpr[-1]
+                ap += abs(recs[-1] - recs[-3]) * pres[-3]
                   
             # add the last value
-            fpr.append(1.0)
             tpr.append(1.0)
-            auc += abs(fpr[-1] - fpr[-2]) * tpr[-1]
+            fpr.append(fpr[-1])
+            tpr.append(1.0)
+            fpr.append(1.0)
+            auc += abs(fpr[-1] - fpr[-3]) * tpr[-1]
 
+            pres.append(pres[-1])
+            recs.append(1.0)
             pres.append(0.0)
             recs.append(1.0)
-            ap += abs(recs[-1] - recs[-2]) * pres[-2]
+            ap += abs(recs[-1] - recs[-3]) * pres[-3]
+
+            # print(fpr)
+            # print(tpr)
+            # print(pres)
+            # print(recs)
 
             # draw curves
-            ax.plot(fpr, tpr)
-            ax.set_title(f"ROC Curve ({class_name})")
-            ax.set_xlabel('FPR')
-            ax.set_ylabel('TPR')
+            ax.plot([0.0, 1.0], [0.0, 1.0], color='k', linestyle='--', label='baseline')
+            ax.plot(fpr, tpr, marker='o', color='red', label='ours')
+            ax.text(0.8, 0.2, f'AUC = {auc:.02f}', ha='center', color='red', fontsize=16)
+            ax.set_title(f"ROC Curve ({class_name})", fontsize=20)
+            ax.set_xlabel('FPR', fontsize=16)
+            ax.set_ylabel('TPR', fontsize=16)
+            ax.legend(fontsize=16)
             ax.grid()
             fig.savefig(os.path.join(roc_pr_dir, f"{class_name}_roc.png"))
             ax.clear()
 
-            ax.plot(recs, pres)
-            ax.set_title(f"PR Curve ({class_name})")
-            ax.set_xlabel('Recall')
-            ax.set_ylabel('Precision')
+            ax.plot([0.0, 1.0], [1.0, 0.0], color='k', linestyle='--', label='baseline')
+            ax.plot(recs, pres, marker='o', color='red', label='ours')
+            ax.set_title(f"PR Curve ({class_name})", fontsize=20)
+            ax.set_xlabel('Recall', fontsize=16)
+            ax.set_ylabel('Precision', fontsize=16)
+            ax.text(0.2, 0.2, f'AUC = {ap:.02f}', ha='center', color='red', fontsize=16)
+            ax.legend(fontsize=16)
             ax.grid()
             fig.savefig(os.path.join(roc_pr_dir, f"{class_name}_pr.png"))
             ax.clear()
@@ -247,6 +275,7 @@ class SegmentationModel(object):
         # figure of confusion matrix
         cm_disp = ConfusionMatrixDisplay(confusion_matrix=cm_multi_class,
                                          display_labels=labels)
+        ax.set_title('Confusion Matrix', fontsize=20)
         cm_disp.plot(ax=ax)
         filename = os.path.join(eval_dir, "confusion_matrix.png")
         fig.savefig(filename)
@@ -263,7 +292,7 @@ class SegmentationModel(object):
             "Specificity": spe,
             "F-Score": fscore,
             "ROC Curve AUC": auc,
-            "Average Precision": ap,
+            "PR Curve AUC (Average Precision)": ap,
             "img": img,
         }
 
@@ -282,8 +311,8 @@ class SegmentationModel(object):
     
     def convert2onnx(self):
         onnx_path = os.path.join(self.config.log_dir, "model.onnx")
-        if os.path.exists(onnx_path):
-            return
+        # if os.path.exists(onnx_path):
+            # return
         tf2onnx.convert.from_keras(self.model, opset=11, output_path=onnx_path)
 
 

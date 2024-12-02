@@ -10,6 +10,7 @@ from aidia.ai.config import AIConfig
 from aidia.image import det2merge
 from aidia.ai.models.yolov4.yolov4 import YOLO
 from aidia.ai.models.yolov4.yolov4_generator import YOLODataGenerator
+from aidia import utils
 
 
 class DetectionModel(object):
@@ -54,9 +55,7 @@ class DetectionModel(object):
                 self.model.load_weights(weights_path)
 
     def train(self, custom_callbacks=None):
-        checkpoint_dir = os.path.join(self.config.log_dir, "weights")
-        if not os.path.exists(checkpoint_dir):
-            os.makedirs(checkpoint_dir)
+        checkpoint_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'weights')
         if self.config.SAVE_BEST:
             checkpoint_path = os.path.join(checkpoint_dir, "best_model.h5")
         else:
@@ -68,7 +67,7 @@ class DetectionModel(object):
                 monitor='val_loss',
                 save_best_only=self.config.SAVE_BEST,
                 save_weights_only=True,
-                period=1 if self.config.SAVE_BEST else 50,
+                period=1 if self.config.SAVE_BEST else 20,
             ),
         ]
         if custom_callbacks:
@@ -236,7 +235,14 @@ class DetectionModel(object):
             "Recall": rec,
             "mAP50": mAP,
         }
-        # result = [mAP]
+
+        # save dict
+        eval_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'evaluation')
+        save_dict = {
+                "Metrics": list(res.keys()),
+                "Values": list(res.values()),
+            }
+        utils.save_dict_to_excel(save_dict, os.path.join(eval_dir, "scores.xlsx"))
         return res
     
     def predict_by_id(self, image_id, thresh=0.5):

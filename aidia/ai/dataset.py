@@ -96,23 +96,20 @@ class Dataset(object):
             a = self.image_info[i]["annotations"]
             for s in a:
                 label = s["label"]
-                for l in label:
-                    label_id = self.class_names.index(l)
-                    self.train_per_class[label_id] += 1
+                label_id = self.class_names.index(label)
+                self.train_per_class[label_id] += 1
         for i in self.val_ids:
             a = self.image_info[i]["annotations"]
             for s in a:
                 label = s["label"]
-                for l in label:
-                    label_id = self.class_names.index(l)
-                    self.val_per_class[label_id] += 1
+                label_id = self.class_names.index(label)
+                self.val_per_class[label_id] += 1
         for i in self.test_ids:
             a = self.image_info[i]["annotations"]
             for s in a:
                 label = s["label"]
-                for l in label:
-                    label_id = self.class_names.index(l)
-                    self.test_per_class[label_id] += 1
+                label_id = self.class_names.index(label)
+                self.test_per_class[label_id] += 1
 
     def load(self, json_path):
         # p = os.path.join(self.config.log_dir, "dataset.json")
@@ -171,7 +168,6 @@ class Dataset(object):
             if data.get("shapes") is None:
                 continue
 
-            _multi_label_flag = False
             new_shapes = []
             for shape in data["shapes"]:
                 if not shape["shape_type"] in self.target_shape:
@@ -182,19 +178,20 @@ class Dataset(object):
                 for l in label:
                     if l in self.config.LABELS:
                         new_label.append(l)
-                        label_index = self.config.LABELS.index(l)
-                        self.num_per_class[label_index] += 1
-                if len(new_label):
-                    shape["label"] = new_label
-                    new_shapes.append(shape)
-                    self.num_shapes += 1
-                    if len(new_label) > 1:
-                        _multi_label_flag = True
-            if len(new_shapes) == 0:
-                continue
 
-            # skip multi label data
-            if not self.config.IS_MULTI_LABEL and _multi_label_flag:
+                # skip multi label data and no label data
+                if len(new_label) > 1 or len(new_label) == 0:
+                    continue
+
+                new_label = new_label[0]
+                label_index = self.config.LABELS.index(new_label)
+                self.num_per_class[label_index] += 1
+                shape["label"] = new_label
+                new_shapes.append(shape)
+                self.num_shapes += 1
+
+            # skip no shapes data
+            if len(new_shapes) == 0:
                 continue
 
             name = os.path.splitext(json_path)[0]
@@ -325,17 +322,13 @@ class Dataset(object):
                 _m = _m[:, :, 0]
                 foreground += _m  # to create background mask
 
-                if self.config.IS_MULTI_LABEL:
-                    for l in a['label']:
-                        class_id = self.config.LABELS.index(l) + 1
-                        if class_id not in list(range(self.num_classes + 1)):
-                            raise IndexError(f"{class_id} is out of range. {a['label'][0]}")
-                        mask_per_class[class_id] += _m
-                else:
-                    class_id = self.config.LABELS.index(a["label"][0]) + 1
-                    if class_id not in list(range(self.num_classes + 1)):
-                        raise IndexError(f"{class_id} is out of range. {a['label'][0]}")
-                    mask_per_class[class_id] += _m
+                label = a["label"]
+                if isinstance(label, list):  # TODO: for old system
+                    label = label[0]
+                class_id = self.config.LABELS.index(label) + 1
+                if class_id not in list(range(self.num_classes + 1)):
+                    raise IndexError(f"{class_id} is out of range. {a['label'][0]}")
+                mask_per_class[class_id] += _m
             
             # create background mask
             _foreground = np.where(foreground >= 1, 1, 0).astype(np.uint8)
@@ -382,18 +375,24 @@ class Dataset(object):
         bboxes = []
         for a in annotations:
             shape_type = a["shape_type"]
-            if shape_type == "polygon":
-                pass
-            elif shape_type == "rectangle":
-                points = a["points"]  # [[x1, y1], [x2, y2]]
-                label = a["label"][0]
+            if shape_type in ['polygon', 'rectangle']:
+                points = a["points"]
+                label = a["label"]
+                if isinstance(label, list):  # TODO: for old system
+                    label = label[0]
                 class_id = self.class_names.index(label)
-                x1, y1 = points[0]
-                x2, y2 = points[1]
-                xmin = min(x1, x2)
-                ymin = min(y1, y2)
-                xmax = max(x1, x2)
-                ymax = max(y1, y2)
+                if shape_type == 'polygon':
+                    xmin = np.min(points)
+                    ymin = np.min(points)
+                    xmax = np.max(points)
+                    ymax = np.max(points)
+                else:
+                    x1, y1 = points[0]
+                    x2, y2 = points[1]
+                    xmin = min(x1, x2)
+                    ymin = min(y1, y2)
+                    xmax = max(x1, x2)
+                    ymax = max(y1, y2)
                 bboxes.append([
                     float(xmin),
                     float(ymin),

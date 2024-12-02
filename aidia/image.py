@@ -284,7 +284,7 @@ def mask2polygon(masks, labels, approx_epsilon=0.003, area_limit=50):
 def mask2merge(src_img, pred, class_names, gt=None, thresh=0.5):
     """Return the RGB image merged AI prediction masks and the original image."""
     fonttype = cv2.FONT_HERSHEY_DUPLEX
-    fontsize = 1
+    fontsize = 0.5
     fontcolor = (255, 255, 255) if np.mean(src_img[:, :100, :]) < 128 else (0, 0, 0)  # select color depending on background
     fontweight = 1
 
@@ -310,10 +310,10 @@ def mask2merge(src_img, pred, class_names, gt=None, thresh=0.5):
         y_idx, x_idx = indexes
         x1 = np.min(x_idx)
         y1 = np.min(y_idx) - 5
-        cv2.putText(merge, label, (x1, y1), fonttype, 1, color, 1, cv2.LINE_AA)
+        cv2.putText(merge, label, (x1, y1), fonttype, fontsize, color, 1, cv2.LINE_AA)
     merge[merge > 255] = 255.0
     merge = merge.astype(np.uint8)
-    cv2.putText(merge, "AI", (0, 30), fonttype, fontsize, fontcolor, fontweight, cv2.LINE_AA)
+    cv2.putText(merge, "AI", (0, 10), fonttype, fontsize, fontcolor, fontweight, cv2.LINE_AA)
 
     if gt is not None:
         gt_merge = src_img.astype(float)
@@ -333,13 +333,13 @@ def mask2merge(src_img, pred, class_names, gt=None, thresh=0.5):
             y_idx, x_idx = indexes
             x1 = np.min(x_idx)
             y1 = np.min(y_idx) - 5
-            cv2.putText(gt_merge, label, (x1, y1), fonttype, 1, color, 1, cv2.LINE_AA)
+            cv2.putText(gt_merge, label, (x1, y1), fonttype, fontsize, color, 1, cv2.LINE_AA)
             gt_merge += gt_mask.astype(float)
         gt_merge[gt_merge > 255] = 255.0
         gt_merge = gt_merge.astype(np.uint8)
-        cv2.putText(gt_merge, "human", (0, 30), fonttype, fontsize, fontcolor, fontweight, cv2.LINE_AA)
+        cv2.putText(gt_merge, "human", (0, 10), fonttype, fontsize, fontcolor, fontweight, cv2.LINE_AA)
 
-    cv2.putText(src_img, "original", (0, 30), fonttype, fontsize, fontcolor, fontweight, cv2.LINE_AA)
+    cv2.putText(src_img, "original", (0, 10), fonttype, fontsize, fontcolor, fontweight, cv2.LINE_AA)
 
     if gt is not None:
         concat = np.concatenate([src_img, merge, gt_merge], axis=1)

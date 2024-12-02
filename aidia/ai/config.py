@@ -36,7 +36,6 @@ class AIConfig(object):
         self.USE_MULTI_GPUS = False
         self.NAME = 'test'
         self.TASK = "Segmentation"
-        self.IS_MULTI_LABEL = False
         self.DATASET_NUM = 1
         self.SEED = 12345
 
