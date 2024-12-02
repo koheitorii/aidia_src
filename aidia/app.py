@@ -1019,8 +1019,8 @@ Please keep in mind that many times takes in training AI.'''
     def init_dir(self):
         if self.work_dir is not None and os.path.exists(self.work_dir):
             self.import_from_dir(self.work_dir)
-        else:
-            self.work_dir = HOME_DIR
+        # else:
+            # self.work_dir = HOME_DIR
 
     def menu(self, title, actions=None):
         menu = self.menuBar().addMenu(title)
@@ -1883,7 +1883,7 @@ Please keep in mind that many times takes in training AI.'''
     def open_file(self, _value=False):
         if not self.may_continue_unsaved():
             return
-        path = os.path.dirname(str(self.img_path)) if self.img_path else "."
+        default_dir = os.path.dirname(str(self.img_path)) if self.img_path else HOME_DIR
 
         # get extension filter
         _exts = [f"*{e}" for e in EXTS]
@@ -1895,7 +1895,7 @@ Please keep in mind that many times takes in training AI.'''
             filename = QtWidgets.QFileDialog.getOpenFileName(
                 self,
                 self.tr("Choose image file"),
-                path,
+                default_dir,
                 filter=filter,)
             filename = str(filename[0]).replace("/", os.sep)
             ext = os.path.splitext(filename)[1].lower()
