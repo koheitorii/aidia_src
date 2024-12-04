@@ -15,7 +15,7 @@ def main():
         # long_description=get_long_description(),
         # long_description_content_type="text/markdown",
         author="Kohei Torii",
-        author_email="work.torii@gmail.com",
+        author_email="p1an0singer1995@gmail.com",
         url="https://kottonhome.sakura.ne.jp/index.html",
         install_requires=open("requirements.txt").read().splitlines(),
         # install_requires=get_install_requires(),

@@ -1,16 +1,15 @@
 numpy==1.24.0
-opencv-python-headless
+opencv-python-headless==4.4.0.46
 PyQt5==5.15.2
 QtPy
+openpyxl
 pydicom
 python-gdcm
-# pyinstaller==5.13.2
 pyinstaller-versionfile
 PyYAML
 # for AI utils
 matplotlib
 scikit-learn
-openpyxl
 tensorflow==2.10.1
 onnxruntime==1.14.1
 onnx==1.12.0

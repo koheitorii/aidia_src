@@ -801,7 +801,7 @@ If you did not select it, you can set &quot;last_model.h5&quot; or &quot;****.h5
     <message>
         <location filename="../widgets/ai_eval_dialog.py" line="558"/>
         <source>The evaluation directory was not found.</source>
-        <translation>評価結果フォルダが見つかりませんでした。</translation>
+        <translation type="obsolete">評価結果フォルダが見つかりませんでした。</translation>
     </message>
 </context>
 <context>
@@ -1937,6 +1937,23 @@ Aidiaは選択したパターンに応じてデータを４：１の比率（学
         <source>Please reduce labels to {} or below.</source>
         <translation>ラベルを10個以下にしてください。</translation>
     </message>
+    <message>
+        <location filename="../widgets/label_setting_dialog.py" line="27"/>
+        <source>Write the labels, separated by line breaks.
+
+&lt;Example&gt;
+apple
+banana
+orange
+</source>
+        <translation>ラベルを改行で区切って入力してください。
+
+&lt;例&gt;
+apple
+banana
+orange
+</translation>
+    </message>
 </context>
 <context>
     <name>MainWindow</name>
@@ -2824,7 +2841,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">ディレクトリのインポートエラー</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2553"/>
+        <location filename="../app.py" line="2551"/>
         <source>{} does not exists.</source>
         <translation>{}は存在しません。</translation>
     </message>
@@ -3284,7 +3301,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">AI診断をテストしますか？これには少し時間がかかります。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2474"/>
+        <location filename="../app.py" line="2472"/>
         <source>AI Testing ...</source>
         <translation>AIテスト実行中…</translation>
     </message>
@@ -3699,12 +3716,12 @@ Show/Hide Selected Polygon</source>
         <translation>AI処理が実行中です！</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2332"/>
+        <location filename="../app.py" line="2330"/>
         <source>[Images Total] {}</source>
         <translation>[画像枚数] {}</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2334"/>
+        <location filename="../app.py" line="2332"/>
         <source>[Annotations Total] {}</source>
         <translation>[アノテーション数] {}</translation>
     </message>
@@ -3719,17 +3736,17 @@ Show/Hide Selected Polygon</source>
         <translation>AI学習</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2464"/>
+        <location filename="../app.py" line="2462"/>
         <source>AI Model was not found.</source>
         <translation>AIモデルが見つかりませんでした。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2468"/>
+        <location filename="../app.py" line="2466"/>
         <source>Are you sure you want to overwrite annotations?</source>
         <translation>アノテーションを上書きしてもよろしいですか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2499"/>
+        <location filename="../app.py" line="2497"/>
         <source>No detections.</source>
         <translation>検出なし。</translation>
     </message>
@@ -3759,7 +3776,7 @@ Show/Hide Selected Polygon</source>
         <translation>JSON形式のアノテーションファイルを書き出します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2532"/>
+        <location filename="../app.py" line="2530"/>
         <source>Exported annotation files to {}</source>
         <translation>アノテーションファイルを{}に書き出しました</translation>
     </message>
@@ -3779,7 +3796,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">{}を{}にインポートしました</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2583"/>
+        <location filename="../app.py" line="2581"/>
         <source>Select Directory</source>
         <translation>フォルダの選択</translation>
     </message>
@@ -3809,12 +3826,12 @@ Show/Hide Selected Polygon</source>
         <translation>学習済みモデルをインポートします。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2541"/>
+        <location filename="../app.py" line="2539"/>
         <source>Select Pretrained Model Directory</source>
         <translation>学習済みモデル（フォルダ）を選択してください</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2572"/>
+        <location filename="../app.py" line="2570"/>
         <source>Imported {}</source>
         <translation>{}をインポートしました</translation>
     </message>
@@ -3849,7 +3866,7 @@ Show/Hide Selected Polygon</source>
         <translation>表示されている画像をPNG画像に変換して保存します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2597"/>
+        <location filename="../app.py" line="2595"/>
         <source>Select Output Directory</source>
         <translation>保存先のフォルダを選択してください</translation>
     </message>
@@ -3874,7 +3891,7 @@ Show/Hide Selected Polygon</source>
         <translation>学習済みモデルを削除します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2607"/>
+        <location filename="../app.py" line="2605"/>
         <source>Are you sure you want to delete it?</source>
         <translation>本当に削除しますか？</translation>
     </message>
@@ -3904,7 +3921,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">&amp;点モードの表示</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2565"/>
+        <location filename="../app.py" line="2563"/>
         <source>The same model has already exists.</source>
         <translation>同じモデルがすでに存在します。</translation>
     </message>

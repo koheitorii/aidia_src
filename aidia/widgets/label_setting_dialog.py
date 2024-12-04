@@ -24,7 +24,7 @@ class LabelSettingDialog(QtWidgets.QDialog):
         self.error = CLEAR
 
         # label definition
-        self.label_help = QtWidgets.QLabel(
+        self.label_help = QtWidgets.QLabel(self.tr(
             '''Write the labels, separated by line breaks.
 
 <Example>
@@ -32,7 +32,7 @@ apple
 banana
 orange
 '''
-        )
+        ))
         self.label_def_input = QtWidgets.QTextEdit()
         self.label_def_input.textChanged.connect(self.parse_label)
         self.label_def_warning_text = QtWidgets.QLabel("")
