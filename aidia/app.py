@@ -413,11 +413,11 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
         open_action = action(
-            self.tr("&Open"),
+            self.tr("&Load Image"),
             self.open_file,
             shortcuts["open"],
             "open",
-            self.tr("Open image or label file.")
+            self.tr("Load image file.")
         )
    
         open_next_action = action(
@@ -1902,22 +1902,24 @@ Please keep in mind that many times takes in training AI.'''
             if len(filename) == 0:
                 return
             elif len(ext) and ext == LabelFile.SUFFIX:  # if json files are selected
+                _ret = False
                 for ext in EXTS:
                     _img_path = os.path.splitext(filename)[0] + ext
                     if os.path.exists(_img_path):
                         filename = _img_path
+                        _ret = True
                         break
+                if _ret:
+                    break
                 else:
                     self.error_message(self.tr("The image file was not found."))
-                    continue
+            elif not len(ext) and is_dicom(filename):   # dicom file has no ext
                 break
-            elif len(ext) and ext not in EXTS:     # exclude not supported file
-                self.error_message(self.tr("This file format is not supported."))
-            elif not len(ext) and not is_dicom(filename):   # exclude not dicom file has no ext
-                self.error_message(self.tr("This file is not a dicom file."))
+            elif len(ext) and ext in EXTS:     # supported image file
+                break
             else:
-                break
-        
+                self.error_message(self.tr("This file format is not supported."))
+
         # open directory
         target_path = utils.get_parent_path(filename)
         if target_path != self.work_dir:
@@ -2211,8 +2213,6 @@ Please keep in mind that many times takes in training AI.'''
             self.error_message(self.tr("No images in the directory."))
             return
         
-        # create data directory
-        data_dirpath = utils.get_dirpath_with_mkdir(AI_DIR_NAME)
         self.canvas.reset_params()
 
         is_get_all_labels = False

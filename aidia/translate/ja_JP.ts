@@ -896,7 +896,7 @@ If you did not select it, you can set &quot;last_model.h5&quot; or &quot;****.h5
         <translation>タスク</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="910"/>
+        <location filename="../widgets/ai_train_dialog.py" line="911"/>
         <source>Name</source>
         <translation>名前</translation>
     </message>
@@ -931,7 +931,7 @@ If you did not select it, you can set &quot;last_model.h5&quot; or &quot;****.h5
         <translation>AI学習</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="913"/>
+        <location filename="../widgets/ai_train_dialog.py" line="914"/>
         <source>Input Size</source>
         <translation>入力サイズ</translation>
     </message>
@@ -955,22 +955,22 @@ If you set 256, resizes input images to 256x256.</source>
         <translation type="obsolete">入力画像の1辺のサイズを設定します。例: 256に設定した場合、入力画像は256×256にリサイズされます。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="916"/>
+        <location filename="../widgets/ai_train_dialog.py" line="917"/>
         <source>Epochs</source>
         <translation>学習回数</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="919"/>
+        <location filename="../widgets/ai_train_dialog.py" line="920"/>
         <source>Batch Size</source>
         <translation>バッチサイズ</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="922"/>
+        <location filename="../widgets/ai_train_dialog.py" line="923"/>
         <source>Learning Rate</source>
         <translation>学習率</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="925"/>
+        <location filename="../widgets/ai_train_dialog.py" line="926"/>
         <source>Label Definition</source>
         <translation>ラベル定義</translation>
     </message>
@@ -1095,42 +1095,42 @@ If you set 256, resizes input images to 256x256.</source>
         <translation type="obsolete">完了。経過時間: {}時間 {}分 {}秒</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="836"/>
+        <location filename="../widgets/ai_train_dialog.py" line="837"/>
         <source>Number of Data: {}</source>
         <translation>データ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="837"/>
+        <location filename="../widgets/ai_train_dialog.py" line="838"/>
         <source>Number of Train: {}</source>
         <translation>学習データ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="838"/>
+        <location filename="../widgets/ai_train_dialog.py" line="839"/>
         <source>Number of Validation: {}</source>
         <translation>検証データ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="839"/>
+        <location filename="../widgets/ai_train_dialog.py" line="840"/>
         <source>Number of Test: {}</source>
         <translation>テストデータ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="844"/>
+        <location filename="../widgets/ai_train_dialog.py" line="845"/>
         <source>Train Steps: {}</source>
         <translation>学習ステップ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="845"/>
+        <location filename="../widgets/ai_train_dialog.py" line="846"/>
         <source>Validation Steps: {}</source>
         <translation>検証ステップ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="846"/>
+        <location filename="../widgets/ai_train_dialog.py" line="847"/>
         <source>Number of Shapes: {}</source>
         <translation>図形の数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="847"/>
+        <location filename="../widgets/ai_train_dialog.py" line="848"/>
         <source>Class Information:
 {}</source>
         <translation>クラス情報:
@@ -1147,17 +1147,17 @@ If you set 256, resizes input images to 256x256.</source>
         <translation>強制終了</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="841"/>
+        <location filename="../widgets/ai_train_dialog.py" line="842"/>
         <source>Number of Train Directories: {}</source>
         <translation>学習用フォルダ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="842"/>
+        <location filename="../widgets/ai_train_dialog.py" line="843"/>
         <source>Number of Validation Directories: {}</source>
         <translation>検証用フォルダ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="843"/>
+        <location filename="../widgets/ai_train_dialog.py" line="844"/>
         <source>Number of Test Directories: {}</source>
         <translation>テスト用フォルダ数: {}</translation>
     </message>
@@ -1172,7 +1172,7 @@ If you set 256, resizes input images to 256x256.</source>
         <translation>早期終了</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="835"/>
+        <location filename="../widgets/ai_train_dialog.py" line="836"/>
         <source>Dataset Number: {}</source>
         <translation>データセット番号: {}</translation>
     </message>
@@ -1182,7 +1182,7 @@ If you set 256, resizes input images to 256x256.</source>
         <translation type="obsolete">フォルダを対象にデータセットを構築する</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="824"/>
+        <location filename="../widgets/ai_train_dialog.py" line="825"/>
         <source>[*] labels (all|train|val|test)</source>
         <translation>[*] ラベル (すべて|学習|検証|テスト)</translation>
     </message>
@@ -1227,32 +1227,32 @@ If you set 256, resizes input images to 256x256.</source>
         <translation type="obsolete">データセットのパターンを選択してください。Aidiaは選択したパターンに応じてデータを8：2の比率（学習用：テスト用）に分割します。この機能は5-fold交差検証に利用できます。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="911"/>
+        <location filename="../widgets/ai_train_dialog.py" line="912"/>
         <source>Change the name.</source>
         <translation>名前を変更してください。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="914"/>
+        <location filename="../widgets/ai_train_dialog.py" line="915"/>
         <source>Set an appropriate input size.</source>
         <translation>適切な入力サイズを設定してください。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="917"/>
+        <location filename="../widgets/ai_train_dialog.py" line="918"/>
         <source>Set an appropriate epochs.</source>
         <translation>適切な学習回数を設定してください。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="920"/>
+        <location filename="../widgets/ai_train_dialog.py" line="921"/>
         <source>Set an appropriate batch size.</source>
         <translation>適切なバッチサイズを設定してください。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="923"/>
+        <location filename="../widgets/ai_train_dialog.py" line="924"/>
         <source>Set an appropriate learning rate.</source>
         <translation>適切な学習率を設定してください。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="926"/>
+        <location filename="../widgets/ai_train_dialog.py" line="927"/>
         <source>Set an appropriate label definition.</source>
         <translation>適切なラベル定義を設定してください。</translation>
     </message>
@@ -1356,7 +1356,7 @@ The labels are separated with line breaks.</source>
 ラベルは改行で区切ってください。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="618"/>
+        <location filename="../widgets/ai_train_dialog.py" line="619"/>
         <source>Done -- Elapsed time: {}h {}m {}s</source>
         <translation>完了 -- 学習時間: {}時間 {}分 {}秒</translation>
     </message>
@@ -1378,32 +1378,32 @@ Aidiaは選択したパターンに応じてデータを４：１の比率（学
 <context>
     <name>AITrainThread</name>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="989"/>
+        <location filename="../widgets/ai_train_dialog.py" line="990"/>
         <source>Not configured. Terminated.</source>
         <translation>設定が未完了です。強制終了。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1000"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1001"/>
         <source>Model error. Terminated.</source>
         <translation>モデルエラー。強制終了。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1004"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1005"/>
         <source>Data loading...</source>
         <translation>データ読み込み中...</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1045"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1046"/>
         <source>Model building...</source>
         <translation>モデルを構築中...</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1053"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1054"/>
         <source>Preparing...</source>
         <translation>準備中...</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1077"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1078"/>
         <source>Failed to train.</source>
         <translation>学習に失敗しました。</translation>
     </message>
@@ -1413,7 +1413,7 @@ Aidiaは選択したパターンに応じてデータを４：１の比率（学
         <translation type="obsolete">データセットの構築に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="984"/>
+        <location filename="../widgets/ai_train_dialog.py" line="985"/>
         <source>Fitting process has not started yet.</source>
         <translation>まだ学習の準備中です。</translation>
     </message>
@@ -1423,17 +1423,17 @@ Aidiaは選択したパターンに応じてデータを４：１の比率（学
         <translation type="obsolete">学習を強制終了しました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="981"/>
+        <location filename="../widgets/ai_train_dialog.py" line="982"/>
         <source>Interrupt training.</source>
         <translation>学習を中断しました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1069"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1070"/>
         <source>Memory error. Please reduce the input size or batch size.</source>
         <translation>メモリエラー。入力サイズまたはバッチサイズを小さくしてください。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1073"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1074"/>
         <source>Loss got NaN. Please adjust the learning rate.</source>
         <translation>損失がNaNになりました。学習率を調整してください。</translation>
     </message>
@@ -1448,17 +1448,17 @@ Aidiaは選択したパターンに応じてデータを４：１の比率（学
         <translation type="obsolete">データが少ないためデータの分割に失敗しました。小さなバッチサイズ</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1012"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1013"/>
         <source>Failed to split data because of the few data.</source>
         <translation>データが少ないためデータの分割に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1008"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1009"/>
         <source>Failed to load data. Please check the settings or data.</source>
         <translation>データの読み込みに失敗しました。設定またはデータを確認してください。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1016"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1017"/>
         <source>Failed to build dataset. Please check the settings or data.</source>
         <translation>データセットの構築に失敗しました。設定またはデータを確認してください。</translation>
     </message>
@@ -1985,7 +1985,7 @@ orange
     <message>
         <location filename="../app.py" line="415"/>
         <source>&amp;Open</source>
-        <translation>&amp;開く</translation>
+        <translation type="obsolete">&amp;開く</translation>
     </message>
     <message>
         <location filename="../app.py" line="360"/>
@@ -2841,7 +2841,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">ディレクトリのインポートエラー</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2551"/>
+        <location filename="../app.py" line="2549"/>
         <source>{} does not exists.</source>
         <translation>{}は存在しません。</translation>
     </message>
@@ -3113,7 +3113,7 @@ Show/Hide Selected Polygon</source>
     <message>
         <location filename="../app.py" line="415"/>
         <source>Open image or label file.</source>
-        <translation>画像またはラベルファイルを開きます。</translation>
+        <translation type="obsolete">画像またはラベルファイルを開きます。</translation>
     </message>
     <message>
         <location filename="../app.py" line="412"/>
@@ -3301,7 +3301,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">AI診断をテストしますか？これには少し時間がかかります。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2472"/>
+        <location filename="../app.py" line="2470"/>
         <source>AI Testing ...</source>
         <translation>AIテスト実行中…</translation>
     </message>
@@ -3716,12 +3716,12 @@ Show/Hide Selected Polygon</source>
         <translation>AI処理が実行中です！</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2330"/>
+        <location filename="../app.py" line="2328"/>
         <source>[Images Total] {}</source>
         <translation>[画像枚数] {}</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2332"/>
+        <location filename="../app.py" line="2330"/>
         <source>[Annotations Total] {}</source>
         <translation>[アノテーション数] {}</translation>
     </message>
@@ -3736,17 +3736,17 @@ Show/Hide Selected Polygon</source>
         <translation>AI学習</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2462"/>
+        <location filename="../app.py" line="2460"/>
         <source>AI Model was not found.</source>
         <translation>AIモデルが見つかりませんでした。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2466"/>
+        <location filename="../app.py" line="2464"/>
         <source>Are you sure you want to overwrite annotations?</source>
         <translation>アノテーションを上書きしてもよろしいですか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2497"/>
+        <location filename="../app.py" line="2495"/>
         <source>No detections.</source>
         <translation>検出なし。</translation>
     </message>
@@ -3776,7 +3776,7 @@ Show/Hide Selected Polygon</source>
         <translation>JSON形式のアノテーションファイルを書き出します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2530"/>
+        <location filename="../app.py" line="2528"/>
         <source>Exported annotation files to {}</source>
         <translation>アノテーションファイルを{}に書き出しました</translation>
     </message>
@@ -3796,7 +3796,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">{}を{}にインポートしました</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2581"/>
+        <location filename="../app.py" line="2579"/>
         <source>Select Directory</source>
         <translation>フォルダの選択</translation>
     </message>
@@ -3826,12 +3826,12 @@ Show/Hide Selected Polygon</source>
         <translation>学習済みモデルをインポートします。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2539"/>
+        <location filename="../app.py" line="2537"/>
         <source>Select Pretrained Model Directory</source>
         <translation>学習済みモデル（フォルダ）を選択してください</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2570"/>
+        <location filename="../app.py" line="2568"/>
         <source>Imported {}</source>
         <translation>{}をインポートしました</translation>
     </message>
@@ -3866,7 +3866,7 @@ Show/Hide Selected Polygon</source>
         <translation>表示されている画像をPNG画像に変換して保存します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2595"/>
+        <location filename="../app.py" line="2593"/>
         <source>Select Output Directory</source>
         <translation>保存先のフォルダを選択してください</translation>
     </message>
@@ -3891,7 +3891,7 @@ Show/Hide Selected Polygon</source>
         <translation>学習済みモデルを削除します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2605"/>
+        <location filename="../app.py" line="2603"/>
         <source>Are you sure you want to delete it?</source>
         <translation>本当に削除しますか？</translation>
     </message>
@@ -3921,7 +3921,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">&amp;点モードの表示</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2563"/>
+        <location filename="../app.py" line="2561"/>
         <source>The same model has already exists.</source>
         <translation>同じモデルがすでに存在します。</translation>
     </message>
@@ -3951,6 +3951,34 @@ Show/Hide Selected Polygon</source>
 Please keep in mind that many times takes in training AI.</source>
         <translation>利用可能なGPUがありません。
 AIの学習に長い時間を要することに注意してください。</translation>
+    </message>
+    <message>
+        <location filename="../app.py" line="415"/>
+        <source>&amp;Open File</source>
+        <translation type="obsolete">&amp;ファイルを
+開く</translation>
+    </message>
+    <message>
+        <location filename="../app.py" line="415"/>
+        <source>&amp;Open Image</source>
+        <translation type="obsolete">&amp;画像を
+開く</translation>
+    </message>
+    <message>
+        <location filename="../app.py" line="415"/>
+        <source>Open image file.</source>
+        <translation type="obsolete">画像ファイルを開きます。</translation>
+    </message>
+    <message>
+        <location filename="../app.py" line="415"/>
+        <source>&amp;Load Image</source>
+        <translation>&amp;画像を
+読み込む</translation>
+    </message>
+    <message>
+        <location filename="../app.py" line="415"/>
+        <source>Load image file.</source>
+        <translation>画像ファイルを読み込みます。</translation>
     </message>
 </context>
 <context>
