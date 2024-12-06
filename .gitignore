@@ -13,6 +13,7 @@ aidia/icons/
 *.onnx
 *.log
 *.egg-info
+*.spec
 
 version.txt
 build.py
