@@ -17,7 +17,7 @@ class CopyrightDialog(QtWidgets.QDialog):
         aidia_text2 = QtWidgets.QLabel("AI Development and Image Annotation")
         aidia_text3 = QtWidgets.QLabel("Developed by Kohei Torii, Tokushima University, Japan")
 
-        text = QtWidgets.QLabel("Copyright (C) 2021-2024 Kohei Torii.")
+        text = QtWidgets.QLabel("Copyright (C) 2021 Kohei Torii.")
         text2 = QtWidgets.QLabel("""Copyright (C) 2021 Kohei Torii.
 Copyright (C) 2016 Kentaro Wada.
 Copyright (C) 2011 Michael Pitidis, Hussein Abdulwahid.

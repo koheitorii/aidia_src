@@ -596,6 +596,7 @@ The labels are separated with line breaks."""))
         if os.path.exists(os.path.join(dataset_dir, AI_DIR_NAME)):
             self.config.save(config_path)
     
+    ### Callbacks ###
     def ai_finished(self):
         """Call back function when AI thread finished."""
         self.switch_enabled_by_task(self.config.TASK)
@@ -607,6 +608,7 @@ The labels are separated with line breaks."""))
             # self.text_status.setText(self.tr("Training was failed."))
             self.reset_state()
             self.aiRunning.emit(False)
+            self.text_status.setText(self.tr("Terminated training."))
             return
         
         self._set_error(self.tag_name) # to avoid NAME duplication.
@@ -1006,16 +1008,20 @@ class AITrainThread(QtCore.QThread):
         self.notifyMessage.emit(self.tr("Data loading..."))
         try:
             model.build_dataset()
-        except errors.DataLoadingError as e:
-            self.errorMessage.emit(self.tr("Failed to load data. Please check the settings or data."))
+        except errors.DataLoadingError:
+            self.errorMessage.emit(self.tr("Failed to load data.<br>Please check the settings or data."))
             aidia_logger.error(e, exc_info=True)
             return
-        except errors.DataFewError as e:
+        except errors.DataFewError:
             self.errorMessage.emit(self.tr("Failed to split data because of the few data."))
             aidia_logger.error(e, exc_info=True)
             return
+        except errors.BatchsizeError:
+            self.errorMessage.emit(self.tr("Please reduce the batch size."))
+            aidia_logger.error(e, exc_info=True)
+            return
         except Exception as e:
-            self.errorMessage.emit(self.tr("Failed to build dataset. Please check the settings or data."))
+            self.errorMessage.emit(self.tr('Unexpected error.<br>{}'.format(e)))
             aidia_logger.error(e, exc_info=True)
             return
         

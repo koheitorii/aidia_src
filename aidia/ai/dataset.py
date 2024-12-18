@@ -274,7 +274,7 @@ class Dataset(object):
         self.train_steps = self.num_train // self.config.total_batchsize
         self.val_steps = self.num_val // self.config.total_batchsize
         if self.train_steps == 0 or self.val_steps == 0:
-            raise errors.DataFewError
+            raise errors.BatchsizeError
         
     ### Data Loading Function ###
     def load_image(self, image_id, is_resize=True):

@@ -1,6 +1,8 @@
-import tensorflow as tf
 import os
+import numpy as np
+import tensorflow as tf
 
+from aidia import APP_DIR
 from aidia.ai.config import AIConfig
 
 class TestModel():
@@ -13,9 +15,11 @@ class TestModel():
         self.config = config
 
     def build_dataset(self, mode=None):
-        fashion_mnist = tf.keras.datasets.fashion_mnist
-        (train_images, train_labels), (test_images, test_labels) = fashion_mnist.load_data()
-        self.dataset = [(train_images, train_labels), (test_images, test_labels)]
+        # (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.mnist.load_data(path=os.path.join(APP_DIR, 'ai', 'data'))
+        with np.load(os.path.join(APP_DIR, 'ai', 'data', 'mnist.npz'), allow_pickle=True) as f:
+            x_train, y_train = f["x_train"], f["y_train"]
+            x_test, y_test = f["x_test"], f["y_test"]
+        self.dataset = [(x_train, y_train), (x_test, y_test)]
 
     def build_model(self, mode=None):
         self.model = tf.keras.Sequential([

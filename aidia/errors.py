@@ -6,3 +6,6 @@ class DataFewError(Exception):
 
 class LossGetNanError(Exception):
     pass
+
+class BatchsizeError(Exception):
+    pass

@@ -3,7 +3,7 @@ dist/
 build/
 .vscode/
 Output/
-pyinstaller-5.13.2/
+pyinstaller*
 .DS_Store
 signtool/
 aidia/icons/

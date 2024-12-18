@@ -872,6 +872,7 @@ class MainWindow(QtWidgets.QMainWindow):
             file=self.menu(self.tr("&File")),
             edit=self.menu(self.tr("&Edit")),
             view=self.menu(self.tr("&View")),
+            tools=self.menu(self.tr("&Tools")),
             setting=self.menu(self.tr("&Option")),
             # help=self.menu(self.tr("&Help")),
             recentFiles=QtWidgets.QMenu(self.tr("Open &Recent")),
@@ -889,10 +890,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 save_action,
                 save_as_action,
                 # close_action,
-                None,
-                export_anno_action,
-                import_model_action,
-                delete_pretrained_model_action,
                 None,
                 delete_file_action,
                 quit_action,
@@ -937,6 +934,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 None,
                 reset_brightness_contrast_action,
             ),
+        )
+
+        qt.addActions(
+            self.menus.tools,
+            (
+                export_anno_action,
+                import_model_action,
+                delete_pretrained_model_action,
+            )
         )
 
         self.menus.file.aboutToShow.connect(self.updateFileMenu)
@@ -1011,10 +1017,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # popup gpu info
         if not LITE and not AIConfig.is_gpu_available():
-            self.info_message(self.tr(
-                '''No GPU is available.
-Please keep in mind that many times takes in training AI.'''
-            ))
+            self.info_message(self.tr('''No GPU is available.<br>Please keep in mind that many times takes in training AI.'''))
 
     def init_dir(self):
         if self.work_dir is not None and os.path.exists(self.work_dir):
@@ -2007,8 +2010,6 @@ Please keep in mind that many times takes in training AI.'''
             self.load_file(img_path)
         self.update_sum()
 
-
-    ### message dialogs ###
 
     def has_labels(self):
         if self.noShapes():
