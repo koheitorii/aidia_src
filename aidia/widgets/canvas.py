@@ -314,6 +314,7 @@ class Canvas(QtWidgets.QWidget):
                 self.prevhShape = self.hShape = shape
                 self.prevhEdge = self.hEdge
                 self.hEdge = None
+                self.overrideCursor(CURSOR_DEFAULT)
                 self.update()
                 break
         else:  # Nothing found, clear highlights, reset state.

@@ -6,7 +6,7 @@ from qtpy import QtWidgets
 from aidia.widgets.label_setting_dialog import LabelSettingDialog
 
 
-class LabelDialog(QtWidgets.QWidget):
+class LabelWidget(QtWidgets.QWidget):
 
     valueChanged = QtCore.Signal()
 
@@ -69,7 +69,7 @@ class LabelDialog(QtWidgets.QWidget):
         self._layout.addWidget(w, 0, 2, QtCore.Qt.AlignCenter)
         
         # popup label setting dialog
-        self.popup_setting_button = QtWidgets.QPushButton(self.tr("Label Settings"), self)
+        self.popup_setting_button = QtWidgets.QPushButton(self.tr("Label Buttons Setting"), self)
         self.popup_setting_button.clicked.connect(self._setting_popup)
         self._layout.addWidget(self.popup_setting_button, 1, 2, QtCore.Qt.AlignCenter)
 

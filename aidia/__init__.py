@@ -6,7 +6,7 @@ import logging
 LITE = False
 
 __appname__ = "Aidia" if not LITE else "Aidia-lite"
-__version__ = "1.4.0"
+__version__ = "1.4.1"
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 HOME_DIR = os.path.expanduser("~")

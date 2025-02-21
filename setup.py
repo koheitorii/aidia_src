@@ -1,13 +1,13 @@
 
 from setuptools import find_packages
 from setuptools import setup
-from aidia import __version__, IS_LITE
+from aidia import __version__, LITE
 
 
 def main():
 
     setup(
-        name="aidia-lite" if IS_LITE else "aidia",
+        name="aidia-lite" if LITE else "aidia",
         version=__version__,
         # version=version,
         packages=find_packages(),
@@ -20,7 +20,7 @@ def main():
         install_requires=open("requirements.txt").read().splitlines(),
         # install_requires=get_install_requires(),
         license="GPLv3",
-        keywords="Image Annotation, Machine Learning, Medical Images",
+        keywords="Image Annotation, Deep Learning, Medical Imageing",
         classifiers=[
             "Development Status :: 5 - Production/Stable",
             "Intended Audience :: Developers",
@@ -34,10 +34,11 @@ def main():
         package_data={"aidia": [
             "icons/*",
             "config/*.yaml",
-            "translate/ja_JP.qm"]},
+            "translate/ja_JP.qm",
+            "ai/data/mnist.npz"]},
         entry_points={
             "console_scripts": [
-                "aidia-lite=aidia.__main__:main" if IS_LITE else "aidia=aidia.__main__:main",
+                "aidia-lite=aidia.__main__:main" if LITE else "aidia=aidia.__main__:main",
             ],
         },
     )

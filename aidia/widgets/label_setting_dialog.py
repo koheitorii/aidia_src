@@ -15,7 +15,7 @@ class LabelSettingDialog(QtWidgets.QDialog):
                             | QtCore.Qt.CustomizeWindowHint
                             | QtCore.Qt.WindowTitleHint)
         
-        self.setWindowTitle(self.tr("Label Setting"))
+        self.setWindowTitle(self.tr("Label Buttons Setting"))
 
         layout = QtWidgets.QVBoxLayout()
 
@@ -25,7 +25,7 @@ class LabelSettingDialog(QtWidgets.QDialog):
 
         # label definition
         self.label_help = QtWidgets.QLabel(self.tr(
-            '''Write the labels, separated by line breaks.
+            '''Write the labels, separated by line breaks
 
 <Example>
 apple

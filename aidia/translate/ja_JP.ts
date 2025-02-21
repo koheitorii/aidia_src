@@ -1921,22 +1921,39 @@ Please check the settings or data.</source>
     <message>
         <location filename="../widgets/label_widget.py" line="40"/>
         <source>Selected Shape Labels</source>
-        <translation>選択中の図形のラベル</translation>
+        <translation type="obsolete">選択中の図形のラベル</translation>
     </message>
     <message>
         <location filename="../widgets/label_widget.py" line="42"/>
         <source>Default Labels</source>
-        <translation>既定のラベル</translation>
+        <translation type="obsolete">既定のラベル</translation>
     </message>
     <message>
         <location filename="../widgets/label_widget.py" line="50"/>
         <source>Multi Label Mode</source>
-        <translation>マルチラベルモード</translation>
+        <translation type="obsolete">マルチラベルモード</translation>
     </message>
     <message>
         <location filename="../widgets/label_widget.py" line="72"/>
         <source>Label Settings</source>
-        <translation>ラベル設定</translation>
+        <translation type="obsolete">ラベル設定</translation>
+    </message>
+</context>
+<context>
+    <name>LabelEditDialog</name>
+    <message>
+        <location filename="../widgets/label_edit_dialog.py" line="22"/>
+        <source>Please split labels by &quot;_&quot;
+e.g. apple_banana_orange</source>
+        <translation type="obsolete">マルチラベルの場合は&quot;_&quot;でラベルを区切ってください
+例) apple_banana_orange</translation>
+    </message>
+    <message>
+        <location filename="../widgets/label_edit_dialog.py" line="22"/>
+        <source>Please split labels by &quot;_&quot; if multi label
+e.g. apple_banana_orange</source>
+        <translation>マルチラベルの場合は&quot;_&quot;でラベルを区切ってください
+例) apple_banana_orange</translation>
     </message>
 </context>
 <context>
@@ -1944,7 +1961,7 @@ Please check the settings or data.</source>
     <message>
         <location filename="../widgets/label_setting_dialog.py" line="18"/>
         <source>Label Setting</source>
-        <translation>ラベル設定</translation>
+        <translation type="obsolete">ラベル設定</translation>
     </message>
     <message>
         <location filename="../widgets/label_setting_dialog.py" line="57"/>
@@ -1980,13 +1997,63 @@ apple
 banana
 orange
 </source>
-        <translation>ラベルを改行で区切って入力してください。
+        <translation type="obsolete">ラベルを改行で区切って入力してください。
 
 &lt;例&gt;
 apple
 banana
 orange
 </translation>
+    </message>
+    <message>
+        <location filename="../widgets/label_setting_dialog.py" line="18"/>
+        <source>Label Buttons Setting</source>
+        <translation>ラベルボタン設定</translation>
+    </message>
+    <message>
+        <location filename="../widgets/label_setting_dialog.py" line="27"/>
+        <source>Write the labels, separated by line breaks
+
+&lt;Example&gt;
+apple
+banana
+orange
+</source>
+        <translation>ラベルを改行で区切って入力してください
+
+&lt;例&gt;
+apple
+banana
+orange
+</translation>
+    </message>
+</context>
+<context>
+    <name>LabelWidget</name>
+    <message>
+        <location filename="../widgets/label_widget.py" line="40"/>
+        <source>Selected Shape Labels</source>
+        <translation>選択中の図形のラベル</translation>
+    </message>
+    <message>
+        <location filename="../widgets/label_widget.py" line="42"/>
+        <source>Default Labels</source>
+        <translation>既定のラベル</translation>
+    </message>
+    <message>
+        <location filename="../widgets/label_widget.py" line="50"/>
+        <source>Multi Label Mode</source>
+        <translation>マルチラベルモード</translation>
+    </message>
+    <message>
+        <location filename="../widgets/label_widget.py" line="72"/>
+        <source>Label Settings</source>
+        <translation type="obsolete">ラベル設定</translation>
+    </message>
+    <message>
+        <location filename="../widgets/label_widget.py" line="72"/>
+        <source>Label Buttons Setting</source>
+        <translation>ラベルボタン設定</translation>
     </message>
 </context>
 <context>
@@ -1997,7 +2064,7 @@ orange
         <translation type="obsolete">フラグ</translation>
     </message>
     <message>
-        <location filename="../app.py" line="143"/>
+        <location filename="../app.py" line="145"/>
         <source>Polygon Labels</source>
         <translation>アノテーション一覧</translation>
     </message>
@@ -2007,7 +2074,7 @@ orange
         <translation type="obsolete">ファイル名の検索</translation>
     </message>
     <message>
-        <location filename="../app.py" line="410"/>
+        <location filename="../app.py" line="412"/>
         <source>&amp;Quit</source>
         <translation>&amp;終了</translation>
     </message>
@@ -2032,17 +2099,17 @@ orange
         <translation type="obsolete">&amp;フォルダ</translation>
     </message>
     <message>
-        <location filename="../app.py" line="423"/>
+        <location filename="../app.py" line="425"/>
         <source>&amp;Next Image</source>
         <translation>&amp;次の画像</translation>
     </message>
     <message>
-        <location filename="../app.py" line="432"/>
+        <location filename="../app.py" line="434"/>
         <source>&amp;Prev Image</source>
         <translation>&amp;前の画像</translation>
     </message>
     <message>
-        <location filename="../app.py" line="441"/>
+        <location filename="../app.py" line="443"/>
         <source>&amp;Save</source>
         <translation>&amp;保存</translation>
     </message>
@@ -2052,7 +2119,7 @@ orange
         <translation type="obsolete">ラベルをファイルに保存します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="446"/>
+        <location filename="../app.py" line="448"/>
         <source>&amp;Save As</source>
         <translation>&amp;名前を付けて保存</translation>
     </message>
@@ -2062,7 +2129,7 @@ orange
         <translation type="obsolete">ラベルを別のファイルに保存します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="453"/>
+        <location filename="../app.py" line="455"/>
         <source>&amp;Delete File</source>
         <translation>&amp;データの
 削除</translation>
@@ -2098,7 +2165,7 @@ orange
         <translation type="obsolete">&quot;前のアノテーションを保持&quot;モードを切り替えます</translation>
     </message>
     <message>
-        <location filename="../app.py" line="489"/>
+        <location filename="../app.py" line="491"/>
         <source>Create Polygons</source>
         <translation>ポリゴン</translation>
     </message>
@@ -2108,7 +2175,7 @@ orange
         <translation type="obsolete">ポリゴンの描画を開始します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="498"/>
+        <location filename="../app.py" line="500"/>
         <source>Create Rectangle</source>
         <translation>矩形</translation>
     </message>
@@ -2128,7 +2195,7 @@ orange
         <translation type="obsolete">円の描画を開始します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="516"/>
+        <location filename="../app.py" line="518"/>
         <source>Create Line</source>
         <translation>線</translation>
     </message>
@@ -2138,7 +2205,7 @@ orange
         <translation type="obsolete">線の描画を開始します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="525"/>
+        <location filename="../app.py" line="527"/>
         <source>Create Point</source>
         <translation>点</translation>
     </message>
@@ -2153,7 +2220,7 @@ orange
         <translation type="obsolete">折れ線の作成</translation>
     </message>
     <message>
-        <location filename="../app.py" line="534"/>
+        <location filename="../app.py" line="536"/>
         <source>Edit Polygons</source>
         <translation>編集</translation>
     </message>
@@ -2163,7 +2230,7 @@ orange
         <translation type="obsolete">選択したポリゴンを移動および編集します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="543"/>
+        <location filename="../app.py" line="545"/>
         <source>Delete Polygons</source>
         <translation>ポリゴン
 削除</translation>
@@ -2174,7 +2241,7 @@ orange
         <translation type="obsolete">選択したポリゴンを削除します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="551"/>
+        <location filename="../app.py" line="553"/>
         <source>Duplicate Polygons</source>
         <translation>ポリゴン
 複製</translation>
@@ -2185,7 +2252,7 @@ orange
         <translation type="obsolete">選択したポリゴンの複製を作成します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="559"/>
+        <location filename="../app.py" line="561"/>
         <source>Undo last point</source>
         <translation>最後の点を取り消し</translation>
     </message>
@@ -2195,7 +2262,7 @@ orange
         <translation type="obsolete">最後の点の描画を取り消します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="567"/>
+        <location filename="../app.py" line="569"/>
         <source>Add Point to Edge</source>
         <translation>点の追加</translation>
     </message>
@@ -2205,7 +2272,7 @@ orange
         <translation type="obsolete">最も近いエッジに点を追加します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="582"/>
+        <location filename="../app.py" line="584"/>
         <source>Undo</source>
         <translation>取り消し</translation>
     </message>
@@ -2215,7 +2282,7 @@ orange
         <translation type="obsolete">点の追加および形の変形を取り消します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="590"/>
+        <location filename="../app.py" line="592"/>
         <source>&amp;Hide
 Polygons</source>
         <translation>&amp;全ポリゴンの非表示</translation>
@@ -2226,7 +2293,7 @@ Polygons</source>
         <translation type="obsolete">すべてのポリゴンを非表示にします</translation>
     </message>
     <message>
-        <location filename="../app.py" line="598"/>
+        <location filename="../app.py" line="600"/>
         <source>&amp;Show
 Polygons</source>
         <translation>&amp;全ポリゴンの表示</translation>
@@ -2247,12 +2314,12 @@ Polygons</source>
         <translation type="obsolete">チュートリアルページを見ます</translation>
     </message>
     <message>
-        <location filename="../app.py" line="632"/>
+        <location filename="../app.py" line="634"/>
         <source>Ctrl+Wheel</source>
         <translation>Ctrl+Wheel</translation>
     </message>
     <message>
-        <location filename="../app.py" line="647"/>
+        <location filename="../app.py" line="649"/>
         <source>Zoom &amp;In</source>
         <translation>&amp;拡大</translation>
     </message>
@@ -2262,7 +2329,7 @@ Polygons</source>
         <translation type="obsolete">拡大します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="652"/>
+        <location filename="../app.py" line="654"/>
         <source>&amp;Zoom Out</source>
         <translation>&amp;縮小</translation>
     </message>
@@ -2272,7 +2339,7 @@ Polygons</source>
         <translation type="obsolete">縮小します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="657"/>
+        <location filename="../app.py" line="659"/>
         <source>&amp;Original size</source>
         <translation>&amp;元のサイズ</translation>
     </message>
@@ -2282,7 +2349,7 @@ Polygons</source>
         <translation type="obsolete">元のサイズに戻します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="662"/>
+        <location filename="../app.py" line="664"/>
         <source>&amp;Fit Window</source>
         <translation>&amp;画面に
 合わせる</translation>
@@ -2304,7 +2371,7 @@ Polygons</source>
         <translation type="obsolete">ウィンドウ幅に合わせます</translation>
     </message>
     <message>
-        <location filename="../app.py" line="679"/>
+        <location filename="../app.py" line="681"/>
         <source>&amp;Edit Label</source>
         <translation>&amp;ラベルの編集</translation>
     </message>
@@ -2324,27 +2391,27 @@ Polygons</source>
         <translation type="obsolete">描画中にポリゴンを塗りつぶします</translation>
     </message>
     <message>
-        <location filename="../app.py" line="871"/>
+        <location filename="../app.py" line="873"/>
         <source>&amp;File</source>
         <translation>&amp;ファイル</translation>
     </message>
     <message>
-        <location filename="../app.py" line="871"/>
+        <location filename="../app.py" line="873"/>
         <source>&amp;Edit</source>
         <translation>&amp;編集</translation>
     </message>
     <message>
-        <location filename="../app.py" line="871"/>
+        <location filename="../app.py" line="873"/>
         <source>&amp;View</source>
         <translation>&amp;表示</translation>
     </message>
     <message>
-        <location filename="../app.py" line="623"/>
+        <location filename="../app.py" line="625"/>
         <source>&amp;Help</source>
         <translation>&amp;ヘルプ</translation>
     </message>
     <message>
-        <location filename="../app.py" line="871"/>
+        <location filename="../app.py" line="873"/>
         <source>Open &amp;Recent</source>
         <translation>&amp;最近の項目を開く</translation>
     </message>
@@ -2364,17 +2431,17 @@ Polygons</source>
         <translation type="obsolete">ファイルオープンにエラーが発生しました</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1970"/>
+        <location filename="../app.py" line="2001"/>
         <source>Choose File</source>
         <translation>ファイルの選択</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1998"/>
+        <location filename="../app.py" line="2029"/>
         <source>You are about to permanently delete this label file, proceed anyway?</source>
         <translation>本当にこのラベルファイルを削除してもよろしいですか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2121"/>
+        <location filename="../app.py" line="2152"/>
         <source>Attention</source>
         <translation>注意</translation>
     </message>
@@ -2384,7 +2451,7 @@ Polygons</source>
         <translation type="obsolete">&quot;{}&quot; を閉じる前にアノテーションを保存しますか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2034"/>
+        <location filename="../app.py" line="2065"/>
         <source>Save annotations?</source>
         <translation>アノテーションを保存しますか？</translation>
     </message>
@@ -2404,7 +2471,7 @@ Polygons</source>
         <translation type="obsolete">ラベルリスト</translation>
     </message>
     <message>
-        <location filename="../app.py" line="172"/>
+        <location filename="../app.py" line="174"/>
         <source>File List</source>
         <translation>ファイル一覧</translation>
     </message>
@@ -2434,7 +2501,7 @@ Polygons</source>
         <translation type="obsolete">折れ線の描画を開始します。Ctrl+左クリックで終点を作成します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="632"/>
+        <location filename="../app.py" line="634"/>
         <source>Zoom in or out of the image. Also accessible with {} and {} from the canvas.</source>
         <translation>画像を拡大または縮小します。キャンバスから{}と{}で操作が可能です。</translation>
     </message>
@@ -2469,7 +2536,7 @@ Polygons</source>
         <translation type="obsolete">ラベルファイルに画像データを保存します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="482"/>
+        <location filename="../app.py" line="484"/>
         <source>&amp;Close</source>
         <translation>&amp;閉じる</translation>
     </message>
@@ -2479,12 +2546,12 @@ Polygons</source>
         <translation type="obsolete">現在のファイルを閉じます</translation>
     </message>
     <message>
-        <location filename="../app.py" line="575"/>
+        <location filename="../app.py" line="577"/>
         <source>Remove Selected Point</source>
         <translation>選択した点の削除</translation>
     </message>
     <message>
-        <location filename="../app.py" line="981"/>
+        <location filename="../app.py" line="983"/>
         <source>{} started.</source>
         <translation>{}を開始しました。</translation>
     </message>
@@ -2499,7 +2566,7 @@ Polygons</source>
         <translation type="obsolete">{} - フォルダ内のアノテーションの保存/読み込み</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1957"/>
+        <location filename="../app.py" line="1988"/>
         <source>{} - Choose File</source>
         <translation>{} - ファイルの選択</translation>
     </message>
@@ -2529,7 +2596,7 @@ Polygons</source>
         <translation type="obsolete">確認者を編集します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="606"/>
+        <location filename="../app.py" line="608"/>
         <source>&amp;Toggle
 Show/Hide Selected Polygon</source>
         <translation>&amp;選択ポリゴンの表示・非表示の切り替え</translation>
@@ -2545,7 +2612,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">自動的にポリゴンを生成しますか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2093"/>
+        <location filename="../app.py" line="2124"/>
         <source>Confirmation</source>
         <translation>確認</translation>
     </message>
@@ -2585,22 +2652,22 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">データ確認者: {}</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1681"/>
+        <location filename="../app.py" line="1712"/>
         <source>No such file: &lt;b&gt;{}&lt;/b&gt;</source>
         <translation>そのようなファイルはありません。 &lt;b&gt;{}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1687"/>
+        <location filename="../app.py" line="1718"/>
         <source>Loading {}...</source>
         <translation>{}を読み込み中...</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1800"/>
+        <location filename="../app.py" line="1831"/>
         <source>Error reading {}</source>
         <translation>{}の読み込みエラー</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1723"/>
+        <location filename="../app.py" line="1754"/>
         <source>Loaded {}</source>
         <translation>{}を読み込みました</translation>
     </message>
@@ -2645,7 +2712,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">{} - 画像ファイルを選択してください</translation>
     </message>
     <message>
-        <location filename="../app.py" line="270"/>
+        <location filename="../app.py" line="272"/>
         <source>AI</source>
         <translation>人工知能</translation>
     </message>
@@ -2670,7 +2737,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">画像読み込みエラー</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1805"/>
+        <location filename="../app.py" line="1836"/>
         <source>&lt;p&gt;Cannot open image file.&lt;/p&gt;</source>
         <translation>&lt;p&gt;画像の読み込みに失敗しました。&lt;/p&gt;</translation>
     </message>
@@ -2730,7 +2797,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">自動ポリゴン作成</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1745"/>
+        <location filename="../app.py" line="1776"/>
         <source>&lt;p&gt;&lt;b&gt;{}&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Make sure &lt;i&gt;{}&lt;/i&gt; is a valid label file.&lt;/p&gt;</source>
         <translation>&lt;p&gt;&lt;b&gt;{}&lt;/b&gt;&lt;/p&gt;&lt;p&gt; &lt;i&gt;{}&lt;/i&gt; は無効なラベルファイルです。&lt;/p&gt;</translation>
     </message>
@@ -2740,7 +2807,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">画像読み込みエラー</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1799"/>
+        <location filename="../app.py" line="1830"/>
         <source>&lt;p&gt;Cannot load image file.&lt;/p&gt;</source>
         <translation>&lt;p&gt;画像ファイルを読み込めません。&lt;/p&gt;</translation>
     </message>
@@ -2860,12 +2927,12 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">ステータスは &apos;check&apos; である必要があります</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2032"/>
+        <location filename="../app.py" line="2063"/>
         <source>Save annotations to &apos;{}&apos; before closing?</source>
         <translation>&apos;{}&apos; を閉じる前にアノテーションを保存しますか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2107"/>
+        <location filename="../app.py" line="2138"/>
         <source>You are about to permanently delete &apos;{}&apos; polygon, proceed anyway?</source>
         <translation>&apos;{}&apos;のポリゴンを完全に削除しようとしています。本当によろしいですか？</translation>
     </message>
@@ -2875,7 +2942,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">ディレクトリのインポートエラー</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2552"/>
+        <location filename="../app.py" line="2583"/>
         <source>{} does not exists.</source>
         <translation>{}は存在しません。</translation>
     </message>
@@ -2885,7 +2952,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">送信先ディレクトリの設定を確認してください。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="192"/>
+        <location filename="../app.py" line="194"/>
         <source>Summary</source>
         <translation>集計</translation>
     </message>
@@ -2985,7 +3052,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">送信先フォルダ: {}</translation>
     </message>
     <message>
-        <location filename="../app.py" line="148"/>
+        <location filename="../app.py" line="150"/>
         <source>Refresh</source>
         <translation>更新</translation>
     </message>
@@ -3065,7 +3132,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">送信元ラベルファイルを見つかりませんでした。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1534"/>
+        <location filename="../app.py" line="1536"/>
         <source>&lt;p&gt;Error saving label data.&lt;/p&gt;&lt;b&gt;{}&lt;/b&gt;</source>
         <translation>&lt;p&gt;ラベルデータの保存でエラーが発生しました。&lt;/p&gt;&lt;b&gt;{}&lt;/b&gt;</translation>
     </message>
@@ -3075,7 +3142,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">このラベルファイルは書き込みできません。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2088"/>
+        <location filename="../app.py" line="2119"/>
         <source>Error</source>
         <translation>エラー</translation>
     </message>
@@ -3115,7 +3182,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">&amp;輪郭近似パラメータの設定</translation>
     </message>
     <message>
-        <location filename="../app.py" line="695"/>
+        <location filename="../app.py" line="697"/>
         <source>&amp;Setting</source>
         <translation>&amp;設定</translation>
     </message>
@@ -3140,7 +3207,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">ラベルの文字色を反転します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="410"/>
+        <location filename="../app.py" line="412"/>
         <source>Quit application.</source>
         <translation>アプリケーションを終了します。</translation>
     </message>
@@ -3160,97 +3227,97 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">次の画像を開きます（）</translation>
     </message>
     <message>
-        <location filename="../app.py" line="441"/>
+        <location filename="../app.py" line="443"/>
         <source>Save labels to file.</source>
         <translation>ラベルファイルを保存します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="446"/>
+        <location filename="../app.py" line="448"/>
         <source>Save labels to a different file.</source>
         <translation>別名でラベルファイルを保存します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="453"/>
+        <location filename="../app.py" line="455"/>
         <source>Delete current label file.</source>
         <translation>ラベルファイルを削除します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="482"/>
+        <location filename="../app.py" line="484"/>
         <source>Close current file.</source>
         <translation>開いているファイルを閉じます。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="489"/>
+        <location filename="../app.py" line="491"/>
         <source>Start drawing polygons.</source>
         <translation>ポリゴンの描画を開始します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="534"/>
+        <location filename="../app.py" line="536"/>
         <source>Move and edit the selected polygons.</source>
         <translation>選択したポリゴンを編集します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="543"/>
+        <location filename="../app.py" line="545"/>
         <source>Delete the selected polygons.</source>
         <translation>選択したポリゴンを削除します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="551"/>
+        <location filename="../app.py" line="553"/>
         <source>Create a duplicate of the selected polygons.</source>
         <translation>選択したポリゴンの複製を作成します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="559"/>
+        <location filename="../app.py" line="561"/>
         <source>Undo last drawn point.</source>
         <translation>最後の点の描画を取り消します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="567"/>
+        <location filename="../app.py" line="569"/>
         <source>Add point to the nearest edge.</source>
         <translation>最も近い輪郭に点を追加します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="582"/>
+        <location filename="../app.py" line="584"/>
         <source>Undo last add and edit of shape.</source>
         <translation>点の追加と形の変形を取り消します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="590"/>
+        <location filename="../app.py" line="592"/>
         <source>Hide all polygons.</source>
         <translation>すべてのポリゴンを非表示にします。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="598"/>
+        <location filename="../app.py" line="600"/>
         <source>Show all polygons.</source>
         <translation>すべてのポリゴンを表示します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="606"/>
+        <location filename="../app.py" line="608"/>
         <source>Toggle show/hide selected polygon.</source>
         <translation>選択したポリゴンの表示と非表示を切り替えます。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="647"/>
+        <location filename="../app.py" line="649"/>
         <source>Increase zoom level.</source>
         <translation>拡大します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="652"/>
+        <location filename="../app.py" line="654"/>
         <source>Decrease zoom level.</source>
         <translation>縮小します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="657"/>
+        <location filename="../app.py" line="659"/>
         <source>Zoom to original size.</source>
         <translation>元の画像サイズで表示します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="662"/>
+        <location filename="../app.py" line="664"/>
         <source>Zoom follows window size.</source>
         <translation>ウィンドウに合わせて表示します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="679"/>
+        <location filename="../app.py" line="681"/>
         <source>Modify the label of the selected polygon.</source>
         <translation>選択したポリゴンのラベルを修正します。</translation>
     </message>
@@ -3260,12 +3327,12 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">描画中にポリゴンを塗りつぶします。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="423"/>
+        <location filename="../app.py" line="425"/>
         <source>Open next image.</source>
         <translation>次の画像を開きます。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="432"/>
+        <location filename="../app.py" line="434"/>
         <source>Open previous image.</source>
         <translation>前の画像を開きます。</translation>
     </message>
@@ -3335,17 +3402,17 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">AI診断をテストしますか？これには少し時間がかかります。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2473"/>
+        <location filename="../app.py" line="2504"/>
         <source>AI Testing ...</source>
         <translation>AIテスト実行中…</translation>
     </message>
     <message>
-        <location filename="../app.py" line="290"/>
+        <location filename="../app.py" line="292"/>
         <source>note</source>
         <translation>メモ</translation>
     </message>
     <message>
-        <location filename="../app.py" line="498"/>
+        <location filename="../app.py" line="500"/>
         <source>Start drawing rectangles.</source>
         <translation>矩形の作成を開始します。</translation>
     </message>
@@ -3370,12 +3437,12 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">実行してもよろしいですか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="152"/>
+        <location filename="../app.py" line="154"/>
         <source>Search Label</source>
         <translation>ラベルの検索</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1770"/>
+        <location filename="../app.py" line="1801"/>
         <source>&lt;p&gt;Cannot open DICOM file.&lt;/p&gt;&lt;p&gt;Error Details:&lt;br/&gt;{}&lt;/p&gt;</source>
         <translation>&lt;p&gt;DICOMファイルを開けません。&lt;/p&gt;&lt;p&gt;エラー詳細：&lt;br/&gt;{}&lt;/p&gt;</translation>
     </message>
@@ -3400,7 +3467,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">コントラストを初期化します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="156"/>
+        <location filename="../app.py" line="158"/>
         <source>Search File</source>
         <translation>ファイルの検索</translation>
     </message>
@@ -3415,7 +3482,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">患者名： </translation>
     </message>
     <message>
-        <location filename="../app.py" line="295"/>
+        <location filename="../app.py" line="297"/>
         <source>Note</source>
         <translation>メモ</translation>
     </message>
@@ -3561,7 +3628,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">DICOM情報の表示でエラーが発生しました。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1970"/>
+        <location filename="../app.py" line="2001"/>
         <source>Label files (*{})</source>
         <translation>ラベルファイル (*{})</translation>
     </message>
@@ -3610,17 +3677,17 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">{}&lt;br&gt;サーバ接続に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="309"/>
+        <location filename="../app.py" line="311"/>
         <source>Start</source>
         <translation>スタート</translation>
     </message>
     <message>
-        <location filename="../app.py" line="313"/>
+        <location filename="../app.py" line="315"/>
         <source>Stop</source>
         <translation>ストップ</translation>
     </message>
     <message>
-        <location filename="../app.py" line="319"/>
+        <location filename="../app.py" line="321"/>
         <source>Timer</source>
         <translation>タイマー</translation>
     </message>
@@ -3635,7 +3702,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">[アノテーション済みデータ数] {}</translation>
     </message>
     <message>
-        <location filename="../app.py" line="331"/>
+        <location filename="../app.py" line="333"/>
         <source>Labels</source>
         <translation>ラベル</translation>
     </message>
@@ -3645,22 +3712,22 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">完了</translation>
     </message>
     <message>
-        <location filename="../app.py" line="507"/>
+        <location filename="../app.py" line="509"/>
         <source>Create Linestrip</source>
         <translation>折れ線</translation>
     </message>
     <message>
-        <location filename="../app.py" line="507"/>
+        <location filename="../app.py" line="509"/>
         <source>Start drawing linestrips.</source>
         <translation>折れ線を作成します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="516"/>
+        <location filename="../app.py" line="518"/>
         <source>Start drawing a line.</source>
         <translation>直線を作成します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="525"/>
+        <location filename="../app.py" line="527"/>
         <source>Start drawing a point.</source>
         <translation>点を作成します。</translation>
     </message>
@@ -3675,27 +3742,27 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">いくつかのアノテーションファイルの読み込みをスキップしました。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="687"/>
+        <location filename="../app.py" line="689"/>
         <source>&amp;Copyright</source>
         <translation>&amp;Copyright</translation>
     </message>
     <message>
-        <location filename="../app.py" line="687"/>
+        <location filename="../app.py" line="689"/>
         <source>Open copyright information.</source>
         <translation>コピーライトの情報を表示します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="695"/>
+        <location filename="../app.py" line="697"/>
         <source>Open setting dialog.</source>
         <translation>設定を開きます。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="871"/>
+        <location filename="../app.py" line="873"/>
         <source>&amp;Option</source>
         <translation>&amp;オプション</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2117"/>
+        <location filename="../app.py" line="2148"/>
         <source>You are about to permanently delete polygon you selected, proceed anyway?</source>
         <translation>選択したポリゴンを完全に削除しようとしています。よろしいですか？</translation>
     </message>
@@ -3705,7 +3772,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">[アノテーション中データ数] {}</translation>
     </message>
     <message>
-        <location filename="../app.py" line="211"/>
+        <location filename="../app.py" line="213"/>
         <source>DICOM Info</source>
         <translation>DICOM情報</translation>
     </message>
@@ -3720,12 +3787,12 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">ラベルの表示・非表示を切り替えます。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="401"/>
+        <location filename="../app.py" line="403"/>
         <source>Toggle Labels Show and Hide</source>
         <translation>ラベルの表示・非表示切り替え</translation>
     </message>
     <message>
-        <location filename="../app.py" line="401"/>
+        <location filename="../app.py" line="403"/>
         <source>Toggle labels show and hide.</source>
         <translation>ラベルの表示・非表示を切り替えます。</translation>
     </message>
@@ -3735,27 +3802,27 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">AI学習</translation>
     </message>
     <message>
-        <location filename="../app.py" line="249"/>
+        <location filename="../app.py" line="251"/>
         <source>AI Evaluation</source>
         <translation>AI評価</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2055"/>
+        <location filename="../app.py" line="2086"/>
         <source>AI thread is running. Terminate?</source>
         <translation>AI処理が実行中です。強制終了しますか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2056"/>
+        <location filename="../app.py" line="2087"/>
         <source>AI thread is running!</source>
         <translation>AI処理が実行中です！</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2331"/>
+        <location filename="../app.py" line="2362"/>
         <source>[Images Total] {}</source>
         <translation>[画像枚数] {}</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2333"/>
+        <location filename="../app.py" line="2364"/>
         <source>[Annotations Total] {}</source>
         <translation>[アノテーション数] {}</translation>
     </message>
@@ -3765,22 +3832,22 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">AIデータ生成</translation>
     </message>
     <message>
-        <location filename="../app.py" line="244"/>
+        <location filename="../app.py" line="246"/>
         <source>AI Training</source>
         <translation>AI学習</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2463"/>
+        <location filename="../app.py" line="2494"/>
         <source>AI Model was not found.</source>
         <translation>AIモデルが見つかりませんでした。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2467"/>
+        <location filename="../app.py" line="2498"/>
         <source>Are you sure you want to overwrite annotations?</source>
         <translation>アノテーションを上書きしてもよろしいですか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2498"/>
+        <location filename="../app.py" line="2529"/>
         <source>No detections.</source>
         <translation>検出なし。</translation>
     </message>
@@ -3790,7 +3857,7 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">サブフォルダモード</translation>
     </message>
     <message>
-        <location filename="../app.py" line="623"/>
+        <location filename="../app.py" line="625"/>
         <source>Show Aidia GitHub page.</source>
         <translation>AidiaのGitHubページを開きます。</translation>
     </message>
@@ -3800,22 +3867,22 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">{} 内のすべてのサブフォルダのデータを対象にデータセットを構築します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="463"/>
+        <location filename="../app.py" line="465"/>
         <source>&amp;Export Annotations</source>
         <translation>&amp;アノテーションの書き出し</translation>
     </message>
     <message>
-        <location filename="../app.py" line="463"/>
+        <location filename="../app.py" line="465"/>
         <source>Export JSON annotation files.</source>
         <translation>JSON形式のアノテーションファイルを書き出します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2531"/>
+        <location filename="../app.py" line="2562"/>
         <source>Exported annotation files to {}</source>
         <translation>アノテーションファイルを{}に書き出しました</translation>
     </message>
     <message>
-        <location filename="../app.py" line="473"/>
+        <location filename="../app.py" line="475"/>
         <source>&amp;Import Pretrained Model</source>
         <translation>&amp;学習済みモデルのインポート</translation>
     </message>
@@ -3830,22 +3897,22 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">{}を{}にインポートしました</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2582"/>
+        <location filename="../app.py" line="2613"/>
         <source>Select Directory</source>
         <translation>フォルダの選択</translation>
     </message>
     <message>
-        <location filename="../app.py" line="223"/>
+        <location filename="../app.py" line="225"/>
         <source>Automatic Annotation</source>
         <translation>自動アノテーション</translation>
     </message>
     <message>
-        <location filename="../app.py" line="239"/>
+        <location filename="../app.py" line="241"/>
         <source>Import</source>
         <translation>インポート</translation>
     </message>
     <message>
-        <location filename="../app.py" line="253"/>
+        <location filename="../app.py" line="255"/>
         <source>from Parent Directory</source>
         <translation>親フォルダからデータを参照する</translation>
     </message>
@@ -3855,32 +3922,32 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">親フォルダからすべてのサブフォルダのデータを対象にデータセットを構築します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="473"/>
+        <location filename="../app.py" line="475"/>
         <source>Import pretrained models.</source>
         <translation>学習済みモデルをインポートします。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2540"/>
+        <location filename="../app.py" line="2571"/>
         <source>Select Pretrained Model Directory</source>
         <translation>学習済みモデル（フォルダ）を選択してください</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2571"/>
+        <location filename="../app.py" line="2602"/>
         <source>Imported {}</source>
         <translation>{}をインポートしました</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2214"/>
+        <location filename="../app.py" line="2245"/>
         <source>No images in the directory.</source>
         <translation>フォルダに画像がありません。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1898"/>
+        <location filename="../app.py" line="1929"/>
         <source>Choose image file</source>
         <translation>画像ファイルを選択してください</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1924"/>
+        <location filename="../app.py" line="1955"/>
         <source>This file format is not supported.</source>
         <translation>このファイルフォーマットはサポートされていません。</translation>
     </message>
@@ -3890,52 +3957,52 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">このファイルはDICOMファイルではありません。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="703"/>
+        <location filename="../app.py" line="705"/>
         <source>&amp;Export PNG</source>
         <translation>&amp;PNG画像として保存</translation>
     </message>
     <message>
-        <location filename="../app.py" line="703"/>
+        <location filename="../app.py" line="705"/>
         <source>Export the canvas image to PNG image.</source>
         <translation>表示されている画像をPNG画像に変換して保存します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2596"/>
+        <location filename="../app.py" line="2627"/>
         <source>Select Output Directory</source>
         <translation>保存先のフォルダを選択してください</translation>
     </message>
     <message>
-        <location filename="../app.py" line="615"/>
+        <location filename="../app.py" line="617"/>
         <source>&amp;Reset Brightness and Contrast</source>
         <translation>&amp;明るさ・コントラストの初期化</translation>
     </message>
     <message>
-        <location filename="../app.py" line="615"/>
+        <location filename="../app.py" line="617"/>
         <source>Reset brightness and contrast.</source>
         <translation>明るさとコントラストを初期化します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="711"/>
+        <location filename="../app.py" line="713"/>
         <source>&amp;Delete Pretrained Models</source>
         <translation>&amp;学習済みモデルの削除</translation>
     </message>
     <message>
-        <location filename="../app.py" line="711"/>
+        <location filename="../app.py" line="713"/>
         <source>Delete pretrained model.</source>
         <translation>学習済みモデルを削除します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2606"/>
+        <location filename="../app.py" line="2637"/>
         <source>Are you sure you want to delete it?</source>
         <translation>本当に削除しますか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="723"/>
+        <location filename="../app.py" line="725"/>
         <source>&amp;Show Polygon Mode</source>
         <translation>&amp;ポリゴンモードの表示</translation>
     </message>
     <message>
-        <location filename="../app.py" line="735"/>
+        <location filename="../app.py" line="737"/>
         <source>&amp;Show Rectangle Mode</source>
         <translation>&amp;矩形モードの表示</translation>
     </message>
@@ -3955,22 +4022,22 @@ Show/Hide Selected Polygon</source>
         <translation type="obsolete">&amp;点モードの表示</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2564"/>
+        <location filename="../app.py" line="2595"/>
         <source>The same model has already exists.</source>
         <translation>同じモデルがすでに存在します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1894"/>
+        <location filename="../app.py" line="1925"/>
         <source>All files (*);;Image files ({})</source>
         <translation>すべてのファイル (*);;画像ファイル ({})</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1918"/>
+        <location filename="../app.py" line="1949"/>
         <source>The image file was not found.</source>
         <translation>画像ファイルが見つかりませんでした。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="254"/>
+        <location filename="../app.py" line="256"/>
         <source>Find data from the parent directory.</source>
         <translation>親フォルダからデータを参照します。</translation>
     </message>
@@ -4004,23 +4071,23 @@ AIの学習に長い時間を要することに注意してください。</tran
         <translation type="obsolete">画像ファイルを開きます。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="415"/>
+        <location filename="../app.py" line="417"/>
         <source>&amp;Load Image</source>
         <translation>&amp;画像を
 読み込む</translation>
     </message>
     <message>
-        <location filename="../app.py" line="415"/>
+        <location filename="../app.py" line="417"/>
         <source>Load image file.</source>
         <translation>画像ファイルを読み込みます。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1020"/>
+        <location filename="../app.py" line="1022"/>
         <source>No GPU is available.&lt;br&gt;Please keep in mind that many times takes in training AI.</source>
         <translation>利用可能なGPUがありません。&lt;br&gt;AIの学習に長い時間を要することに注意してください。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="871"/>
+        <location filename="../app.py" line="873"/>
         <source>&amp;Tools</source>
         <translation>&amp;ツール</translation>
     </message>

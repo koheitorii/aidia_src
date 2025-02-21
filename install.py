@@ -1,7 +1,7 @@
 import subprocess
-from aidia import __version__, IS_LITE
+from aidia import __version__, LITE
 
-if IS_LITE:
+if LITE:
     fname = f"dist/aidia-{__version__}-py3-none-any.whl"
     subprocess.run(["pip", "uninstall", "aidia-lite", "-y"], encoding="utf-8")
 else:

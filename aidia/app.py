@@ -21,11 +21,12 @@ from aidia.label_file import LabelFile
 from aidia.label_file import LabelFileError
 from aidia.shape import Shape
 from aidia.widgets import Canvas
-from aidia.widgets import LabelDialog
+from aidia.widgets import LabelWidget
 from aidia.widgets import SettingDialog
 from aidia.widgets import CopyrightDialog
 from aidia.widgets import CopyAnnotationsDialog
 from aidia.widgets import DICOMDialog
+from aidia.widgets import LabelEditDialog
 from aidia.widgets import LabelListWidget
 from aidia.widgets import LabelListWidgetItem
 from aidia.widgets import ToolBar
@@ -39,7 +40,7 @@ if not LITE:
 from aidia.widgets.ai_test_widget import AITestWidget
 
 
-WEB_URL = "https://kottonhome.sakura.ne.jp/index.html"
+WEB_URL = "https://kottonhome.sakura.ne.jp/"
 
 NO_DATA, EDIT = 0, 1
 
@@ -120,6 +121,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.copyrightDialog = CopyrightDialog(parent=self)
         self.settingDialog = SettingDialog(parent=self)
         self.dicomDialog = DICOMDialog(parent=self) # TODO
+        self.labelEditDialog = LabelEditDialog(parent=self)
     
         if not LITE:
             self.ai_train_dialog = AITrainDialog(parent=self)
@@ -131,8 +133,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ai_test_widget = AITestWidget(self)
 
         # initialize label widget
-        self.labelDialog = LabelDialog(self, label_def, is_multi_label)
-        self.labelDialog.valueChanged.connect(self.label_update)
+        self.labelWidget = LabelWidget(self, label_def, is_multi_label)
+        self.labelWidget.valueChanged.connect(self.update_label)
 
         # label list dock
         self.labelList = LabelListWidget()
@@ -331,7 +333,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ld_dock = QtWidgets.QDockWidget(self.tr("Labels"), self)
         self.ld_dock.setObjectName("Labels")
         ld_layout = QtWidgets.QVBoxLayout()
-        ld_layout.addWidget(self.labelDialog)
+        ld_layout.addWidget(self.labelWidget)
         ld_widget = QtWidgets.QWidget()
         ld_widget.setLayout(ld_layout)
         self.ld_dock.setWidget(ld_widget)
@@ -350,7 +352,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.canvas.shapeMoved.connect(self.setDirty)
         self.canvas.selectionChanged.connect(self.shapeSelectionChanged)
         self.canvas.drawingPolygon.connect(self.toggleDrawingSensitive)
-        # self.canvas.shapeDoubleClicked.connect(self.edit_label_double_clicked)
+        self.canvas.shapeDoubleClicked.connect(self.edit_label_shape_selected)
         self.canvas.setDirty.connect(self.setDirty)
         self.canvas.updateStatus.connect(self.status)
 
@@ -715,6 +717,14 @@ class MainWindow(QtWidgets.QMainWindow):
             enabled=True
         )
 
+        label_edit_action = action(
+            text=self.tr("&Edit Label"),
+            slot=self.edit_label_shape_selected,
+            icon='pen',
+            tip=self.tr("Edit labels directly"),
+            enabled=True
+        )
+
         # toggle view toolbar buttons
         def _func(value):
             self.tools.flags[2] = value
@@ -845,6 +855,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 # remove_point_action,
                 # edit_action,
                 # copy_action,
+                label_edit_action,
                 delete_action,
                 undo_action,
                 undo_last_point_action,
@@ -1073,8 +1084,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.settings.setValue("is_linestrip", self.is_linestrip)
         self.settings.setValue("is_line", self.is_line)
         self.settings.setValue("is_point", self.is_point)
-        self.settings.setValue("is_multi_label", self.labelDialog.is_multi_label)
-        self.settings.setValue("label_def", self.labelDialog.label_def)
+        self.settings.setValue("is_multi_label", self.labelWidget.is_multi_label)
+        self.settings.setValue("label_def", self.labelWidget.label_def)
         self.settings.setValue("approx_epsilon", self.approx_epsilon)
         self.settings.setValue("area_limit", self.area_limit)
         self.settings.setValue("is_submode", self.is_submode)
@@ -1158,7 +1169,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def resetState(self):
         self.labelList.clear()
-        self.labelDialog.reset()
+        self.labelWidget.reset()
 
         self.img_path = None
         self.dicom_data = None
@@ -1295,7 +1306,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menus.labelList.exec_(self.labelList.mapToGlobal(point))
 
 
-    def label_update(self):
+    def update_label(self):
         """Get current labels of the label widget, and update shape labels."""
         if not self.currentItem():
             return
@@ -1310,12 +1321,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if shape is None:
             return
 
-        shape.label = self.labelDialog.label
+        shape.label = self.labelWidget.label
         # self.labelList.sort()
         r, g, b = self._get_rgb_by_label(shape)
         item.setText(
             '<font color="#{:02x}{:02x}{:02x}">●</font> {}'
-            .format(r, g, b, self.labelDialog.label))
+            .format(r, g, b, self.labelWidget.label))
         self.update_shape_color(shape, color=(r, g, b))
         self.setDirty()
 
@@ -1334,8 +1345,8 @@ class MainWindow(QtWidgets.QMainWindow):
         if shape is None:
             return
 
-        self.labelDialog.reset()
-        self.labelDialog.update(shape.label)
+        self.labelWidget.reset()
+        self.labelWidget.update(shape.label)
 
     
     def popup_copyright(self):
@@ -1404,7 +1415,7 @@ class MainWindow(QtWidgets.QMainWindow):
             shape.selected = False
         self.labelList.clearSelection()
         self.canvas.selectedShapes = selected_shapes
-        self.labelDialog.reset()
+        self.labelWidget.reset()
         for shape in self.canvas.selectedShapes:
             shape.selected = True
             item = self.labelList.findItemByShape(shape)
@@ -1448,8 +1459,8 @@ class MainWindow(QtWidgets.QMainWindow):
             # label_id = self.labelList.model().indexFromItem(item).row() + 1
             label_id = 1
             for x in shape.label.split("_"):
-                if x in self.labelDialog.label_def:
-                    label_id += self.labelDialog.label_def.index(x) + 1
+                if x in self.labelWidget.label_def:
+                    label_id += self.labelWidget.label_def.index(x) + 1
             return LABEL_COLORMAP[label_id % len(LABEL_COLORMAP)]
         elif (self._config["shape_color"] == "manual" and
               self._config["label_colors"] and
@@ -1578,7 +1589,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # text = self.labelDialog.popUp(pos=self.label_dialog_pos)
         # if text:
         self.labelList.clearSelection()
-        shape = self.canvas.setLastLabel(self.labelDialog.default_label)
+        shape = self.canvas.setLastLabel(self.labelWidget.default_label)
         self.add_label(shape)
         self.actions.editMode.setEnabled(True)
         self.actions.undoLastPoint.setEnabled(False)
@@ -1587,6 +1598,35 @@ class MainWindow(QtWidgets.QMainWindow):
         # else:
             # self.canvas.undoLastLine()
             # self.canvas.shapesBackups.pop()
+    
+    def edit_label_shape_selected(self):
+        item = self.currentItem()
+        if item is None:
+            return
+        shape = item.shape()
+        if shape is None:
+            return
+        
+        result = self.labelEditDialog.popup(shape.label)
+        if not result:
+            return
+        shape.label = result
+
+        # if multi label
+        if len(result.split('_')) > 1:
+            self.labelWidget.is_multi_label_checkbox.setChecked(True)
+        
+        # update label dock
+        self.labelWidget.reset()
+        self.labelWidget.update(shape.label)
+
+        # update label list
+        r, g, b = self._get_rgb_by_label(shape)
+        item.setText(
+            '<font color="#{:02x}{:02x}{:02x}">●</font> {}'
+            .format(r, g, b, shape.label))
+        self.update_shape_color(shape, color=(r, g, b))
+        self.setDirty()
 
     def scroll_request(self, delta, orientation):
         units = - delta * 0.03  # revirse scroll
@@ -2126,7 +2166,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.noShapes():
             for action in self.actions.onShapesPresent:
                 action.setEnabled(False)
-        self.labelDialog.disable_buttons()
+        self.labelWidget.disable_buttons()
 
     def copy_shape(self):
         self.canvas.endMove(copy=True)
@@ -2379,7 +2419,7 @@ class MainWindow(QtWidgets.QMainWindow):
         try:
             self.ai_train_dialog.popup(target_dir,
                                        self.is_submode,
-                                       self.labelDialog.label_def)
+                                       self.labelWidget.label_def)
         except Exception as e:
             self.error_message(e)
             return
@@ -2487,7 +2527,7 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             if len(shapes):
                 self.labelList.clear()
-                self.labelDialog.reset()
+                self.labelWidget.reset()
                 self.loadLabels(shapes)
                 self.setDirty()
                 self.reset_cursor()

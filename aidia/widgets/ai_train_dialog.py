@@ -1008,15 +1008,15 @@ class AITrainThread(QtCore.QThread):
         self.notifyMessage.emit(self.tr("Data loading..."))
         try:
             model.build_dataset()
-        except errors.DataLoadingError:
+        except errors.DataLoadingError as e:
             self.errorMessage.emit(self.tr("Failed to load data.<br>Please check the settings or data."))
             aidia_logger.error(e, exc_info=True)
             return
-        except errors.DataFewError:
+        except errors.DataFewError as e:
             self.errorMessage.emit(self.tr("Failed to split data because of the few data."))
             aidia_logger.error(e, exc_info=True)
             return
-        except errors.BatchsizeError:
+        except errors.BatchsizeError as e:
             self.errorMessage.emit(self.tr("Please reduce the batch size."))
             aidia_logger.error(e, exc_info=True)
             return
