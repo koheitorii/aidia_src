@@ -9,7 +9,7 @@ from qtpy import QtCore
 from aidia import __appname__, __version__
 from aidia import APP_DIR, HOME_DIR, CFONT, CFONT_SIZE
 from aidia.config import get_config
-from aidia.qt import newIcon
+from aidia.qt import new_icon
 
 
 def main():
@@ -52,7 +52,10 @@ def main():
     # QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 
     app.setApplicationName(__appname__)
-    app.setWindowIcon(newIcon('icon'))
+    # app.setWindowIcon(new_icon('icon'))
+    icons_dir = os.path.join(APP_DIR, 'icons')
+    icon_path = os.path.join(icons_dir, 'icon.png')
+    app.setWindowIcon(QtGui.QIcon(icon_path))
     if translator_base is not None and translator is not None:
         app.installTranslator(translator_base)
         app.installTranslator(translator)

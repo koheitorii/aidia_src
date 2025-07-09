@@ -3,6 +3,10 @@ import os
 import logging
 
 
+# Set the Keras backend to PyTorch
+os.environ["KERAS_BACKEND"] = "torch"
+
+
 LITE = False
 
 __appname__ = "Aidia" if not LITE else "Aidia-lite"
@@ -38,6 +42,16 @@ EXTS.append(".dcm")
 EXTS.append(".pano")
 del QtGui
 
+# mode definition
+class DrawMode:
+    """Enum for drawing modes."""
+    EDIT = "edit"
+    POLYGON = "polygon"
+    RECTANGLE = "rectangle"
+    LINESTRIP = "linestrip"
+    LINE = "line"
+    POINT = "point"
+
 # task name definition
 CLS = "Classification"
 DET = "Detection"
@@ -49,15 +63,25 @@ S_EPSILON = "approx_epsilon"
 S_AREA_LIMIT = "area_limit"
 
 # model definition
-CLS_MODEL = ["EfficientNetv2-s"]
-DET_MODEL = ["YOLOv4", "YOLOv4-tiny", "YOLOv3", "YOLOv3-tiny"]
-SEG_MODEL = ["U-Net"]
+class ModelTypes:
+    CLS_MODEL = ["EfficientNetv2-s"]
+    DET_MODEL = ['YOLO11']
+    SEG_MODEL = ['U-Net']
 
 CFONT = "Arial"
 CFONT_SIZE = 10
 
 # for error handling
 CLEAR, ERROR = 0, 1
+
+# label color diffinition
+from . import qt
+class LabelStyle:
+    """Styles for QLabel."""
+    DEFAULT = "QLabel{ color: black; }" if qt.is_dark_mode() else "QLabel{ color: white; }"
+    ERROR = "QLabel{ color: red; }"
+    DISABLED = "QLabel{ color: gray; }"
+del qt
 
 if os.name == "posix":
     CFONT = "Hiragino Sans"

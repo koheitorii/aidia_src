@@ -12,6 +12,7 @@ from qtpy import QtCore, QtGui, QtWidgets
 from qtpy.QtCore import Qt
 
 from aidia import __appname__, __version__, PRETRAINED_DIR, LABEL_COLORMAP, HOME_DIR, LITE, EXTS, AI_DIR_NAME
+from aidia import DrawMode
 from aidia import S_EPSILON, S_AREA_LIMIT
 from aidia import qt
 from aidia import utils
@@ -43,11 +44,6 @@ from aidia.widgets.ai_test_widget import AITestWidget
 WEB_URL = "https://kottonhome.sakura.ne.jp/"
 
 NO_DATA, EDIT = 0, 1
-
-STATE_COLORS = {
-    NO_DATA: QtGui.QBrush(QtCore.Qt.white),
-    EDIT: QtGui.QBrush(QtCore.Qt.yellow),
-}
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -115,7 +111,7 @@ class MainWindow(QtWidgets.QMainWindow):
         is_multi_label = self.settings.value("is_multi_label", False, bool)
 
         # initialize toolbar
-        self.tools = self.toolbar("Tools")
+        self.tool_bar = self.create_toolbar("Tools")
 
         # initialize popup dialog
         self.copyrightDialog = CopyrightDialog(parent=self)
@@ -164,6 +160,53 @@ class MainWindow(QtWidgets.QMainWindow):
         #     self.fileSelectionChanged)
         self.fileListWidget.currentRowChanged.connect(
             self.rowSelectionChanged)
+        
+        class CustomItemDelegate(QtWidgets.QStyledItemDelegate):
+            def __init__(self, parent=None):
+                super().__init__(parent)
+
+            def paint(self, painter, option, index):
+                painter.save()
+
+                checkbox_state = option.widget.item(index.row()).checkState()
+
+                if option.state & QtWidgets.QStyle.State_Selected:
+                    # selected color
+                    painter.fillRect(option.rect, option.palette.highlight())
+                    painter.setPen(option.palette.color(QtGui.QPalette.HighlightedText))
+
+                elif checkbox_state in [Qt.CheckState.Checked, Qt.CheckState.PartiallyChecked]:
+                    # yellow color for checked items
+                    painter.fillRect(option.rect, Qt.GlobalColor.yellow)
+                    painter.setPen(Qt.GlobalColor.black)
+
+                elif option.state & QtWidgets.QStyle.State_MouseOver:
+                    # mouse over color
+                    painter.fillRect(option.rect, option.palette.midlight())
+                
+                else:
+                    # default text color
+                    painter.setPen(option.palette.color(QtGui.QPalette.Text))
+                    
+
+                # draw checkbox
+                # button = QtWidgets.QStyleOptionButton()
+                # if option.state & QtWidgets.QStyle.State_Selected:
+                #     button.state = QtWidgets.QStyle.State_On | QtWidgets.QStyle.State_Enabled
+                # else:
+                #     button.state = QtWidgets.QStyle.State_Off | QtWidgets.QStyle.State_Enabled
+                # button.rect = QtCore.QRect(option.rect.x() + 5, option.rect.y() + 5, 16, 16)
+                # option.widget.style().drawControl(QtWidgets.QStyle.CE_CheckBox, button, painter)
+
+                # draw text
+                name = index.data(Qt.DisplayRole)
+                option.rect.translate(4, 0)  # Adjust text position
+                painter.drawText(option.rect, Qt.AlignVCenter | Qt.AlignLeft, name)
+
+                painter.restore()
+
+        self.fileListWidget.setItemDelegate(CustomItemDelegate(self.fileListWidget))
+
         fileListLayout = QtWidgets.QVBoxLayout()
         fileListLayout.setContentsMargins(0, 0, 0, 0)
         fileListLayout.setSpacing(0)
@@ -264,8 +307,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.input_is_submode.stateChanged.connect(_validate)
 
             submode_layout = QtWidgets.QHBoxLayout()
-            submode_layout.addWidget(self.input_is_submode, alignment=QtCore.Qt.AlignRight)
-            submode_layout.addWidget(self.tag_is_submode, alignment=QtCore.Qt.AlignLeft)
+            submode_layout.addWidget(self.input_is_submode, alignment=Qt.AlignRight)
+            submode_layout.addWidget(self.tag_is_submode, alignment=Qt.AlignLeft)
             submode_widget = QtWidgets.QWidget()
             submode_widget.setLayout(submode_layout)
 
@@ -280,9 +323,9 @@ class MainWindow(QtWidgets.QMainWindow):
         if not LITE:
             ai_layout.addWidget(self.button_ai_train, 2, 0, 1, 2)
             ai_layout.addWidget(self.button_ai_eval, 2, 2, 1, 2)
-            ai_layout.addWidget(submode_widget, 3, 0, 1, 4, alignment=QtCore.Qt.AlignCenter)
-            # ai_layout.addWidget(self.input_is_submode, 3, 0, 1, 1, QtCore.Qt.AlignRight)
-            # ai_layout.addWidget(self.tag_is_submode, 3, 1, 1, 3, QtCore.Qt.AlignLeft)
+            ai_layout.addWidget(submode_widget, 3, 0, 1, 4, alignment=Qt.AlignCenter)
+            # ai_layout.addWidget(self.input_is_submode, 3, 0, 1, 1, Qt.AlignRight)
+            # ai_layout.addWidget(self.tag_is_submode, 3, 1, 1, 3, Qt.AlignLeft)
         ai_widget = QtWidgets.QWidget()
         ai_widget.setLayout(ai_layout)
         self.ai_dock.setWidget(ai_widget)
@@ -343,8 +386,8 @@ class MainWindow(QtWidgets.QMainWindow):
         scrollArea.setWidget(self.canvas)
         scrollArea.setWidgetResizable(True)
         self.scrollBars = {
-            Qt.Vertical: scrollArea.verticalScrollBar(),
-            Qt.Horizontal: scrollArea.horizontalScrollBar(),
+            Qt.Orientation.Vertical: scrollArea.verticalScrollBar(),
+            Qt.Orientation.Horizontal: scrollArea.horizontalScrollBar(),
         }
         self.canvas.scrollRequest.connect(self.scroll_request)
 
@@ -359,9 +402,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(scrollArea)
 
         # set dock widgets
-        features = QtWidgets.QDockWidget.DockWidgetFeatures()
-        features = features | QtWidgets.QDockWidget.DockWidgetClosable
-        features = features | QtWidgets.QDockWidget.DockWidgetFloatable
+        features = QtWidgets.QDockWidget.DockWidgetFeature(
+            QtWidgets.QDockWidget.DockWidgetClosable |
+            QtWidgets.QDockWidget.DockWidgetFloatable
+        )
         # features = features | QtWidgets.QDockWidget.DockWidgetMovable
 
         self.file_dock.setAllowedAreas(Qt.RightDockWidgetArea)
@@ -397,10 +441,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tabifyDockWidget(self.note_dock, self.summary_dock)
         self.tabifyDockWidget(self.note_dock, self.dicom_dock)
 
-        action = functools.partial(qt.newAction, self)
+        create_action = functools.partial(qt.new_action, self)
         shortcuts = self._config["shortcuts"]
 
-        toggle_show_label_action = action(
+        toggle_show_label_action = create_action(
             self.tr("Toggle Labels Show and Hide"),
             self.canvas.toggle_show_label,
             shortcut="Space",
@@ -409,12 +453,12 @@ class MainWindow(QtWidgets.QMainWindow):
             enabled=True
         )
 
-        quit_action = action(
+        quit_action = create_action(
             self.tr("&Quit"), self.close, shortcuts["quit"], "quit",
             self.tr("Quit application.")
         )
 
-        open_action = action(
+        open_action = create_action(
             self.tr("&Load Image"),
             self.open_file,
             shortcuts["open"],
@@ -422,7 +466,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Load image file.")
         )
    
-        open_next_action = action(
+        open_next_action = create_action(
             self.tr("&Next Image"),
             self.open_next_img,
             # shortcuts["open_next"],
@@ -431,7 +475,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Open next image."),
             enabled=False
         )
-        open_prev_action = action(
+        open_prev_action = create_action(
             self.tr("&Prev Image"),
             self.open_prev_img,
             # shortcuts["open_prev"],
@@ -440,19 +484,19 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Open previous image."),
             enabled=False
         )
-        save_action = action(
+        save_action = create_action(
             self.tr("&Save"),
             self.save_file, shortcuts["save"], "save",
             self.tr("Save labels to file."), enabled=False
         )
-        save_as_action = action(
+        save_as_action = create_action(
             self.tr("&Save As"), self.save_file_as,
             shortcuts["save_as"],
             "save-as",
             self.tr("Save labels to a different file."),
             enabled=False
         )
-        delete_file_action = action(
+        delete_file_action = create_action(
             self.tr("&Delete File"),
             self.delete_file,
             shortcuts["delete_file"],
@@ -462,7 +506,7 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
         # export annotations
-        export_anno_action = action(
+        export_anno_action = create_action(
             self.tr("&Export Annotations"),
             self.export_annotations,
             # shortcuts["delete_file"],
@@ -472,7 +516,7 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
         # import pretrained model
-        import_model_action = action(
+        import_model_action = create_action(
             self.tr("&Import Pretrained Model"),
             self.import_model,
             # shortcuts["delete_file"],
@@ -481,68 +525,73 @@ class MainWindow(QtWidgets.QMainWindow):
             enabled=True
         )
 
-        close_action = action(
+        close_action = create_action(
             text=self.tr("&Close"),
             slot=self.close_file,
             shortcut=shortcuts["close"],
             icon="close",
             tip=self.tr("Close current file.")
         )
-        create_mode_action = action(
+
+
+        # create actions for drawing shapes
+        create_polygon_action = create_action(
             text=self.tr("Create Polygons"),
-            slot=lambda: self.toggleDrawMode(False, create_mode='polygon'),
+            slot=lambda: self.toggleDrawMode(DrawMode.POLYGON),
             # shortcut=shortcuts["create_polygon"],
             shortcut="N",
             icon="polygon",
             tip=self.tr("Start drawing polygons."),
-            enabled=False,
+            checkable=True,
         )
-        create_rectangle_mode = action(
+        create_rectangle_action = create_action(
             self.tr("Create Rectangle"),
-            lambda: self.toggleDrawMode(False, create_mode="rectangle"),
+            lambda: self.toggleDrawMode(DrawMode.RECTANGLE),
             # shortcuts["create_rectangle"],
-            "R",
-            "rectangle",
-            self.tr("Start drawing rectangles."),
-            enabled=False,
+            shortcut="R",
+            icon="rectangle",
+            tip=self.tr("Start drawing rectangles."),
+            checkable=True,
         )
-        create_linestrip_mode = action(
+        create_linestrip_action = create_action(
             self.tr("Create Linestrip"),
-            lambda: self.toggleDrawMode(False, create_mode="linestrip"),
+            lambda: self.toggleDrawMode(DrawMode.LINESTRIP),
             # shortcuts["create_linestrip"],
             "S",
             "line-strip",
             self.tr("Start drawing linestrips."),
-            enabled=False,
+            checkable=True,
         )
-        create_line_mode = action(
+        create_line_action = create_action(
             self.tr("Create Line"),
-            lambda: self.toggleDrawMode(False, create_mode="line"),
+            lambda: self.toggleDrawMode(DrawMode.LINE),
             # shortcuts["create_line"],
             "L",
             "line",
             self.tr("Start drawing a line."),
-            enabled=False,
+            checkable=True,
         )
-        create_point_mode = action(
+        mode_point_action = create_action(
             self.tr("Create Point"),
-            lambda: self.toggleDrawMode(False, create_mode="point"),
+            lambda: self.toggleDrawMode(DrawMode.POINT),
             # shortcuts["create_point"],
             "P",
             "point",
             self.tr("Start drawing a point."),
-            enabled=False,
+            checkable=True,
         )
-        edit_mode_action = action(
+        mode_edit_action = create_action(
             self.tr("Edit Polygons"),
-            self.setEditMode,
+            lambda: self.toggleDrawMode(DrawMode.EDIT),
             # shortcuts["edit_polygon"],
             ["E", "ESC"],
             "edit",
             self.tr("Move and edit the selected polygons."),
-            enabled=False
+            checkable=True,
         )
-        delete_action = action(
+        mode_edit_action.setChecked(True)
+
+        delete_action = create_action(
             self.tr("Delete Polygons"),
             self.delete_selected_shape,
             shortcuts["delete_polygon"],
@@ -550,7 +599,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Delete the selected polygons."),
             enabled=False
         )
-        copy_action = action(
+        copy_action = create_action(
             self.tr("Duplicate Polygons"),
             self.copySelectedShape,
             shortcuts["duplicate_polygon"],
@@ -558,7 +607,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Create a duplicate of the selected polygons."),
             enabled=False
         )
-        undo_last_point_action = action(
+        undo_last_point_action = create_action(
             self.tr("Undo last point"),
             self.canvas.undoLastPoint,
             shortcuts["undo_last_point"],
@@ -566,7 +615,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Undo last drawn point."),
             enabled=False
         )
-        add_point_action = action(
+        add_point_action = create_action(
             text=self.tr("Add Point to Edge"),
             slot=self.canvas.addPointToEdge,
             shortcut=None,
@@ -574,14 +623,14 @@ class MainWindow(QtWidgets.QMainWindow):
             tip=self.tr("Add point to the nearest edge."),
             enabled=False
         )
-        remove_point_action = action(
+        remove_point_action = create_action(
             text=self.tr("Remove Selected Point"),
             slot=self.canvas.removeSelectedPoint,
             icon="edit",
             tip="Remove selected point from polygon.",
             enabled=False
         )
-        undo_action = action(
+        undo_action = create_action(
             self.tr("Undo"),
             self.undoShapeEdit,
             shortcuts["undo"],
@@ -589,7 +638,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Undo last add and edit of shape."),
             enabled=False
         )
-        hide_all_action = action(
+        hide_all_action = create_action(
             text=self.tr("&Hide\nPolygons"),
             slot=functools.partial(self.toggle_polygons, False),
             shortcut=shortcuts["hide_all"],
@@ -597,7 +646,7 @@ class MainWindow(QtWidgets.QMainWindow):
             tip=self.tr("Hide all polygons."),
             enabled=False
         )
-        show_all_action = action(
+        show_all_action = create_action(
             text=self.tr("&Show\nPolygons"),
             slot=functools.partial(self.toggle_polygons, True),
             shortcut=shortcuts["show_all"],
@@ -605,7 +654,7 @@ class MainWindow(QtWidgets.QMainWindow):
             tip=self.tr("Show all polygons."),
             enabled=False
         )
-        toggle_polygon_action = action(
+        toggle_polygon_action = create_action(
             text=self.tr("&Toggle\nShow/Hide Selected Polygon"),
             slot=self.toggle_single_polygon,
             shortcut=shortcuts["toggle_polygon"],
@@ -614,7 +663,7 @@ class MainWindow(QtWidgets.QMainWindow):
             enabled=False
         )
 
-        reset_brightness_contrast_action = action(
+        reset_brightness_contrast_action = create_action(
             text=self.tr("&Reset Brightness and Contrast"),
             slot=self.canvas.reset_brightness_contrast,
             icon="contrast",
@@ -622,7 +671,7 @@ class MainWindow(QtWidgets.QMainWindow):
             enabled=False
         )
 
-        help_action = action(
+        help_action = create_action(
             self.tr("&Help"),
             self.tutorial,
             icon="help",
@@ -646,22 +695,22 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         self.zoom_widget.setEnabled(False)
 
-        zoom_in_action = action(
+        zoom_in_action = create_action(
             self.tr("Zoom &In"),
             functools.partial(self.add_zoom, 1.1),
             shortcuts["zoom_in"], "zoom-in",
             self.tr("Increase zoom level."), enabled=False)
-        zoom_out_action = action(
+        zoom_out_action = create_action(
             self.tr("&Zoom Out"),
             functools.partial(self.add_zoom, 0.9),
             shortcuts["zoom_out"], "zoom-out",
             self.tr("Decrease zoom level."), enabled=False)
-        zoom_org_action = action(
+        zoom_org_action = create_action(
             self.tr("&Original size"),
             functools.partial(self.set_zoom, 100),
             shortcuts["zoom_to_original"], "zoom",
             self.tr("Zoom to original size."), enabled=False)
-        fit_window_action = action(
+        fit_window_action = create_action(
             self.tr("&Fit Window"), self.set_fit_window,
             shortcuts["fit_window"], "fit-window",
             self.tr("Zoom follows window size."), checkable=True,
@@ -671,14 +720,14 @@ class MainWindow(QtWidgets.QMainWindow):
         zoom_actions = (self.zoom_widget, zoom_in_action, zoom_out_action,
                         zoom_org_action, fit_window_action)
         self.zoom_mode = self.FIT_WINDOW_MODE
-        fit_window_action.setChecked(Qt.Checked)
+        fit_window_action.setChecked(True)
         self.scalers = {
             self.FIT_WINDOW_MODE: self.scale_fit_window,
             # Set to one to scale to 100% when loading files.
             self.MANUAL_ZOOM: lambda: 1,
         }
 
-        edit_action = action(
+        edit_action = create_action(
             self.tr("&Edit Label"), self.edit_label,
             # shortcuts["edit_label"],
             "edit",
@@ -686,7 +735,7 @@ class MainWindow(QtWidgets.QMainWindow):
             enabled=False
         )
 
-        popup_copyright_action = action(
+        popup_copyright_action = create_action(
             text=self.tr("&Copyright"),
             slot=self.popup_copyright,
             icon="copyright",
@@ -694,7 +743,7 @@ class MainWindow(QtWidgets.QMainWindow):
             enabled=True
         )
 
-        popup_setting_action = action(
+        popup_setting_action = create_action(
             text=self.tr("&Setting"),
             slot=self.popup_setting,
             icon="setting",
@@ -702,7 +751,7 @@ class MainWindow(QtWidgets.QMainWindow):
             enabled=True
         )
 
-        save_canvas_img_action = action(
+        save_canvas_img_action = create_action(
             text=self.tr("&Export PNG"),
             slot=self.export_canvas_img,
             icon="save-as",
@@ -710,14 +759,14 @@ class MainWindow(QtWidgets.QMainWindow):
             enabled=True
         )
 
-        delete_pretrained_model_action = action(
+        delete_pretrained_model_action = create_action(
             text=self.tr("&Delete Pretrained Models"),
             slot=self.delete_pretrained_model,
             tip=self.tr("Delete pretrained model."),
             enabled=True
         )
 
-        label_edit_action = action(
+        label_edit_action = create_action(
             text=self.tr("&Edit Label"),
             slot=self.edit_label_shape_selected,
             icon='pen',
@@ -727,10 +776,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # toggle view toolbar buttons
         def _func(value):
-            self.tools.flags[2] = value
-            self.tools.updateShowButtons()
+            self.tool_bar._actions.get(create_polygon_action.text())[-1] = value
+            self.tool_bar.updateShowButtons()
             self.is_polygon = value
-        show_polygon_mode_action = action(
+        show_polygon_mode_action = create_action(
             text=self.tr("&Show Polygon Mode"),
             slot=_func,
             checkable=True,
@@ -739,10 +788,10 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
         def _func(value):
-            self.tools.flags[3] = value
-            self.tools.updateShowButtons()
+            self.tool_bar._actions.get(create_rectangle_action.text())[-1] = value
+            self.tool_bar.updateShowButtons()
             self.is_rectangle = value
-        show_rectangle_mode_action = action(
+        show_rectangle_mode_action = create_action(
             text=self.tr("&Show Rectangle Mode"),
             slot=_func,
             checkable=True,
@@ -750,51 +799,51 @@ class MainWindow(QtWidgets.QMainWindow):
             checked=self.is_rectangle,
         )
 
-        # def _func(value):
-        #     self.tools.flags[4] = value
-        #     self.tools.updateShowButtons()
-        #     self.is_linestrip = value
-        # show_linestrip_mode_action = action(
-        #     text=self.tr("&Show Linestrip Mode"),
-        #     slot=_func,
-        #     checkable=True,
-        #     enabled=True,
-        #     checked=self.is_linestrip,
-        # )
+        def _func(value):
+            self.tool_bar._actions.get(create_linestrip_action.text())[-1] = value
+            self.tool_bar.updateShowButtons()
+            self.is_linestrip = value
+        show_linestrip_mode_action = create_action(
+            text=self.tr("&Show Linestrip Mode"),
+            slot=_func,
+            checkable=True,
+            enabled=True,
+            checked=self.is_linestrip,
+        )
 
-        # def _func(value):
-        #     self.tools.flags[5] = value
-        #     self.tools.updateShowButtons()
-        #     self.is_line = value
-        # show_line_mode_action = action(
-        #     text=self.tr("&Show Line Mode"),
-        #     slot=_func,
-        #     checkable=True,
-        #     enabled=True,
-        #     checked=self.is_line,
-        # )
+        def _func(value):
+            self.tool_bar._actions.get(create_line_action.text())[-1] = value
+            self.tool_bar.updateShowButtons()
+            self.is_line = value
+        show_line_mode_action = create_action(
+            text=self.tr("&Show Line Mode"),
+            slot=_func,
+            checkable=True,
+            enabled=True,
+            checked=self.is_line,
+        )
 
-        # def _func(value):
-        #     self.tools.flags[6] = value
-        #     self.tools.updateShowButtons()
-        #     self.is_point = value
-        # show_point_mode_action = action(
-        #     text=self.tr("&Show Point Mode"),
-        #     slot=_func,
-        #     checkable=True,
-        #     enabled=True,
-        #     checked=self.is_point,
-        # )
+        def _func(value):
+            self.tool_bar._actions.get(mode_point_action.text())[-1] = value
+            self.tool_bar.updateShowButtons()
+            self.is_point = value
+        show_point_mode_action = create_action(
+            text=self.tr("&Show Point Mode"),
+            slot=_func,
+            checkable=True,
+            enabled=True,
+            checked=self.is_point,
+        )
 
         # label list right click menu.
         labelMenu = QtWidgets.QMenu()
-        qt.addActions(labelMenu, [delete_action])
+        qt.add_actions(labelMenu, [delete_action])
         self.labelList.setContextMenuPolicy(Qt.CustomContextMenu)
         self.labelList.customContextMenuRequested.connect(
             self.popLabelListMenu)
-
+        
         # Store actions for further handling.
-        self.actions = qt.struct(
+        self.actions = qt.DictObject(
             save=save_action,
             saveAs=save_as_action,
             open=open_action,
@@ -811,17 +860,17 @@ class MainWindow(QtWidgets.QMainWindow):
             undo=undo_action,
             addPointToEdge=add_point_action,
             removePoint=remove_point_action,
-            createMode=create_mode_action,
-            createRectangleMode=create_rectangle_mode,
-            # createLineStripMode=create_linestrip_mode,
-            # createLineMode=create_line_mode,
-            # createPointMode=create_point_mode,
+            createMode=create_polygon_action,
+            createRectangleMode=create_rectangle_action,
+            createLineStripMode=create_linestrip_action,
+            createLineMode=create_line_action,
+            createPointMode=mode_point_action,
             showPolygonMode=show_polygon_mode_action,
             showRectangleMode=show_rectangle_mode_action,
-            # showLinestripMode=show_linestrip_mode_action,
-            # showLineMode=show_line_mode_action,
-            # showPointMode=show_point_mode_action,
-            editMode=edit_mode_action,
+            showLinestripMode=show_linestrip_mode_action,
+            showLineMode=show_line_mode_action,
+            showPointMode=show_point_mode_action,
+            editMode=mode_edit_action,
             resetBrightnessContrast=reset_brightness_contrast_action,
             zoom=zoom, zoomIn=zoom_in_action,
             zoomOut=zoom_out_action,
@@ -867,9 +916,9 @@ class MainWindow(QtWidgets.QMainWindow):
             ),
             onLoadActive=(
                 close_action,
-                create_mode_action,
-                create_rectangle_mode,
-                edit_mode_action,
+                create_polygon_action,
+                create_rectangle_action,
+                mode_edit_action,
             ),
             onShapesPresent=(save_as_action, hide_all_action,
                              show_all_action, toggle_polygon_action),
@@ -879,7 +928,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.canvas.vertexSelected.connect(self.actions.removePoint.setEnabled)
 
         # menu bar
-        self.menus = qt.struct(
+        self.menus = qt.DictObject(
             file=self.menu(self.tr("&File")),
             edit=self.menu(self.tr("&Edit")),
             view=self.menu(self.tr("&View")),
@@ -890,7 +939,7 @@ class MainWindow(QtWidgets.QMainWindow):
             labelList=labelMenu,
         )
 
-        qt.addActions(
+        qt.add_actions(
             self.menus.file,
             (
                 open_action,
@@ -907,7 +956,7 @@ class MainWindow(QtWidgets.QMainWindow):
             ),
         )
         # utils.addActions(self.menus.help, (help_action,))
-        qt.addActions(
+        qt.add_actions(
             self.menus.setting,
             (
                 popup_setting_action,
@@ -915,14 +964,14 @@ class MainWindow(QtWidgets.QMainWindow):
                 popup_copyright_action,
             ),
         )
-        qt.addActions(
+        qt.add_actions(
             self.menus.view,
             (
                 show_polygon_mode_action,
                 show_rectangle_mode_action,
-                # show_linestrip_mode_action,
-                # show_line_mode_action,
-                # show_point_mode_action,
+                show_linestrip_mode_action,
+                show_line_mode_action,
+                show_point_mode_action,
                 None,
                 self.file_dock.toggleViewAction(),
                 self.shape_dock.toggleViewAction(),
@@ -947,7 +996,7 @@ class MainWindow(QtWidgets.QMainWindow):
             ),
         )
 
-        qt.addActions(
+        qt.add_actions(
             self.menus.tools,
             (
                 export_anno_action,
@@ -959,9 +1008,21 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menus.file.aboutToShow.connect(self.updateFileMenu)
 
         # Custom context menu for the canvas widget:
-        qt.addActions(self.canvas.menus, self.actions.canvas_menu)
+        qt.add_actions(self.canvas.menus, self.actions.canvas_menu)
 
-        # tool bar
+
+        mode_actions_group = QtGui.QActionGroup(self)
+        mode_actions_group.setObjectName("modeActionsGroup")
+        mode_actions_group.setExclusive(True)
+        mode_actions_group.addAction(self.actions.createMode)
+        mode_actions_group.addAction(self.actions.createRectangleMode)
+        mode_actions_group.addAction(self.actions.createLineStripMode)
+        mode_actions_group.addAction(self.actions.createLineMode)
+        mode_actions_group.addAction(self.actions.createPointMode)
+        mode_actions_group.addAction(self.actions.editMode)
+
+ 
+        # Custom context menu for the label list widget:
         self.actions.tool = (
             open_action,
             # opendir_action,
@@ -969,12 +1030,13 @@ class MainWindow(QtWidgets.QMainWindow):
             # open_next_action,
             save_action,
             # delete_file_action,
-            create_mode_action,
-            create_rectangle_mode,
-            # create_linestrip_mode,
-            # create_line_mode,
-            # create_point_mode,
-            edit_mode_action,
+            *mode_actions_group.actions(),
+            # create_polygon_action,
+            # create_rectangle_action,
+            # create_linestrip_action,
+            # create_line_action,
+            # create_point_action,
+            # edit_mode_action,
             # copy_action,
             # delete_action,
             undo_action,
@@ -985,8 +1047,8 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
         # custom toolbar context menu
-        self.tools.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.tools.customContextMenuRequested.connect(self.toolbar_menu)
+        self.tool_bar.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tool_bar.customContextMenuRequested.connect(self.toolbar_toggle_menu)
 
         # initialize process
         self.statusBar().showMessage(self.tr("{} started.").format(__appname__))
@@ -1010,12 +1072,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.populateModeActions()
 
         # restore toolbar status
-        self.tools.flags[2] = self.is_polygon
-        self.tools.flags[3] = self.is_rectangle
-        # self.tools.flags[4] = self.is_linestrip
-        # self.tools.flags[5] = self.is_line
-        # self.tools.flags[6] = self.is_point
-        self.tools.updateShowButtons()
+        self.tool_bar._actions.get(self.actions.createMode.text())[-1] = self.is_polygon
+        self.tool_bar._actions.get(self.actions.createRectangleMode.text())[-1] = self.is_rectangle
+        self.tool_bar._actions.get(self.actions.createLineStripMode.text())[-1] = self.is_linestrip
+        self.tool_bar._actions.get(self.actions.createLineMode.text())[-1] = self.is_line
+        self.tool_bar._actions.get(self.actions.createPointMode.text())[-1] = self.is_point
+        self.tool_bar.updateShowButtons()
 
         # set disable canvas by default
         self.canvas.setEnabled(False)
@@ -1039,22 +1101,22 @@ class MainWindow(QtWidgets.QMainWindow):
     def menu(self, title, actions=None):
         menu = self.menuBar().addMenu(title)
         if actions:
-            qt.addActions(menu, actions)
+            qt.add_actions(menu, actions)
         return menu
     
-    def toolbar_menu(self):
+    def toolbar_toggle_menu(self):
         m = QtWidgets.QMenu()
         m.addActions([
             self.actions.showPolygonMode,
             self.actions.showRectangleMode,
-            # self.actions.showLinestripMode,
-            # self.actions.showLineMode,
-            # self.actions.showPointMode,
+            self.actions.showLinestripMode,
+            self.actions.showLineMode,
+            self.actions.showPointMode,
         ])
         m.exec_(QtGui.QCursor.pos())
 
 
-    def toolbar(self, title, actions=None):
+    def create_toolbar(self, title, actions=None):
         toolbar = ToolBar(title)
         toolbar.setObjectName("{}ToolBar".format(title))
         # toolbar.setOrientation(Qt.Vertical)
@@ -1062,7 +1124,7 @@ class MainWindow(QtWidgets.QMainWindow):
         toolbar.setFloatable(False)
         toolbar.setMovable(False)
         if actions:
-            qt.addActions(toolbar, actions)
+            qt.add_actions(toolbar, actions)
         self.addToolBar(Qt.LeftToolBarArea, toolbar)
         return toolbar
 
@@ -1099,20 +1161,20 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def populateModeActions(self):
         tool, menu = self.actions.tool, self.actions.canvas_menu
-        self.tools.clear()
-        qt.addActions(self.tools, tool)
+        self.tool_bar.clear()
+        qt.add_actions(self.tool_bar, tool)
         self.canvas.menus.clear()
-        qt.addActions(self.canvas.menus, menu)
+        qt.add_actions(self.canvas.menus, menu)
         self.menus.edit.clear()
         actions = (
             self.actions.createMode,
             self.actions.createRectangleMode,
-            # self.actions.createLineStripMode,
-            # self.actions.createLineMode,
-            # self.actions.createPointMode,
+            self.actions.createLineStripMode,
+            self.actions.createLineMode,
+            self.actions.createPointMode,
             self.actions.editMode,
         )
-        qt.addActions(self.menus.edit, actions + self.actions.editMenu)
+        qt.add_actions(self.menus.edit, actions + self.actions.editMenu)
 
 
     def setDirty(self):
@@ -1228,58 +1290,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actions.undo.setEnabled(not drawing)
         self.actions.delete.setEnabled(not drawing)
 
-    def toggleDrawMode(self, edit=True, create_mode='polygon'):
-        # self.canvas.setEditing(edit)
-        # self.actions.createMode.setEnabled(edit)
-        # self.actions.editMode.setEnabled(not edit)
-        self.canvas.setEditing(edit)
-        self.canvas.createMode = create_mode
-        if edit:
+    def toggleDrawMode(self, mode: str):
+        """Toggle drawing mode."""
+
+        if mode == DrawMode.EDIT:
             self.create_mode = None
-            self.actions.createMode.setEnabled(True)
-            self.actions.createRectangleMode.setEnabled(True)
-            # self.actions.createLineStripMode.setEnabled(True)
-            # self.actions.createLineMode.setEnabled(True)
-            # self.actions.createPointMode.setEnabled(True)
+            self.canvas.setEditing(True)
         else:
-            self.create_mode = create_mode
-            if create_mode == "polygon":
-                self.actions.createMode.setEnabled(False)
-                self.actions.createRectangleMode.setEnabled(True)
-                # self.actions.createLineStripMode.setEnabled(True)
-                # self.actions.createLineMode.setEnabled(True)
-                # self.actions.createPointMode.setEnabled(True)
-            elif create_mode == "rectangle":
-                self.actions.createMode.setEnabled(True)
-                self.actions.createRectangleMode.setEnabled(False)
-                # self.actions.createLineStripMode.setEnabled(True)
-                # self.actions.createLineMode.setEnabled(True)
-                # self.actions.createPointMode.setEnabled(True)
-            # elif create_mode == "linestrip":
-            #     self.actions.createMode.setEnabled(True)
-            #     self.actions.createRectangleMode.setEnabled(True)
-            #     self.actions.createLineStripMode.setEnabled(False)
-            #     self.actions.createLineMode.setEnabled(True)
-            #     self.actions.createPointMode.setEnabled(True)
-            # elif create_mode == "line":
-            #     self.actions.createMode.setEnabled(True)
-            #     self.actions.createRectangleMode.setEnabled(True)
-            #     self.actions.createLineStripMode.setEnabled(True)
-            #     self.actions.createLineMode.setEnabled(False)
-            #     self.actions.createPointMode.setEnabled(True)
-            # elif create_mode == "point":
-            #     self.actions.createMode.setEnabled(True)
-            #     self.actions.createRectangleMode.setEnabled(True)
-            #     self.actions.createLineStripMode.setEnabled(True)
-            #     self.actions.createLineMode.setEnabled(True)
-            #     self.actions.createPointMode.setEnabled(False)
-            else:
-                raise ValueError(f"Unsupported createMode: {create_mode}")
-        self.actions.editMode.setEnabled(not edit)
-
-
-    def setEditMode(self):
-        self.toggleDrawMode(True)
+            self.create_mode = mode
+            self.canvas.setEditing(False)
+            self.canvas.createMode = mode
 
 
     def updateFileMenu(self):
@@ -1292,7 +1312,7 @@ class MainWindow(QtWidgets.QMainWindow):
         menu.clear()
         files = [f for f in self.recentFiles if f != current and exists(f)]
         for i, f in enumerate(files):
-            icon = qt.newIcon("file")
+            icon = qt.new_icon("file")
             action = QtWidgets.QAction(
                 icon,
                 "&{} {}".format(i + 1, QtCore.QFileInfo(f).fileName()),
@@ -1470,9 +1490,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def update_shape_color(self, shape, color):
         r, g, b = color
         shape.line_color = QtGui.QColor(r, g, b)
-        # shape.line_color = QtCore.Qt.yellow
+        # shape.line_color = Qt.yellow
         shape.vertex_fill_color = QtGui.QColor(r, g, b)
-        # shape.vertex_fill_color = QtCore.Qt.yellow
+        # shape.vertex_fill_color = Qt.yellow
         shape.hvertex_fill_color = QtGui.QColor(255, 255, 255)
         shape.fill_color = QtGui.QColor(r, g, b, 128)
         shape.select_line_color = QtGui.QColor(255, 255, 255)
@@ -1511,7 +1531,7 @@ class MainWindow(QtWidgets.QMainWindow):
             data = dict(
                 label=shape.label,
                 shape_type=shape.shape_type,
-                points=[(int(p.x()), int(p.y())) for p in shape.points],
+                points=[(p.x(), p.y()) for p in shape.points],
             )
             return data
         shapes = [format_shape(item.shape()) for item in self.labelList]
@@ -1557,7 +1577,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self._noSelectionSlot:
             return
         if not self.canvas.editing():
-            self.setEditMode()
+            self.toggleDrawMode(mode=DrawMode.EDIT)
         if self.canvas.editing():
             selected_shapes = [item.shape()
                                for item in self.labelList.selectedItems()]
@@ -1566,9 +1586,9 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 self.canvas.deSelectShape()
 
-    def labelItemChanged(self, item):
+    def labelItemChanged(self, item: LabelListWidgetItem):
         shape = item.shape()
-        self.canvas.setShapeVisible(shape, item.checkState() == Qt.Checked)
+        self.canvas.setShapeVisible(shape, item.checkState() == Qt.CheckState.Checked)
 
     def labelOrderChanged(self):
         self.setDirty()
@@ -1635,12 +1655,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.set_scroll(orientation, value)
 
     def set_scroll(self, orientation, value):
-        self.scrollBars[orientation].setValue(value)
+        self.scrollBars[orientation].setValue(int(value))
 
     def set_zoom(self, value):
         self.actions.fitWindow.setChecked(False)
         self.zoom_mode = self.MANUAL_ZOOM
-        self.zoom_widget.setValue(value)
+        self.zoom_widget.setValue(int(value))
         self.zoom_level = value
 
     def add_zoom(self, increment=1.1):
@@ -1660,21 +1680,31 @@ class MainWindow(QtWidgets.QMainWindow):
             x_shift = round(pos.x() * canvas_scale_factor) - pos.x()
             y_shift = round(pos.y() * canvas_scale_factor) - pos.y()
 
-            self.set_scroll(
-                Qt.Horizontal,
-                self.scrollBars[Qt.Horizontal].value() + x_shift,
+            self.scroll_request(
+                delta=x_shift,
+                orientation=Qt.Orientation.Horizontal,
             )
-            self.set_scroll(
-                Qt.Vertical,
-                self.scrollBars[Qt.Vertical].value() + y_shift,
+
+            self.scroll_request(
+                delta=y_shift,
+                orientation=Qt.Orientation.Vertical,
             )
+
+            # self.set_scroll(
+            #     Qt.Horizontal,
+            #     self.scrollBars['x'].value() + x_shift,
+            # )
+            # self.set_scroll(
+            #     Qt.Vertical,
+            #     self.scrollBars['y'].value() + y_shift,
+            # )
 
     def set_fit_window(self, value=True):
         self.zoom_mode = self.FIT_WINDOW_MODE if value else self.MANUAL_ZOOM
         self.adjust_scale()
 
     def toggle_polygons(self, value):
-        [item.setCheckState(Qt.Checked if value else Qt.Unchecked)
+        [item.setCheckState(Qt.CheckState.Checked if value else Qt.CheckState.Unchecked)
          for item in self.labelList]
 
     def toggle_single_polygon(self):
@@ -1755,11 +1785,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.adjust_scale(initial=True)
         self.addRecentFile(self.img_path)
         self.toggleActions(True)
-        # self.setEditMode()
         if self.create_mode is None:
-            self.setEditMode()
+            self.toggleDrawMode(DrawMode.EDIT)
         else:
-            self.toggleDrawMode(edit=False, create_mode=self.create_mode)
+            self.toggleDrawMode(self.create_mode)
         self.status(self.tr("Loaded {}").format(self.img_path))
 
         self.reset_cursor()
@@ -1868,7 +1897,7 @@ class MainWindow(QtWidgets.QMainWindow):
                              if initial else self.zoom_mode]()
         # print(value)
         value = int(100 * value)
-        self.zoom_widget.setValue(value)
+        self.zoom_widget.setValue(int(value))
         self.zoom_level = value
 
     def scale_fit_window(self):
@@ -2194,7 +2223,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def wait_cursor(self):
-        QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        QtWidgets.QApplication.setOverrideCursor(Qt.WaitCursor)
 
 
     def reset_cursor(self):
@@ -2297,7 +2326,6 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.labels[item_name] = self.get_all_labels(lf)
                 self.count_annotations += 1
                 item.setCheckState(Qt.PartiallyChecked)
-                item.setBackground(STATE_COLORS[EDIT])
                 self.fileListWidget.addItem(item)
         
         self.work_dir = dirpath
@@ -2351,12 +2379,10 @@ class MainWindow(QtWidgets.QMainWindow):
             self.input_note.setEnabled(True)
             if item:
                 item.setCheckState(Qt.Unchecked)
-                item.setBackground(STATE_COLORS[NO_DATA])
         elif state == EDIT:
             self.input_note.setEnabled(True)
             if item:
                 item.setCheckState(Qt.PartiallyChecked)
-                item.setBackground(STATE_COLORS[EDIT])
 
 
     def update_sum(self, only_text=False):

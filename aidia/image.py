@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import os
+import matplotlib.pyplot as plt
 
 from aidia import LABEL_COLORMAP
 from aidia import dicom
@@ -62,6 +63,7 @@ def preprocessing(img, is_tensor=False):
     return img
 
 def convert_dtype(img: np.ndarray):
+    """Convert image dtype between uint8 and uint16."""
     if img.dtype == np.uint8:
         pre_max = 255.0
         new_max = 65535.0
@@ -71,7 +73,7 @@ def convert_dtype(img: np.ndarray):
         new_max = 255.0
         result_dtype = np.uint8
     else:
-        raise TypeError
+        raise TypeError(f"Unsupported image dtype: {img.dtype}")
     return (img / pre_max * new_max).astype(result_dtype)
 
 
@@ -395,18 +397,24 @@ def mask2rect(mask):
     return rect_list
 
 
-def fig2img(fig):
+def fig2img(fig: plt.Figure) -> np.ndarray:
+    """Convert a matplotlib figure to an RGB image."""
+    if fig is None:
+        return None
+    if not isinstance(fig, plt.Figure):
+        raise TypeError("Expected a matplotlib Figure object.")
+    if fig.canvas is None:
+        raise ValueError("Figure canvas is not initialized.")
     fig.canvas.draw()
-    data = fig.canvas.tostring_rgb()
+    data = fig.canvas.tostring_argb()
     w, h = fig.canvas.get_width_height()
     c = len(data) // (w * h)
-    return np.frombuffer(data, dtype=np.uint8).reshape(h, w, c)
+    return np.frombuffer(data, dtype=np.uint8).reshape(h, w, c)[..., 1:]  # remove alpha channel
 
 
-def save_canvas_img(canvas_img:np.ndarray, path):
+def save_canvas_img(canvas_img: np.ndarray, path: str) -> bool:
     if canvas_img.dtype == np.uint16:
         canvas_img = convert_dtype(canvas_img)
     if canvas_img.ndim == 2:
         canvas_img = cv2.cvtColor(canvas_img, cv2.COLOR_GRAY2RGB)
-
     return imwrite(canvas_img, path)

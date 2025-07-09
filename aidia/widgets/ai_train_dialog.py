@@ -2,21 +2,22 @@
 import os
 import shutil
 import time
-import logging
+import random
 import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore, QtWidgets, QtGui
+from qtpy.QtCore import Qt
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-import tensorflow as tf
-
-from aidia import CLS, DET, SEG, MNIST, DET_MODEL, SEG_MODEL, CLEAR, ERROR, AI_DIR_NAME
+from aidia import CLS, DET, SEG, MNIST, CLEAR, ERROR, AI_DIR_NAME
+from aidia import ModelTypes
+from aidia import LabelStyle
 from aidia import aidia_logger
 from aidia import qt
 from aidia import utils
 from aidia import errors
+from aidia.image import fig2img
 from aidia.ai.config import AIConfig
 from aidia.ai.dataset import Dataset
 from aidia.ai.test import TestModel
@@ -24,8 +25,20 @@ from aidia.ai.det import DetectionModel
 from aidia.ai.seg import SegmentationModel
 from aidia.widgets import ImageWidget
 
-tf.get_logger().setLevel('ERROR')
-logging.getLogger('tensorflow').setLevel(logging.ERROR)
+import torch
+
+# Set random seeds for reproducibility
+seed = AIConfig().SEED
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+
+# Set PyTorch to use the CPU or GPU
+torch.backends.cudnn.benchmark = False
+torch.backends.cudnn.deterministic = True
+
+import keras
+
 
 
 class AITrainDialog(QtWidgets.QDialog):
@@ -35,11 +48,11 @@ class AITrainDialog(QtWidgets.QDialog):
     def __init__(self, parent):
         super().__init__(parent)
 
-        self.setWindowFlags(QtCore.Qt.Window
-                            | QtCore.Qt.CustomizeWindowHint
-                            | QtCore.Qt.WindowTitleHint
-                            | QtCore.Qt.WindowCloseButtonHint
-                            | QtCore.Qt.WindowMaximizeButtonHint
+        self.setWindowFlags(Qt.Window
+                            | Qt.CustomizeWindowHint
+                            | Qt.WindowTitleHint
+                            | Qt.WindowCloseButtonHint
+                            | Qt.WindowMaximizeButtonHint
                             )
         self.setWindowTitle(self.tr("AI Training"))
 
@@ -66,10 +79,6 @@ class AITrainDialog(QtWidgets.QDialog):
         
         self.fig2, self.ax_pie = plt.subplots(figsize=(6, 6))
         self.ax_pie.axis("off")
-
-        self.default_style = "QLabel{ color: black; }"
-        self.error_style = "QLabel{ color: red; }"
-        self.disabled_style = "QLabel{ color: gray; }"
 
         self.error_flags = {}
         self.input_fields = []
@@ -119,7 +128,7 @@ If MNIST Test are selected, the training test using MNIST dataset are performed 
             """Set the experiment name.
 You cannot set existed experiment names."""
         ))
-        # self.input_name.setAlignment(QtCore.Qt.AlignCenter)
+        # self.input_name.setAlignment(Qt.AlignCenter)
         def _validate(text):
             # check trained data in log directory
             p1 = os.path.join(self.dataset_dir, AI_DIR_NAME, text, "weights")
@@ -205,7 +214,7 @@ If you set 8, 8 samples are trained per step."""
         self.input_lr.setToolTip(self.tr(
             """Set the initial learning rate of Adam.
 The value is 0.001 by default.
-Other parameters of Adam uses the default values of TensorFlow."""
+Other parameters of Adam uses the default values of Keras 3."""
         ))
         def _validate(text):
             if text.replace(".", "", 1).isdigit() and 0.0 < float(text) < 1.0:
@@ -241,16 +250,16 @@ The labels are separated with line breaks."""))
         self._add_basic_params(self.tag_labels, self.input_labels, right=True, custom_size=(4, 1))
 
         # save best only
-        self.tag_is_savebest = QtWidgets.QLabel(self.tr("Save Only the Best Weights"))
-        self.tag_is_savebest.setToolTip(self.tr("""Enable saving only the weights achived the minimum validation loss."""))
-        self.input_is_savebest = QtWidgets.QCheckBox()
-        def _validate(state): # check:2, empty:0
-            if state == 2:
-                self.config.SAVE_BEST = True
-            else:
-                self.config.SAVE_BEST = False
-        self.input_is_savebest.stateChanged.connect(_validate)
-        self._add_basic_params(self.tag_is_savebest, self.input_is_savebest, right=True, reverse=True)
+        # self.tag_is_savebest = QtWidgets.QLabel(self.tr("Save Only the Best Weights"))
+        # self.tag_is_savebest.setToolTip(self.tr("""Enable saving only the weights achived the minimum validation loss."""))
+        # self.input_is_savebest = QtWidgets.QCheckBox()
+        # def _validate(state): # check:2, empty:0
+        #     if state == 2:
+        #         self.config.SAVE_BEST = True
+        #     else:
+        #         self.config.SAVE_BEST = False
+        # self.input_is_savebest.stateChanged.connect(_validate)
+        # self._add_basic_params(self.tag_is_savebest, self.input_is_savebest, right=True, reverse=True)
 
         # early stopping
         self.tag_is_earlystop = QtWidgets.QLabel(self.tr("Early Stopping"))
@@ -265,16 +274,16 @@ The labels are separated with line breaks."""))
         self._add_basic_params(self.tag_is_earlystop, self.input_is_earlystop, right=True, reverse=True)
 
         # use multiple gpu
-        self.tag_is_multi = QtWidgets.QLabel(self.tr("Use Multiple GPUs"))
-        self.tag_is_multi.setToolTip(self.tr("""Enable parallel calculation with multiple GPUs."""))
-        self.input_is_multi = QtWidgets.QCheckBox()
-        def _validate(state): # check:2, empty:0
-            if state == 2:
-                self.config.USE_MULTI_GPUS = True
-            else:
-                self.config.USE_MULTI_GPUS = False
-        self.input_is_multi.stateChanged.connect(_validate)
-        self._add_basic_params(self.tag_is_multi, self.input_is_multi, right=True, reverse=True)
+        # self.tag_is_multi = QtWidgets.QLabel(self.tr("Use Multiple GPUs"))
+        # self.tag_is_multi.setToolTip(self.tr("""Enable parallel calculation with multiple GPUs."""))
+        # self.input_is_multi = QtWidgets.QCheckBox()
+        # def _validate(state): # check:2, empty:0
+        #     if state == 2:
+        #         self.config.USE_MULTI_GPUS = True
+        #     else:
+        #         self.config.USE_MULTI_GPUS = False
+        # self.input_is_multi.stateChanged.connect(_validate)
+        # self._add_basic_params(self.tag_is_multi, self.input_is_multi, right=True, reverse=True)
 
         # train target select
         self.tag_is_dir_split = QtWidgets.QLabel(self.tr("Separate Data by Directory"))
@@ -291,7 +300,7 @@ The labels are separated with line breaks."""))
         ### add augment params ###
         # title
         text_augment = qt.head_text(self.tr("Data Augmentation"))
-        text_augment.setAlignment(QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter)
+        text_augment.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
         self._augment_layout.addWidget(text_augment, 0, 0, 1, 3)
         self.augment_row += 1
 
@@ -416,13 +425,13 @@ The labels are separated with line breaks."""))
         self.unit_noise = QtWidgets.QLabel()
         self.units.append(self.unit_noise)
         def _validate(text):
-            if text.isdigit() and 0 < int(text) < 50:
-                self.config.RANDOM_NOISE = int(text)
-                self.unit_noise.setText(self.tr("(std = 0 to {})").format(
-                    int(text)
+            if text.replace(".", "", 1).isdigit() and 0.0 < float(text) < 1.0:
+                self.config.RANDOM_NOISE = float(text)
+                self.unit_noise.setText(self.tr("(std = {})").format(
+                    float(text)
                 ))
             else:
-                self.config.RANDOM_NOISE = 0
+                self.config.RANDOM_NOISE = 0.0
                 self.unit_noise.setText(self.tr("Disabled"))
         self.input_noise.textChanged.connect(_validate)
         self._add_augment_params(self.tag_noise, self.input_noise, self.unit_noise)
@@ -492,19 +501,19 @@ The labels are separated with line breaks."""))
             self.ai.quit()
             self.button_stop.setEnabled(False)
         self.button_stop.clicked.connect(_stop_training)
-        self._layout.addWidget(self.button_stop, row, 4, 1, 1, QtCore.Qt.AlignRight)
+        self._layout.addWidget(self.button_stop, row, 4, 1, 1, Qt.AlignRight)
         # row += 1
 
         ### add dataset information ###
         # title
         title_dataset = qt.head_text(self.tr("Dataset Information"))
         title_dataset.setMaximumHeight(100)
-        title_dataset.setAlignment(QtCore.Qt.AlignTop)
+        title_dataset.setAlignment(Qt.AlignTop)
         self._dataset_layout.addWidget(title_dataset)
 
         # dataset information
         self.text_dataset = QtWidgets.QLabel()
-        self.text_dataset.setAlignment(QtCore.Qt.AlignLeading)
+        self.text_dataset.setAlignment(Qt.AlignLeading)
         self._dataset_layout.addWidget(self.text_dataset)
 
         self.image_widget2 = ImageWidget(self, self._plt2img2())
@@ -571,10 +580,10 @@ The labels are separated with line breaks."""))
             self.input_labels.setText("\n".join(data_labels))
         else:
             self.input_labels.setText("\n".join(self.config.LABELS))
-        if self.config.gpu_num < 2:
-            self.input_is_multi.setEnabled(False)
-        self.input_is_multi.setChecked(self.config.USE_MULTI_GPUS)
-        self.input_is_savebest.setChecked(self.config.SAVE_BEST)
+        # if self.config.gpu_num < 2:
+        #     self.input_is_multi.setEnabled(False)
+        # self.input_is_multi.setChecked(self.config.USE_MULTI_GPUS)
+        # self.input_is_savebest.setChecked(self.config.SAVE_BEST)
         self.input_is_earlystop.setChecked(self.config.EARLY_STOPPING)
         if not self.config.SUBMODE:
             self.input_is_dir_split.setEnabled(False)
@@ -644,9 +653,9 @@ The labels are separated with line breaks."""))
         elif task in [DET, SEG]:
             self.input_model.clear()
             if task == DET:
-                self.input_model.addItems(DET_MODEL)
+                self.input_model.addItems(ModelTypes.DET_MODEL)
             elif task == SEG:
-                self.input_model.addItems(SEG_MODEL)
+                self.input_model.addItems(ModelTypes.SEG_MODEL)
             self.enable_all()
 
         elif task == MNIST:
@@ -668,54 +677,54 @@ The labels are separated with line breaks."""))
         self.button_train.setEnabled(True)
         self.button_stop.setEnabled(False)
 
-    def switch_enabled(self, targets:list, enabled:bool):
+    def switch_enabled(self, targets:list[QtWidgets.QLabel], enabled:bool):
         for t in targets:
             if enabled:
-                t.setStyleSheet(self.default_style)
+                t.setStyleSheet(LabelStyle.DEFAULT)
             else:
-                t.setStyleSheet(self.disabled_style)
+                t.setStyleSheet(LabelStyle.DISABLED)
             i = self.tags.index(t)
             self.input_fields[i].setEnabled(enabled)
-        if enabled and self.config.gpu_num < 2:
-            self.tag_is_multi.setStyleSheet(self.disabled_style)
-            self.input_is_multi.setEnabled(False)
+        # if enabled and self.config.gpu_num < 2:
+        #     self.tag_is_multi.setStyleSheet(LabelStyle.DISABLED)
+        #     self.input_is_multi.setEnabled(False)
         if enabled and not self.config.SUBMODE:
-            self.tag_is_dir_split.setStyleSheet(self.disabled_style)
+            self.tag_is_dir_split.setStyleSheet(LabelStyle.DISABLED)
             self.input_is_dir_split.setEnabled(False)
 
     def switch_global_params(self):
-        if self.config.gpu_num < 2:
-            self.tag_is_multi.setStyleSheet(self.disabled_style)
-            self.input_is_multi.setEnabled(False)
-        else:
-            self.tag_is_multi.setStyleSheet(self.default_style)
-            self.input_is_multi.setEnabled(True)
+        # if self.config.gpu_num < 2:
+        #     self.tag_is_multi.setStyleSheet(LabelStyle.DISABLED)
+        #     self.input_is_multi.setEnabled(False)
+        # else:
+        #     self.tag_is_multi.setStyleSheet(LabelStyle.DEFAULT)
+        #     self.input_is_multi.setEnabled(True)
         if not self.config.SUBMODE or self.config.TASK in [MNIST]:
-            self.tag_is_dir_split.setStyleSheet(self.disabled_style)
+            self.tag_is_dir_split.setStyleSheet(LabelStyle.DISABLED)
             self.input_is_dir_split.setEnabled(False)
         else:
-            self.tag_is_dir_split.setStyleSheet(self.default_style)
+            self.tag_is_dir_split.setStyleSheet(LabelStyle.DEFAULT)
             self.input_is_dir_split.setEnabled(True)
     
     def enable_all(self):
         for x in self.input_fields:
             x.setEnabled(True)
         for x in self.tags:
-            x.setStyleSheet(self.default_style)
+            x.setStyleSheet(LabelStyle.DEFAULT)
         for x in self.units:
-            x.setStyleSheet(self.default_style)
+            x.setStyleSheet(LabelStyle.DEFAULT)
         for i, v in enumerate(self.error_flags.values()):
             if v == 1:
-                self.tags[i].setStyleSheet(self.error_style)
+                self.tags[i].setStyleSheet(LabelStyle.ERROR)
 
     
     def disable_all(self):
         for x in self.input_fields:
             x.setEnabled(False)
         for x in self.tags:
-            x.setStyleSheet(self.disabled_style)
+            x.setStyleSheet(LabelStyle.DISABLED)
         for x in self.units:
-            x.setStyleSheet(self.disabled_style)
+            x.setStyleSheet(LabelStyle.DISABLED)
         self.button_train.setEnabled(False)
 
     def closeEvent(self, event):
@@ -735,7 +744,7 @@ The labels are separated with line breaks."""))
         self.input_fields.append(widget)
         row = self.left_row
         pos = [1, 2]
-        align = [QtCore.Qt.AlignRight, QtCore.Qt.AlignLeft]
+        align = [Qt.AlignRight, Qt.AlignLeft]
         h, w = (1, 1)
         if right:
             row = self.right_row
@@ -759,7 +768,7 @@ The labels are separated with line breaks."""))
         self.input_fields.append(widget)
         row = self.augment_row
         pos = [0, 1, 2]
-        align = [QtCore.Qt.AlignRight, QtCore.Qt.AlignCenter, QtCore.Qt.AlignLeft]
+        align = [Qt.AlignRight, Qt.AlignCenter, Qt.AlignLeft]
         self._augment_layout.addWidget(tag, row, pos[0], alignment=align[0])
         self._augment_layout.addWidget(widget, row, pos[1], alignment=align[1])
         if unit is not None:
@@ -767,11 +776,11 @@ The labels are separated with line breaks."""))
         self.augment_row += 1
 
     def _set_error(self, tag:QtWidgets.QLabel):
-        tag.setStyleSheet(self.error_style)
+        tag.setStyleSheet(LabelStyle.ERROR)
         self.error_flags[tag.text()] = ERROR
 
     def _set_ok(self, tag:QtWidgets.QLabel):
-        tag.setStyleSheet(self.default_style)
+        tag.setStyleSheet(LabelStyle.DEFAULT)
         self.error_flags[tag.text()] = CLEAR
 
     def update_figure(self):
@@ -796,18 +805,10 @@ The labels are separated with line breaks."""))
             self.image_widget.loadPixmap(self._plt2img())
 
     def _plt2img(self):
-        self.fig.canvas.draw()
-        data = self.fig.canvas.tostring_rgb()
-        w, h = self.fig.canvas.get_width_height()
-        c = len(data) // (w * h)
-        return np.frombuffer(data, dtype=np.uint8).reshape(h, w, c)
+        return fig2img(self.fig)
 
     def _plt2img2(self):
-        self.fig2.canvas.draw()
-        data = self.fig2.canvas.tostring_rgb()
-        w, h = self.fig2.canvas.get_width_height()
-        c = len(data) // (w * h)
-        return np.frombuffer(data, dtype=np.uint8).reshape(h, w, c)
+        return fig2img(self.fig2)
 
     def update_dataset(self, value):
         dataset_num = value["dataset_num"]
@@ -902,7 +903,7 @@ The labels are separated with line breaks."""))
 
     def create_input_field(self, size):
         l = QtWidgets.QLineEdit()
-        l.setAlignment(QtCore.Qt.AlignCenter)
+        l.setAlignment(Qt.AlignCenter)
         # l.setMaximumWidth(size)
         # l.setMinimumWidth(size)
         return l
@@ -1024,7 +1025,7 @@ class AITrainThread(QtCore.QThread):
             self.errorMessage.emit(self.tr('Unexpected error.<br>{}'.format(e)))
             aidia_logger.error(e, exc_info=True)
             return
-        
+
         if isinstance(model.dataset, Dataset):
             _info_dict = {
                 "dataset_num": model.dataset.dataset_num,
@@ -1051,32 +1052,33 @@ class AITrainThread(QtCore.QThread):
             self.datasetInfo.emit(_info_dict)
 
         self.notifyMessage.emit(self.tr("Model building..."))
-        if self.config.gpu_num > 1 and self.config.USE_MULTI_GPUS: # apply multiple GPU support
-            strategy = tf.distribute.MirroredStrategy(cross_device_ops=tf.distribute.ReductionToOneDevice())
-            with strategy.scope():
-                model.build_model(mode="train")
-        else:
-            model.build_model(mode="train")
-        
+        # if self.config.gpu_num > 1 and self.config.USE_MULTI_GPUS: # apply multiple GPU support
+        #     strategy = tf.distribute.MirroredStrategy(cross_device_ops=tf.distribute.ReductionToOneDevice())
+        #     with strategy.scope():
+        #         model.build_model(mode="train")
+        # else:
+        #     model.build_model(mode="train")
+        model.build_model(mode="train")
+
         self.notifyMessage.emit(self.tr("Preparing..."))
 
         cb_getprocess = GetProgress(self)
         self.cb_getprocess = cb_getprocess
 
         if self.config.EARLY_STOPPING:
-            cb = [cb_getprocess, tf.keras.callbacks.EarlyStopping(patience=10)] # TODO
+            cb = [cb_getprocess, keras.callbacks.EarlyStopping(patience=10)] # TODO
         else:
             cb = [cb_getprocess]
         try:
             model.train(cb)
-        except tf.errors.ResourceExhaustedError as e:
-            self.errorMessage.emit(self.tr("Memory error. Please reduce the input size or batch size."))
-            aidia_logger.error(e, exc_info=True)
-            return
-        except tf.errors.NotFoundError as e:
-            self.errorMessage.emit(self.tr("Memory error. Please reduce the input size or batch size."))
-            aidia_logger.error(e, exc_info=True)
-            return
+        # except tf.errors.ResourceExhaustedError as e:
+        #     self.errorMessage.emit(self.tr("Memory error. Please reduce the input size or batch size."))
+        #     aidia_logger.error(e, exc_info=True)
+        #     return
+        # except tf.errors.NotFoundError as e:
+        #     self.errorMessage.emit(self.tr("Memory error. Please reduce the input size or batch size."))
+        #     aidia_logger.error(e, exc_info=True)
+        #     return
         except errors.LossGetNanError as e:
             self.errorMessage.emit(self.tr("Loss got NaN. Please adjust the learning rate."))
             aidia_logger.error(e, exc_info=True)
@@ -1094,7 +1096,7 @@ class AITrainThread(QtCore.QThread):
             model.dataset.save(p)
 
 
-class GetProgress(tf.keras.callbacks.Callback):
+class GetProgress(keras.callbacks.Callback):
     """Custom keras callback to get progress values while AI training."""
     def __init__(self, widget: AITrainThread):
         super().__init__()

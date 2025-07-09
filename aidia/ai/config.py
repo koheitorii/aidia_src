@@ -1,26 +1,10 @@
 import os
 import json
-import logging
+import torch
 import imgaug
 import imgaug.augmenters as iaa
 
 from aidia import AI_DIR_NAME
-
-# TensorFlow global setting
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-import tensorflow as tf
-
-tf.get_logger().setLevel('ERROR')
-logging.getLogger('tensorflow').setLevel(logging.ERROR)
-
-# set memory growth
-physical_devices = tf.config.list_physical_devices('GPU')
-if len(physical_devices) > 0:
-    for device in physical_devices:
-        tf.config.experimental.set_memory_growth(device, True)
-        print('{} memory growth: {}'.format(device, tf.config.experimental.get_memory_growth(device)))
-else:
-    print("Not enough GPU hardware devices available")
 
 
 class AIConfig(object):
@@ -35,7 +19,8 @@ class AIConfig(object):
         self.num_classes = 0
         self.total_batchsize = 0
 
-        self.USE_MULTI_GPUS = False
+        # self.USE_MULTI_GPUS = False
+        # self.SAVE_BEST = True
         self.NAME = 'test'
         self.TASK = "Segmentation"
         self.DATASET_NUM = 1
@@ -52,7 +37,6 @@ class AIConfig(object):
         self.VAL_STEP = None
         self.EPOCHS = 100
         self.LEARNING_RATE = 0.001
-        self.SAVE_BEST = False
         self.LABELS = []
         self.N_SPLITS = 5
 
@@ -63,27 +47,26 @@ class AIConfig(object):
         # self.SQUARE = False
 
         # image augmentatin
-        self.EXPAND_X = 20
-        self.EXPAND_Y = 20
-        self.RANDOM_ROTATE = 30
         self.RANDOM_HFLIP = True
         self.RANDOM_VFLIP = True
-        self.RANDOM_SHIFT = 20
-        self.RANDOM_BRIGHTNESS = 40
-        self.RANDOM_CONTRAST = 0.1
+        self.RANDOM_ROTATE = 20
         self.RANDOM_SCALE = 0.2
+        self.RANDOM_SHIFT = 20
+        self.RANDOM_SHEAR = 20
+        self.RANDOM_BRIGHTNESS = 20
+        self.RANDOM_CONTRAST = 0.1
         self.RANDOM_BLUR = 3.0  # 0 to n
-        self.RANDOM_NOISE = 15
-        self.RANDOM_SHEAR = 4
+        self.RANDOM_NOISE = 15.0
 
         self.build_params()
             
     def build_params(self):
-        self.gpu_num = len(tf.config.list_logical_devices('GPU'))
-        if self.USE_MULTI_GPUS and self.gpu_num > 1:
-            self.total_batchsize = self.BATCH_SIZE * self.gpu_num
-        else:
-            self.total_batchsize = self.BATCH_SIZE
+        self.gpu_num = torch.cuda.device_count()
+        # if self.USE_MULTI_GPUS and self.gpu_num > 1:
+        #     self.total_batchsize = self.BATCH_SIZE * self.gpu_num
+        # else:
+        #     self.total_batchsize = self.BATCH_SIZE
+        self.total_batchsize = self.BATCH_SIZE
         if self.dataset_dir is not None:
             self.log_dir = os.path.join(self.dataset_dir, AI_DIR_NAME, self.NAME)
         self.image_size = (self.INPUT_SIZE, self.INPUT_SIZE)
@@ -151,6 +134,6 @@ class AIConfig(object):
 
     @staticmethod
     def is_gpu_available():
-        if len(tf.config.list_logical_devices('GPU')):
+        if torch.cuda.device_count() > 0:
             return True
         return False

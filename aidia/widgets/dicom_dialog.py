@@ -26,7 +26,7 @@ class DICOMDialog(QtWidgets.QDialog):
 
         # accept and reject button
         bb = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok, QtCore.Qt.Horizontal, self)
-        bb.button(bb.Ok).setIcon(qt.newIcon('done'))
+        bb.button(bb.Ok).setIcon(qt.new_icon('done'))
         bb.accepted.connect(self.accept)
         layout.addWidget(bb)
 

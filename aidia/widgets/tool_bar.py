@@ -3,6 +3,7 @@ from qtpy import QtWidgets
 
 
 class ToolBar(QtWidgets.QToolBar):
+    """A custom toolbar that allows adding buttons with actions."""
 
     def __init__(self, title):
         super(ToolBar, self).__init__(title)
@@ -13,11 +14,10 @@ class ToolBar(QtWidgets.QToolBar):
         self.setContentsMargins(*m)
         self.setWindowFlags(self.windowFlags() | QtCore.Qt.FramelessWindowHint)
         
-        self._actions = []
-        self.flags = []
+        self._actions = {}
 
 
-    def addAction(self, action):
+    def addAction(self, action: QtWidgets.QAction):
         if isinstance(action, QtWidgets.QWidgetAction):
             return super(ToolBar, self).addAction(action)
         btn = ToolButton()
@@ -28,14 +28,15 @@ class ToolBar(QtWidgets.QToolBar):
         # btn.setMinimumHeight(80)
         # btn.setMaximumHeight(80)
         a = self.addWidget(btn)
-        self._actions.append(a)
-        self.flags.append(True)
+        self._actions[action.text()] = [a, True]
 
 
     def updateShowButtons(self):
         self.clear()
-        for a, flag in zip(self._actions, self.flags):
-            if flag:
+        for i in range(len(self._actions.keys())):
+            k = list(self._actions.keys())[i]
+            a, is_show = self._actions[k]
+            if is_show:
                 self.addAction(a)
 
 

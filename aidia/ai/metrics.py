@@ -1,5 +1,6 @@
 import numpy as np
-import tensorflow as tf
+import torch
+import torch.nn as nn
 
 from aidia import image
 
@@ -107,79 +108,87 @@ def iou(box1, box2):
     return iou
 
 
-class MultiMetrics(tf.keras.metrics.Metric):
+class MultiMetrics(nn.Module):
     def __init__(self, threshold=0.5, class_id=None, name='MultiMetrics', **kwargs):
-        super().__init__(name=name, **kwargs)
-        self.true_positives = self.add_weight(name='tp', initializer='zeros')
-        self.true_negatives = self.add_weight(name="tn", initializer="zeros")
-        # self.false_positives = self.add_weight(name="fp", initializer="zeros")
-        # self.false_negatives = self.add_weight(name="fn", initializer="zeros")
-        self.sum_ytrue = self.add_weight(name='tp+fn', initializer='zeros')
-        self.sum_ypred = self.add_weight(name='tp+fp', initializer='zeros')
-        self.sum_inv_ytrue = self.add_weight(name='tn+fp', initializer='zeros')
-        # self.sum_inv_ypred = self.add_weight(name='tn+fn', initializer='zeros')
+        super().__init__()
+        self.true_positives = nn.Parameter(torch.tensor(0.0), requires_grad=False)
+        self.true_negatives = nn.Parameter(torch.tensor(0.0), requires_grad=False)
+        # self.false_positives = nn.Parameter(torch.tensor(0.0), requires_grad=False)
+        # self.false_negatives = nn.Parameter(torch.tensor(0.0), requires_grad=False)
+        self.sum_ytrue = nn.Parameter(torch.tensor(0.0), requires_grad=False)
+        self.sum_ypred = nn.Parameter(torch.tensor(0.0), requires_grad=False)
+        self.sum_inv_ytrue = nn.Parameter(torch.tensor(0.0), requires_grad=False)
+        # self.sum_inv_ypred = nn.Parameter(torch.tensor(0.0), requires_grad=False)
         self.threshold = threshold
         self.class_id = class_id
+        self.name = name
 
     def update_state(self, y_true, y_pred, sample_weight=None):
         if self.class_id is not None:
             y_true = y_true[..., self.class_id]
             y_pred = y_pred[..., self.class_id]
-        y_true = tf.cast(y_true, tf.bool)
-        inv_y_true = tf.logical_not(y_true)
-        y_pred = tf.greater_equal(y_pred, self.threshold)
-        inv_y_pred = tf.logical_not(y_pred)
+        
+        y_true = y_true.bool()
+        inv_y_true = ~y_true
+        y_pred = y_pred >= self.threshold
+        inv_y_pred = ~y_pred
 
         # TP
-        values = tf.logical_and(y_true, y_pred)
-        values = tf.cast(values, self.dtype)
-        self.true_positives.assign_add(tf.reduce_sum(values))
-        self.true_positives.assign_add(tf.cast(1e-6, self.dtype))
+        values = y_true & y_pred
+        values = values.float()
+        self.true_positives.data += torch.sum(values)
+        self.true_positives.data += 1e-6
 
         # TN
-        values = tf.logical_and(inv_y_true, inv_y_pred)
-        values = tf.cast(values, self.dtype)
-        self.true_negatives.assign_add(tf.reduce_sum(values))
-        self.true_negatives.assign_add(tf.cast(1e-6, self.dtype))
+        values = inv_y_true & inv_y_pred
+        values = values.float()
+        self.true_negatives.data += torch.sum(values)
+        self.true_negatives.data += 1e-6
 
         # FP
-        # values = tf.logical_and(inv_y_true, _y_pred)
-        # values = tf.cast(values, self.dtype)
-        # self.false_positives.assign_add(tf.reduce_sum(values))
+        # values = inv_y_true & y_pred
+        # values = values.float()
+        # self.false_positives.data += torch.sum(values)
 
         # FN
-        # values = tf.logical_and(y_true, inv_y_pred)
-        # values = tf.cast(values, self.dtype)
-        # self.false_negatives.assign_add(tf.reduce_sum(values))
+        # values = y_true & inv_y_pred
+        # values = values.float()
+        # self.false_negatives.data += torch.sum(values)
 
         # TP + FN
-        y_true = tf.cast(y_true, self.dtype)
-        self.sum_ytrue.assign_add(tf.reduce_sum(y_true))
-        self.sum_ytrue.assign_add(tf.cast(1e-6, self.dtype))
+        y_true = y_true.float()
+        self.sum_ytrue.data += torch.sum(y_true)
+        self.sum_ytrue.data += 1e-6
 
         # TP + FP
-        y_pred = tf.cast(y_pred, self.dtype)
-        self.sum_ypred.assign_add(tf.reduce_sum(y_pred))
-        self.sum_ypred.assign_add(tf.cast(1e-6, self.dtype))
+        y_pred = y_pred.float()
+        self.sum_ypred.data += torch.sum(y_pred)
+        self.sum_ypred.data += 1e-6
 
         # TN + FP
-        inv_y_true = tf.cast(inv_y_true, self.dtype)
-        self.sum_inv_ytrue.assign_add(tf.reduce_sum(inv_y_true))
-        self.sum_inv_ytrue.assign_add(tf.cast(1e-6, self.dtype))
+        inv_y_true = inv_y_true.float()
+        self.sum_inv_ytrue.data += torch.sum(inv_y_true)
+        self.sum_inv_ytrue.data += 1e-6
 
         # TN + FN
-        # inv_y_pred = tf.cast(inv_y_pred, self.dtype)
-        # self.sum_inv_ypred.assign_add(tf.reduce_sum(inv_y_pred))
+        # inv_y_pred = inv_y_pred.float()
+        # self.sum_inv_ypred.data += torch.sum(inv_y_pred)
     
     def result(self):
-        precision = tf.divide(self.true_positives, self.sum_ypred)
-        recall = tf.divide(self.true_positives, self.sum_ytrue)
-        specificity = tf.divide(self.true_negatives, self.sum_inv_ytrue)
+        precision = self.true_positives / self.sum_ypred
+        recall = self.true_positives / self.sum_ytrue
+        specificity = self.true_negatives / self.sum_inv_ytrue
         tpr = recall
-        fpr = tf.subtract(tf.cast(1, self.dtype), specificity)
-        a = tf.multiply(tf.multiply(precision, recall), tf.cast(2, self.dtype))
-        b = tf.add(precision, recall)
-        f1 = tf.divide(a, b)
+        fpr = 1.0 - specificity
+        f1 = (2 * precision * recall) / (precision + recall)
         return [precision, recall, specificity, tpr, fpr, f1]
+    
+    def reset_states(self):
+        """メトリクスの状態をリセットする"""
+        self.true_positives.data.zero_()
+        self.true_negatives.data.zero_()
+        self.sum_ytrue.data.zero_()
+        self.sum_ypred.data.zero_()
+        self.sum_inv_ytrue.data.zero_()
 
         

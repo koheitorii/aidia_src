@@ -1,96 +1,98 @@
 import os
-import tensorflow as tf
+import keras
 import numpy as np
-import tf2onnx
 import glob
 import random
 
 from aidia.ai.dataset import Dataset
 from aidia.ai.config import AIConfig
 from aidia.image import det2merge
-from aidia.ai.models.yolov4.yolov4 import YOLO
-from aidia.ai.models.yolov4.yolov4_generator import YOLODataGenerator
+# from aidia.ai.models.yolov4.yolov4 import YOLO
+# from aidia.ai.models.yolov4.yolov4_generator import YOLODataGenerator
 from aidia import utils
 
+from ultralytics import YOLO
 
 class DetectionModel(object):
-    def __init__(self, config:AIConfig) -> None:
+    def __init__(self, config: AIConfig) -> None:
         self.config = config
         self.dataset = None
         self.model = None
-
-        np.random.seed(self.config.SEED)
-        tf.random.set_seed(self.config.SEED)
-        random.seed(self.config.SEED)
     
     def set_config(self, config):
         self.config = config
 
+
     def build_dataset(self):
         self.dataset = Dataset(self.config)
+        self.dataset.write_dataset_for_ultra()
     
+
     def load_dataset(self):
         self.dataset = Dataset(self.config, load=True)
     
+
     def build_model(self, mode, weights_path=None):
+        """Build YOLO model."""
         assert mode in ["train", "test"]
 
-        if self.config.MODEL.find("YOLO") > -1:
-            self.model = YOLO(self.config)
+        if mode == "train":
+            self.model = YOLO(None, task="detect")
+        elif mode == "test":
+            self.model = YOLO(weights_path, task="detect")
         else:
-            raise NotImplementedError
+            raise ValueError("Mode must be 'train' or 'test'.")
 
-        input_shape = (None, self.config.INPUT_SIZE, self.config.INPUT_SIZE, 3)
-        self.model.build(input_shape=input_shape)
-        self.model.compute_output_shape(input_shape=input_shape)
-
-        optim = tf.keras.optimizers.Adam(learning_rate=self.config.LEARNING_RATE)
-        self.model.compile(optimizer=optim)
-        if mode == "test":
-            if weights_path and os.path.exists(weights_path):
-                self.model.load_weights(weights_path)
-            else:
-                _wlist = os.path.join(self.config.log_dir, "weights", "*.h5")
-                weights_path = sorted(glob.glob(_wlist))[-1]
-                self.model.load_weights(weights_path)
 
     def train(self, custom_callbacks=None):
         checkpoint_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'weights')
-        if self.config.SAVE_BEST:
-            checkpoint_path = os.path.join(checkpoint_dir, "best_model.h5")
-        else:
-            checkpoint_path = os.path.join(checkpoint_dir, "{epoch:04d}.h5")
 
-        callbacks = [
-            tf.keras.callbacks.ModelCheckpoint(
-                checkpoint_path,
-                monitor='val_loss',
-                save_best_only=self.config.SAVE_BEST,
-                save_weights_only=True,
-                period=1 if self.config.SAVE_BEST else 20,
-            ),
-        ]
-        if custom_callbacks:
-            for c in custom_callbacks:
-                callbacks.append(c)
-
-        train_generator = YOLODataGenerator(self.dataset, self.config, mode="train")
-        val_generator = YOLODataGenerator(self.dataset, self.config, mode="val")
-
-        self.model.fit(
-            train_generator,
-            steps_per_epoch=self.dataset.train_steps,
+        self.model.train(
+            data=self.dataset.yaml_path,
             epochs=self.config.EPOCHS,
-            verbose=0,
-            validation_data=val_generator,
-            validation_steps=self.dataset.val_steps,
-            callbacks=callbacks
+            imgsz=self.config.INPUT_SIZE,
+            batch=self.config.BATCH_SIZE,
+            device=0 if self.config.gpu_num >= 0 else "cpu",
+            project=self.config.log_dir,
+            name=self.config.NAME,
+            # save_period=1 if self.config.SAVE_BEST else 20,
+            # save_best=self.config.SAVE_BEST,
         )
+        # if self.config.SAVE_BEST:
+        #     checkpoint_path = os.path.join(checkpoint_dir, "best_model.h5")
+        # else:
+        #     checkpoint_path = os.path.join(checkpoint_dir, "{epoch:04d}.h5")
+
+        # callbacks = [
+        #     keras.callbacks.ModelCheckpoint(
+        #         checkpoint_path,
+        #         monitor='val_loss',
+        #         save_best_only=self.config.SAVE_BEST,
+        #         save_weights_only=True,
+        #         period=1 if self.config.SAVE_BEST else 20,
+        #     ),
+        # ]
+        # if custom_callbacks:
+        #     for c in custom_callbacks:
+        #         callbacks.append(c)
+
+        # train_generator = YOLODataGenerator(self.dataset, self.config, mode="train")
+        # val_generator = YOLODataGenerator(self.dataset, self.config, mode="val")
+
+        # self.model.fit(
+        #     train_generator,
+        #     steps_per_epoch=self.dataset.train_steps,
+        #     epochs=self.config.EPOCHS,
+        #     verbose=0,
+        #     validation_data=val_generator,
+        #     validation_steps=self.dataset.val_steps,
+        #     callbacks=callbacks
+        # )
 
         # save last model
-        if not self.config.SAVE_BEST:
-            checkpoint_path = os.path.join(checkpoint_dir, "last_model.h5")
-            self.model.save_weights(checkpoint_path)
+        # if not self.config.SAVE_BEST:
+        #     checkpoint_path = os.path.join(checkpoint_dir, "last_model.h5")
+        #     self.model.save_weights(checkpoint_path)
 
 
     def stop_training(self):
@@ -281,7 +283,7 @@ class DetectionModel(object):
         onnx_path = os.path.join(self.config.log_dir, "model.onnx")
         if os.path.exists(onnx_path):
             return
-        tf2onnx.convert.from_keras(self.model, opset=11, output_path=onnx_path)
+        # tf2onnx.convert.from_keras(self.model, opset=11, output_path=onnx_path)
 
     @staticmethod
     def voc_ap(rec, prec):

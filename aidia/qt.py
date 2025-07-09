@@ -8,21 +8,40 @@ from qtpy import QtGui
 from qtpy import QtWidgets
 
 
-def newIcon(icon):
+def is_dark_mode():
+    """Check if the current application is in dark mode."""
+    palette = QtWidgets.QApplication.palette()
+    window_color = palette.color(QtGui.QPalette.Window)
+    return window_color.lightness() < 128
+
+
+def new_icon(icon):
     icons_dir = osp.join(osp.dirname(osp.abspath(__file__)), 'icons')
-    return QtGui.QIcon(osp.join(':/', icons_dir, '%s.png' % icon))
+    icon_path = osp.join(icons_dir, '%s.png' % icon)
+    
+    if is_dark_mode():
+        # ダークモード用にアイコンの色を調整
+        pixmap = QtGui.QPixmap(icon_path)
+        if not pixmap.isNull():
+            # アイコンを白色に変更
+            white_pixmap = QtGui.QPixmap(pixmap.size())
+            white_pixmap.fill(QtCore.Qt.GlobalColor.white)
+            white_pixmap.setMask(pixmap.createMaskFromColor(QtCore.Qt.GlobalColor.transparent))
+            return QtGui.QIcon(white_pixmap)
+    
+    return QtGui.QIcon(icon_path)
 
 
-def newButton(text, icon=None, slot=None):
+def new_button(text, icon=None, slot=None):
     b = QtWidgets.QPushButton(text)
     if icon is not None:
-        b.setIcon(newIcon(icon))
+        b.setIcon(new_icon(icon))
     if slot is not None:
         b.clicked.connect(slot)
     return b
 
 
-def newAction(parent, text, slot=None, shortcut=None, icon=None,
+def new_action(parent, text, slot=None, shortcut=None, icon=None,
               tip=None, checkable=False, enabled=True, checked=False):
     """Create a new action and assign callbacks, shortcuts, etc."""
     a = QtWidgets.QAction(text, parent)
@@ -31,10 +50,11 @@ def newAction(parent, text, slot=None, shortcut=None, icon=None,
         if locale == "ja_JP":
             a.setIconText(text)
             a.setText(text.replace("\n", ""))
-            a.setIcon(newIcon(icon))
+            a.setIcon(new_icon(icon))
         else:
             a.setIconText(text.replace(' ', '\n'))
-            a.setIcon(newIcon(icon))
+            a.setText(text)
+            a.setIcon(new_icon(icon))
     if shortcut is not None:
         if isinstance(shortcut, (list, tuple)):
             a.setShortcuts(shortcut)
@@ -52,7 +72,7 @@ def newAction(parent, text, slot=None, shortcut=None, icon=None,
     return a
 
 
-def addActions(widget, actions):
+def add_actions(widget, actions):
     for action in actions:
         if action is None:
             widget.addSeparator()
@@ -66,7 +86,7 @@ def labelValidator():
     return QtGui.QRegExpValidator(QtCore.QRegExp(r'^[^ \t].+'), None)
 
 
-class struct(object):
+class DictObject(object):
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 

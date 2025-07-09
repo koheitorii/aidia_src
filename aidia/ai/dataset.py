@@ -3,8 +3,10 @@ import json
 import numpy as np
 import glob
 import cv2
+import yaml
 
 from aidia import CLS, DET, SEG, EXTS, AI_DIR_NAME
+from aidia import DrawMode
 from aidia import aidia_logger
 from aidia import dicom
 from aidia import image
@@ -17,22 +19,27 @@ class Dataset(object):
     def __init__(self, config:AIConfig, load=False):
 
         self.config = config
-        np.random.seed(self.config.SEED)
-
         self.dataset_num = config.DATASET_NUM
+
+        self.yaml_path = os.path.join(config.log_dir, "dataset_for_yolo.yaml")
 
         if self.config.TASK == CLS:
             self.target_shape = [
-                "polygon",
-                "rectangle",
-                "linestrip",
-                "line",
-                "point",
+                DrawMode.POLYGON,
+                DrawMode.RECTANGLE,
+                DrawMode.LINESTRIP,
+                DrawMode.LINE,
+                DrawMode.POINT,
             ]
         elif self.config.TASK == DET:
-            self.target_shape = ["polygon", "rectangle"]
+            self.target_shape = [
+                DrawMode.POLYGON,
+                DrawMode.RECTANGLE
+            ]
         elif self.config.TASK == SEG:
-            self.target_shape = ["polygon"]
+            self.target_shape = [
+                DrawMode.POLYGON
+            ]
 
         self.image_info = []
         self.class_info = []
@@ -178,7 +185,8 @@ class Dataset(object):
                 for l in label:
                     if l in self.config.LABELS:
                         new_label.append(l)
-
+                
+                # TODO: multiple labels handling
                 # skip multi label data and no label data
                 if len(new_label) > 1 or len(new_label) == 0:
                     continue
@@ -276,8 +284,21 @@ class Dataset(object):
         if self.train_steps == 0 or self.val_steps == 0:
             raise errors.BatchsizeError
         
-    ### Data Loading Function ###
     def load_image(self, image_id, is_resize=True):
+        """Load image by image_id.
+
+        Parameters
+        ----------
+        image_id : int
+            Image ID to load.
+        is_resize : bool
+            If True, resize image to config.image_size.
+
+        Returns
+        -------
+        img : np.ndarray
+            Loaded image.
+        """
         img_path = self.image_info[image_id]["path"]
 
         # if img_path was not found, get relative path
@@ -299,7 +320,20 @@ class Dataset(object):
             img = cv2.resize(img, self.config.image_size)
         return img
 
-    def load_masks(self, image_id):
+    def load_masks(self, image_id: int) -> np.ndarray:
+        """Load masks by image_id.
+
+        Parameters
+        ----------
+        image_id : int
+            Image ID to load masks.
+
+        Returns
+        -------
+        np.ndarray
+            Masks of the image. Shape is (height, width, num_classes).
+            If num_classes is 1, shape is (height, width, 2) with background and foreground.
+        """
         image_info = self.image_info[image_id]
         annotations = self.image_info[image_id]["annotations"]
 
@@ -408,3 +442,96 @@ class Dataset(object):
         # bboxes = bboxes * np.array([w, h, w, h, 1])
         bboxes = bboxes.astype(np.int64)
         return bboxes
+
+
+    def get_ultra_bboxes(self, image_id):
+        """Get YOLO bounding boxes in Ultra format.
+
+        Ultra format example:
+        class_id x_center y_center width height
+        """
+        annotations = self.image_info[image_id]["annotations"]
+        bboxes = []
+        for a in annotations:
+            shape_type = a["shape_type"]
+            if shape_type in [DrawMode.POLYGON, DrawMode.RECTANGLE]:
+                points = a["points"]
+                label = a["label"]
+                if isinstance(label, list):
+                    label = label[0]
+                class_id = self.class_names.index(label)
+                if shape_type == DrawMode.POLYGON:
+                    xmin = np.min(points)
+                    ymin = np.min(points)
+                    xmax = np.max(points)
+                    ymax = np.max(points)
+                else:
+                    x1, y1 = points[0]
+                    x2, y2 = points[1]
+                    xmin = min(x1, x2)
+                    ymin = min(y1, y2)
+                    xmax = max(x1, x2)
+                    ymax = max(y1, y2)
+                
+                # Calculate center, width, and height
+                x_center = (xmin + xmax) / 2
+                y_center = (ymin + ymax) / 2
+                width = xmax - xmin
+                height = ymax - ymin
+
+                # Normalize coordinates to [0, 1]
+                h = self.image_info[image_id]["height"]
+                w = self.image_info[image_id]["width"]
+                x_center /= w
+                y_center /= h
+                width /= w
+                height /= h
+
+                # Append to bboxes list
+                bboxes.append([
+                    float(class_id),
+                    float(x_center),
+                    float(y_center),
+                    float(width),
+                    float(height),
+                ])
+
+        bboxes = np.array(bboxes, dtype=float)
+        return bboxes
+
+
+    def write_dataset_for_ultra(self):
+        """Write dataset information for YOLO Ultra format."""
+        data = {
+            "path": self.config.dataset_dir,
+            "train": [],
+            "val": [],
+            "test": [],
+            "nc": self.num_classes,
+            "names": self.class_names
+        }
+
+        for i in self.train_ids:
+            img_path = self.image_info[i]["path"]
+            if not os.path.exists(img_path):
+                continue
+            data["train"].append(img_path)
+
+        for i in self.val_ids:
+            img_path = self.image_info[i]["path"]
+            if not os.path.exists(img_path):
+                continue
+            data["val"].append(img_path)
+
+        for i in self.test_ids:
+            img_path = self.image_info[i]["path"]
+            if not os.path.exists(img_path):
+                continue
+            data["test"].append(img_path)
+        
+
+        # Write to YAML file
+        if not os.path.exists(os.path.dirname(self.yaml_path)):
+            os.makedirs(os.path.dirname(self.yaml_path))
+        with open(self.yaml_path, 'w', encoding='utf-8') as f:
+            yaml.dump(data, f, allow_unicode=True)

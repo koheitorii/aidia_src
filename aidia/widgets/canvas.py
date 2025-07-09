@@ -3,8 +3,10 @@ import numpy as np
 from qtpy import QtCore
 from qtpy import QtGui
 from qtpy import QtWidgets
+from qtpy.QtCore import Qt
 
 from aidia import CFONT
+from aidia import DrawMode
 from aidia.shape import Shape
 from aidia.qt import distance
 from aidia.image import gamma_correct, change_contrast, dicom_transform, graylevel_transform
@@ -19,8 +21,8 @@ CURSOR_GRAB = QtCore.Qt.OpenHandCursor
 
 class Canvas(QtWidgets.QWidget):
 
-    zoomRequest = QtCore.Signal(int, QtCore.QPoint)
-    scrollRequest = QtCore.Signal(int, int)
+    zoomRequest = QtCore.Signal(int, QtCore.QPoint)  # zoom, pos
+    scrollRequest = QtCore.Signal(int, QtCore.Qt.Orientation)  # delta, orientation
     fileOpenRequest = QtCore.Signal(int)
     newShape = QtCore.Signal()
     selectionChanged = QtCore.Signal(list)
@@ -41,7 +43,7 @@ class Canvas(QtWidgets.QWidget):
     WC_STEP = 1
     WW_STEP = 1
 
-    _createMode = "polygon"
+    _createMode = DrawMode.POLYGON
     _fill_drawing = False
 
     def __init__(self, *args, **kwargs):
@@ -59,9 +61,9 @@ class Canvas(QtWidgets.QWidget):
         #   - createMode == 'polygon': edge from last point to current
         #   - createMode == 'rectangle': diagonal line of the rectangle
         self.line = Shape()
-        self.prevPoint = QtCore.QPoint()
-        self.prevMovePoint = QtCore.QPoint()
-        self.offsets = QtCore.QPoint(), QtCore.QPoint()
+        self.prevPoint = QtCore.QPointF()
+        self.prevMovePoint = QtCore.QPointF()
+        self.offsets = QtCore.QPointF(), QtCore.QPointF()
         self.scale = 1.0
         self.image = QtGui.QImage()
         self.src_image = np.empty((0, 0))
@@ -112,14 +114,13 @@ class Canvas(QtWidgets.QWidget):
         return self._createMode
 
     @createMode.setter
-    def createMode(self, value):
+    def createMode(self, value: str):
         if value not in [
-            "polygon",
-            "rectangle",
-            "circle",
-            "linestrip",
-            "line",
-            "point",
+            DrawMode.POLYGON,
+            DrawMode.RECTANGLE,
+            DrawMode.LINESTRIP,
+            DrawMode.LINE,
+            DrawMode.POINT,
         ]:
             raise ValueError(f"Unsupported createMode: {value}")
         self._createMode = value
@@ -191,20 +192,20 @@ class Canvas(QtWidgets.QWidget):
     def selectedEdge(self):
         return self.hEdge is not None
 
-    def mouseMoveEvent(self, ev):
+    def mouseMoveEvent(self, ev: QtGui.QMouseEvent):
         """Update line with last point and current coordinates."""
         try:
-            pos = self.transformPos(ev.localPos())
+            pos = self.transformPos(ev.position())
         except AttributeError:
             return
 
         self.prevMovePoint = pos
 
         # Update window center and window width.
-        if QtCore.Qt.RightButton & ev.buttons():
-            c = int((ev.localPos().y() - self.prev_pos.y()))
-            w = int((ev.localPos().x() - self.prev_pos.x()))
-            self.prev_pos = ev.localPos()
+        if Qt.MouseButton.RightButton & ev.buttons():
+            c = int((ev.position().y() - self.prev_pos.y()))
+            w = int((ev.position().x() - self.prev_pos.x()))
+            self.prev_pos = ev.position()
             self.moving_distance += np.sqrt(c**2 + w**2)
             if self.is_dicom:
                 self.wc = int(self.wc + (c / self.WC_STEP))
@@ -219,14 +220,14 @@ class Canvas(QtWidgets.QWidget):
             self.paint_polygon = False
         
         # left click scroll
-        if (QtCore.Qt.LeftButton & ev.buttons() and
+        if (Qt.MouseButton.LeftButton & ev.buttons() and
             self.editing() and not self.selectedVertex()):
             diff_x, diff_y = self.diff
-            diff_x += int((ev.localPos().x() - self.prev_pos.x()))
-            diff_y += int((ev.localPos().y() - self.prev_pos.y()))
-            self.prev_pos = ev.localPos()
-            self.scrollRequest.emit(diff_x, QtCore.Qt.Horizontal)
-            self.scrollRequest.emit(diff_y, QtCore.Qt.Vertical)
+            diff_x += int((ev.position().x() - self.prev_pos.x()))
+            diff_y += int((ev.position().y() - self.prev_pos.y()))
+            self.prev_pos = ev.position()
+            self.scrollRequest.emit(diff_x, Qt.Orientation.Horizontal)
+            self.scrollRequest.emit(diff_y, Qt.Orientation.Vertical)
             self.diff = (diff_x, diff_y)
             # self.paint_polygon = False
             # self.update()
@@ -273,7 +274,7 @@ class Canvas(QtWidgets.QWidget):
             return
 
        # Polygon or Vertex moving.
-        if QtCore.Qt.LeftButton & ev.buttons():
+        if Qt.MouseButton.LeftButton & ev.buttons():
             if self.selectedVertex():
                 self.boundedMoveVertex(pos)
                 self.update()
@@ -325,7 +326,7 @@ class Canvas(QtWidgets.QWidget):
         # Update status bar.
         r, g, b = -1, -1, -1
         if 0 <= pos.x() <= self.pixmap.width() and 0 <= pos.y() <= self.pixmap.height():
-            pixel = self.image.pixelColor(pos.x(), pos.y())
+            pixel = self.image.pixelColor(int(pos.x()), int(pos.y()))
             r, g, b = (pixel.red(), pixel.green(), pixel.blue())
         if not self.is_dicom:
             txt = self.tr('pos({}, {}), value: ({:5d}, {:5d}, {:5d}), brightness: {:.4f}, contrast: {:.4f}').format(
@@ -367,12 +368,12 @@ class Canvas(QtWidgets.QWidget):
         self.hEdge = None
         self.movingShape = True  # Save changes
 
-    def mousePressEvent(self, ev):
-        pos = self.transformPos(ev.localPos())
-        self.prev_pos = ev.localPos()  # for contrast adjustment
+    def mousePressEvent(self, ev: QtGui.QMouseEvent):
+        pos = self.transformPos(ev.position())
+        self.prev_pos = ev.position()  # for contrast adjustment
         self.moving_distance = 0.0
         self.diff = (0, 0)
-        if ev.button() == QtCore.Qt.LeftButton:
+        if ev.button() == Qt.MouseButton.LeftButton:
             if self.drawing():
                 if self.current:
                     if self.createMode == "polygon":
@@ -387,7 +388,7 @@ class Canvas(QtWidgets.QWidget):
                     elif self.createMode == "linestrip":
                         self.current.addPoint(self.line[1])
                         self.line[0] = self.current[-1]
-                        if int(ev.modifiers()) == QtCore.Qt.ControlModifier:
+                        if ev.modifiers() == QtCore.Qt.ControlModifier:
                             self.finalise()
                 elif not self.outOfPixmap(pos):
                     # Create new shape.
@@ -403,21 +404,21 @@ class Canvas(QtWidgets.QWidget):
             elif self.editing():
                 if self.selectedEdge():
                     self.addPointToEdge()
-                elif (self.selectedVertex() and int(ev.modifiers()) == QtCore.Qt.ShiftModifier):
+                elif (self.selectedVertex() and ev.modifiers() == QtCore.Qt.ShiftModifier):
                     # Delete point if: left-click + SHIFT on a point
                     self.removeSelectedPoint()
 
-                group_mode = int(ev.modifiers()) == QtCore.Qt.ControlModifier
+                group_mode = ev.modifiers() == QtCore.Qt.ControlModifier
                 self.selectShapePoint(pos, multiple_selection_mode=group_mode)
                 self.prevPoint = pos
                 self.update()
             else:
-                group_mode = (int(ev.modifiers()) == QtCore.Qt.ControlModifier)
+                group_mode = (ev.modifiers() == QtCore.Qt.ControlModifier)
                 self.selectShapePoint(pos, multiple_selection_mode=group_mode)
                 self.prevPoint = pos
                 self.update()
-        elif ev.button() == QtCore.Qt.RightButton and self.editing():
-            group_mode = int(ev.modifiers()) == QtCore.Qt.ControlModifier
+        elif ev.button() == Qt.MouseButton.RightButton and self.editing():
+            group_mode = ev.modifiers() == QtCore.Qt.ControlModifier
             if not self.selectedShapes or (
                 self.hShape is not None
                 and self.hShape not in self.selectedShapes
@@ -426,24 +427,24 @@ class Canvas(QtWidgets.QWidget):
                 self.update()
             self.prevPoint = pos
             # if self.editing():
-            #     group_mode = (int(ev.modifiers()) == QtCore.Qt.ControlModifier)
+            #     group_mode = (ev.modifiers() == QtCore.Qt.ControlModifier)
             #     self.selectShapePoint(pos, multiple_selection_mode=group_mode)
             #     self.prevPoint = pos
             #     self.update()
 
 
-    def mouseReleaseEvent(self, ev):
+    def mouseReleaseEvent(self, ev: QtGui.QMouseEvent):
         self.paint_polygon = True
         self.update()
 
         if self.moving_distance > 10:
-            # if ev.button() == QtCore.Qt.RightButton and self.is_dicom_image():
-            if ev.button() == QtCore.Qt.RightButton:
+            # if ev.button() == Qt.MouseButton.RightButton and self.is_dicom_image():
+            if ev.button() == Qt.MouseButton.RightButton:
                 # self.setDirty.emit()
                 self.update()
 
         # Popup right click menus.
-        elif ev.button() == QtCore.Qt.RightButton:
+        elif ev.button() == Qt.MouseButton.RightButton:
             menu = self.menus
             self.restoreCursor()
             if not menu.exec_(self.mapToGlobal(ev.pos())) and self.selectedShapesCopy:
@@ -490,8 +491,8 @@ class Canvas(QtWidgets.QWidget):
     def canCloseShape(self):
         return self.drawing() and self.current and len(self.current) > 2
 
-    def mouseDoubleClickEvent(self, ev):
-        pos = self.transformPos(ev.localPos())
+    def mouseDoubleClickEvent(self, ev: QtGui.QMouseEvent):
+        pos = self.transformPos(ev.position())
         # We need at least 4 points here, since the mousePress handler
         # adds an extra one before this handler is called.
         if self.canCloseShape() and len(self.current) > 3:
@@ -526,13 +527,13 @@ class Canvas(QtWidgets.QWidget):
                     return
         self.deSelectShape()
 
-    def calculateOffsets(self, shape, point):
+    def calculateOffsets(self, shape: Shape, point):
         rect = shape.boundingRect()
         x1 = rect.x() - point.x()
         y1 = rect.y() - point.y()
         x2 = (rect.x() + rect.width() - 1) - point.x()
         y2 = (rect.y() + rect.height() - 1) - point.y()
-        self.offsets = QtCore.QPoint(x1, y1), QtCore.QPoint(x2, y2)
+        self.offsets = QtCore.QPointF(x1, y1), QtCore.QPointF(x2, y2)
 
     def boundedMoveVertex(self, pos):
         index, shape = self.hVertex, self.hShape
@@ -541,15 +542,15 @@ class Canvas(QtWidgets.QWidget):
             pos = self.intersectionPoint(point, pos)
         shape.moveVertexBy(index, pos - point)
 
-    def boundedMoveShapes(self, shapes, pos):
+    def boundedMoveShapes(self, shapes: list[Shape], pos):
         if self.outOfPixmap(pos):
             return False  # No need to move
         o1 = pos + self.offsets[0]
         if self.outOfPixmap(o1):
-            pos -= QtCore.QPoint(min(0, o1.x()), min(0, o1.y()))
+            pos -= QtCore.QPointF(min(0, o1.x()), min(0, o1.y()))
         o2 = pos + self.offsets[1]
         if self.outOfPixmap(o2):
-            pos += QtCore.QPoint(min(0, self.pixmap.width() - o2.x()),
+            pos += QtCore.QPointF(min(0, self.pixmap.width() - o2.x()),
                                  min(0, self.pixmap.height() - o2.y()))
         # XXX: The next line tracks the new position of the cursor
         # relative to the shape, but also results in making it
@@ -592,8 +593,8 @@ class Canvas(QtWidgets.QWidget):
         # Try to move in one direction, and if it fails in another.
         # Give up if both fail.
         point = shapes[0][0]
-        offset = QtCore.QPoint(2.0, 2.0)
-        self.offsets = QtCore.QPoint(), QtCore.QPoint()
+        offset = QtCore.QPointF(2, 2)
+        self.offsets = QtCore.QPointF(), QtCore.QPointF()
         self.prevPoint = point
         if not self.boundedMoveShapes(shapes, point - offset):
             self.boundedMoveShapes(shapes, point + offset)
@@ -606,7 +607,6 @@ class Canvas(QtWidgets.QWidget):
         p = self._painter
         p.begin(self)
         p.setRenderHint(QtGui.QPainter.Antialiasing)
-        p.setRenderHint(QtGui.QPainter.HighQualityAntialiasing)
         p.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
 
         p.scale(self.scale, self.scale)
@@ -635,7 +635,7 @@ class Canvas(QtWidgets.QWidget):
                         x = sum(x_list) / len(x_list) - text_size / 2
                         y = max(y_list)
                         # Display labels.
-                        label_point = QtCore.QPoint(int(x), int(y))
+                        label_point = QtCore.QPointF(x, y)
                         p.setFont(font)
                         p.setPen(shape.label_color)
                         for s in strings:
@@ -663,7 +663,7 @@ class Canvas(QtWidgets.QWidget):
 
         p.end()
 
-    def transformPos(self, point):
+    def transformPos(self, point: QtCore.QPointF):
         """Convert from widget-logical coordinates to painter-logical ones."""
         return point / self.scale - self.offsetToCenter()
 
@@ -674,7 +674,7 @@ class Canvas(QtWidgets.QWidget):
         aw, ah = area.width(), area.height()
         x = (aw - w) / (2 * s) if aw > w else 0
         y = (ah - h) / (2 * s) if ah > h else 0
-        return QtCore.QPoint(x, y)
+        return QtCore.QPointF(x, y)
 
     def outOfPixmap(self, p):
         w, h = self.pixmap.width(), self.pixmap.height()
@@ -716,10 +716,10 @@ class Canvas(QtWidgets.QWidget):
         if (x, y) == (x1, y1):
             # Handle cases where previous point is on one of the edges.
             if x3 == x4:
-                return QtCore.QPoint(x3, min(max(0, y2), max(y3, y4)))
+                return QtCore.QPointF(x3, min(max(0, y2), max(y3, y4)))
             else:  # y3 == y4
-                return QtCore.QPoint(min(max(0, x2), max(x3, x4)), y3)
-        return QtCore.QPoint(x, y)
+                return QtCore.QPointF(min(max(0, x2), max(x3, x4)), y3)
+        return QtCore.QPointF(x, y)
 
     def intersectingEdges(self, point1, point2, points):
         """Find intersecting edges.
@@ -746,8 +746,8 @@ class Canvas(QtWidgets.QWidget):
             if 0 <= ua <= 1 and 0 <= ub <= 1:
                 x = x1 + ua * (x2 - x1)
                 y = y1 + ua * (y2 - y1)
-                m = QtCore.QPoint((x3 + x4) / 2, (y3 + y4) / 2)
-                d = distance(m - QtCore.QPoint(x2, y2))
+                m = QtCore.QPointF((x3 + x4) / 2, (y3 + y4) / 2)
+                d = distance(m - QtCore.QPointF(x2, y2))
                 yield d, i, (x, y)
 
     # These two, along with a call to adjustSize are required for the
@@ -760,18 +760,18 @@ class Canvas(QtWidgets.QWidget):
             return self.scale * self.pixmap.size()
         return super(Canvas, self).minimumSizeHint()
 
-    def wheelEvent(self, ev):
+    def wheelEvent(self, ev: QtGui.QWheelEvent):
         mods = ev.modifiers()
         delta = ev.angleDelta()
-        if QtCore.Qt.AltModifier == int(mods):
+        if QtCore.Qt.AltModifier == mods:
             self.fileOpenRequest.emit(delta.x())
-        elif QtCore.Qt.ControlModifier == int(mods):
+        elif QtCore.Qt.ControlModifier == mods:
             self.zoomRequest.emit(delta.y(), ev.pos())
         else:
-            if QtCore.Qt.ShiftModifier == int(mods):
-                self.scrollRequest.emit(delta.y(), QtCore.Qt.Horizontal)
+            if QtCore.Qt.ShiftModifier == mods:
+                self.scrollRequest.emit(delta.y(), Qt.Orientation.Horizontal)
             else:
-                self.scrollRequest.emit(delta.y(), QtCore.Qt.Vertical)
+                self.scrollRequest.emit(delta.y(), Qt.Orientation.Vertical)
         ev.accept()
 
     def keyPressEvent(self, ev):

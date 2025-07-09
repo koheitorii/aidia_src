@@ -1,6 +1,5 @@
 
 import os
-import logging
 import cv2
 import glob
 import numpy as np
@@ -8,25 +7,21 @@ import matplotlib.pyplot as plt
 from onnxruntime import InferenceSession
 from qtpy import QtCore, QtWidgets, QtGui
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-import tensorflow as tf
-
 from aidia import qt
 from aidia import utils
 from aidia import aidia_logger
 from aidia import HOME_DIR, CLS, DET, SEG, AI_DIR_NAME
+from aidia import LabelStyle
 from aidia.ai.config import AIConfig
 from aidia.ai.dataset import Dataset
 from aidia.ai.det import DetectionModel
-from aidia.ai.models.yolov4.yolov4_utils import postprocess_boxes, nms
-from aidia.ai.models.yolov4.yolov4_config import YOLO_Config
+# from aidia.ai.models.yolov4.yolov4_utils import postprocess_boxes, nms
+# from aidia.ai.models.yolov4.yolov4_config import YOLO_Config
 from aidia.ai.seg import SegmentationModel
 from aidia.widgets import ImageWidget
 from aidia.widgets import CopyDataDialog
 from aidia import image
 
-tf.get_logger().setLevel('ERROR')
-logging.getLogger('tensorflow').setLevel(logging.ERROR)
 
 
 class AIEvalDialog(QtWidgets.QDialog):
@@ -169,7 +164,7 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         self.text_dataset.setAlignment(QtCore.Qt.AlignLeading)
         self._dataset_layout.addWidget(self.text_dataset)
 
-        self.image_widget2 = ImageWidget(self, self._plt2img2())
+        self.image_widget2 = ImageWidget(self, self._plt2img())
         self._dataset_layout.addWidget(self.image_widget2)
 
         ### add preditcs images ###
@@ -271,12 +266,8 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         if self.ai.isRunning():
             self.disable_all()
 
-    def _plt2img2(self):
-        self.fig.canvas.draw()
-        data = self.fig.canvas.tostring_rgb()
-        w, h = self.fig.canvas.get_width_height()
-        c = len(data) // (w * h)
-        return np.frombuffer(data, dtype=np.uint8).reshape(h, w, c)
+    def _plt2img(self):
+        return image.fig2img(self.fig)
     
     def get_log_dirpath(self, name):
         return os.path.join(self.dataset_dir, AI_DIR_NAME, name)
@@ -363,7 +354,7 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
             # autopct="%1.1f%%",
             wedgeprops={'linewidth': 1, 'edgecolor':"white"},
             textprops={'color': "black", 'fontsize': 16})
-        self.image_widget2.loadPixmap(self._plt2img2())
+        self.image_widget2.loadPixmap(self._plt2img())
 
         # write dataset information
         with open(os.path.join(self.log_dir, "dataset_info.txt"), mode="w", encoding="utf-8") as f:
@@ -425,11 +416,11 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
             self.left_row += h
 
     def _set_error(self, tag:QtWidgets.QLabel):
-        tag.setStyleSheet("QLabel{ color: red; }")
+        tag.setStyleSheet(LabelStyle.ERROR)
         self.error_flags[tag.text()] = 1
     
     def _set_ok(self, tag:QtWidgets.QLabel):
-        tag.setStyleSheet("QLabel{ color: black; }")
+        tag.setStyleSheet(LabelStyle.DEFAULT)
         self.error_flags[tag.text()] = 0
                 
     def reset_state(self):
@@ -760,9 +751,6 @@ class AIEvalThread(QtCore.QThread):
             # update progress bar
             self.progressValue.emit(int(i / n * 100))
         self.progressValue.emit(0)
-
-        self.notifyMessage.emit(self.tr("Convert model to ONNX..."))
-        model.convert2onnx()
     
         self.notifyMessage.emit(self.tr("Evaluating..."))
         try:
@@ -772,6 +760,11 @@ class AIEvalThread(QtCore.QThread):
             aidia_logger.error(e, exc_info=True)
             return
         self.resultsList.emit(results)
+
+        self.notifyMessage.emit(self.tr("Convert model to ONNX..."))
+        if not model.convert2onnx():
+            self.notifyMessage.emit(self.tr("Failed to convert model to ONNX."))
+            return
 
         self.notifyMessage.emit(self.tr("Done"))
 
@@ -857,15 +850,16 @@ class AIPredThread(QtCore.QThread):
         self.notifyMessage.emit(self.tr("Saved result images to {}").format(savedir))
     
     def yolo_postprocessing(self, img, result):
-        is_tiny = True if self.config.MODEL.split("-")[-1] == "tiny" else False
-        if is_tiny:
-            _, pred_mbbox, _, pred_lbbox = result
-        else:
-            _, pred_sbbox, _, pred_mbbox, _, pred_lbbox = result
+        # is_tiny = True if self.config.MODEL.split("-")[-1] == "tiny" else False
+        # if is_tiny:
+        #     _, pred_mbbox, _, pred_lbbox = result
+        # else:
+        #     _, pred_sbbox, _, pred_mbbox, _, pred_lbbox = result
     
-        pred_bbox = np.concatenate([np.reshape(pred_sbbox, (-1, 5 + 3)),
-                                    np.reshape(pred_mbbox, (-1, 5 + 3)),
-                                    np.reshape(pred_lbbox, (-1, 5 + 3))], axis=0)
-        bboxes = postprocess_boxes(pred_bbox, img.shape[:2], self.config.INPUT_SIZE, YOLO_Config().SCORE_THRESHOLD)
-        bboxes = nms(bboxes, YOLO_Config().IOU_THRESHOLD)
-        return bboxes
+        # pred_bbox = np.concatenate([np.reshape(pred_sbbox, (-1, 5 + 3)),
+        #                             np.reshape(pred_mbbox, (-1, 5 + 3)),
+        #                             np.reshape(pred_lbbox, (-1, 5 + 3))], axis=0)
+        # bboxes = postprocess_boxes(pred_bbox, img.shape[:2], self.config.INPUT_SIZE, YOLO_Config().SCORE_THRESHOLD)
+        # bboxes = nms(bboxes, YOLO_Config().IOU_THRESHOLD)
+        # return bboxes
+        return

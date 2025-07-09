@@ -5,7 +5,6 @@ from qtpy.QtGui import QPalette
 from qtpy import QtWidgets
 from qtpy.QtWidgets import QStyle
 
-
 # https://stackoverflow.com/a/2039745/4158863
 class HTMLDelegate(QtWidgets.QStyledItemDelegate):
     def __init__(self, parent=None):
@@ -26,6 +25,13 @@ class HTMLDelegate(QtWidgets.QStyledItemDelegate):
             if options.widget is None
             else options.widget.style()
         )
+
+        if options.state & QStyle.State_Selected:
+            options.palette.setColor(
+                QPalette.Text,
+                options.palette.color(QPalette.Active, QPalette.HighlightedText),
+            )
+
         style.drawControl(QStyle.CE_ItemViewItem, options, painter)
 
         ctx = QtGui.QAbstractTextDocumentLayout.PaintContext()
@@ -37,6 +43,7 @@ class HTMLDelegate(QtWidgets.QStyledItemDelegate):
                     QPalette.Active, QPalette.HighlightedText
                 ),
             )
+            painter.fillRect(option.rect, option.palette.highlight())
         else:
             ctx.palette.setColor(
                 QPalette.Text,
@@ -62,8 +69,8 @@ class HTMLDelegate(QtWidgets.QStyledItemDelegate):
     def sizeHint(self, option, index):
         thefuckyourshitup_constant = 4
         return QtCore.QSize(
-            self.doc.idealWidth(),
-            self.doc.size().height() - thefuckyourshitup_constant,
+            int(self.doc.idealWidth()),
+            int(self.doc.size().height() - thefuckyourshitup_constant),
         )
 
 

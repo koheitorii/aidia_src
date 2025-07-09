@@ -37,7 +37,6 @@ class ImageWidget(QtWidgets.QWidget):
             self.pixmap.fill()
         else:
             p.setRenderHint(QtGui.QPainter.Antialiasing)
-            p.setRenderHint(QtGui.QPainter.HighQualityAntialiasing)
             p.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
 
             img_w = self.pixmap.width()

@@ -34,8 +34,8 @@ e.g. apple_banana_orange'''))
 
         # accept and reject button
         bb = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel, QtCore.Qt.Horizontal, self)
-        bb.button(bb.Ok).setIcon(qt.newIcon('done'))
-        bb.button(bb.Cancel).setIcon(qt.newIcon('undo'))
+        bb.button(bb.Ok).setIcon(qt.new_icon('done'))
+        bb.button(bb.Cancel).setIcon(qt.new_icon('undo'))
         bb.accepted.connect(self.validate)
         bb.rejected.connect(self.reject)
         layout.addWidget(bb)

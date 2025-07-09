@@ -1,10 +1,12 @@
 import os
-import tensorflow as tf
 import numpy as np
 import glob
-import random
-import imgaug
-import tf2onnx
+
+import keras
+
+import torch
+from torch.utils.data import Dataset as TorchDataset, DataLoader
+
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 
 import matplotlib
@@ -26,11 +28,6 @@ class SegmentationModel(object):
         self.dataset = None
         self.model = None
 
-        random.seed(self.config.SEED)
-        np.random.seed(self.config.SEED)
-        tf.random.set_seed(self.config.SEED)
-        imgaug.seed(self.config.SEED)
-
     def set_config(self, config):
         self.config = config
 
@@ -42,14 +39,70 @@ class SegmentationModel(object):
     
     def build_model(self, mode, weights_path=None):
         assert mode in ["train", "test"]
-        self.model = UNet(self.config.num_classes)
 
-        input_shape = (None, self.config.INPUT_SIZE, self.config.INPUT_SIZE, 3)
-        self.model.build(input_shape=input_shape)
-        self.model.compute_output_shape(input_shape=input_shape)
+        # input layer
+        inputs = keras.Input(shape=(self.config.INPUT_SIZE, self.config.INPUT_SIZE, 3))
 
-        optim = tf.keras.optimizers.Adam(learning_rate=self.config.LEARNING_RATE)
-        self.model.compile(optimizer=optim, loss=tf.keras.losses.BinaryCrossentropy())
+        # data augmentation
+        if self.config.RANDOM_HFLIP:
+            x = keras.layers.RandomFlip("horizontal", seed=self.config.SEED)(inputs)
+        if self.config.RANDOM_VFLIP:
+            x = keras.layers.RandomFlip("vertical", seed=self.config.SEED)(x)
+        if self.config.RANDOM_ROTATE:
+            x = keras.layers.RandomRotation(
+                factor=self.config.RANDOM_ROTATE / 180.0 * np.pi,
+                seed=self.config.SEED
+            )(x)
+        if self.config.RANDOM_SCALE:
+            x = keras.layers.RandomZoom(
+                height_factor=self.config.RANDOM_SCALE,
+                width_factor=self.config.RANDOM_SCALE,
+                seed=self.config.SEED
+            )(x)
+        if self.config.RANDOM_SHIFT:
+            x = keras.layers.RandomTranslation(
+                height_factor=self.config.RANDOM_SHIFT / self.config.INPUT_SIZE,
+                width_factor=self.config.RANDOM_SHIFT / self.config.INPUT_SIZE,
+                seed=self.config.SEED
+            )(x)
+        if self.config.RANDOM_SHEAR:
+            x = keras.layers.RandomShear(
+                x_factor=self.config.RANDOM_SHEAR / self.config.INPUT_SIZE,
+                y_factor=self.config.RANDOM_SHEAR / self.config.INPUT_SIZE,
+                seed=self.config.SEED
+            )(x)
+        if self.config.RANDOM_BRIGHTNESS:
+            x = keras.layers.RandomBrightness(
+                factor=self.config.RANDOM_BRIGHTNESS / 255.0,
+                seed=self.config.SEED
+            )(x)
+        if self.config.RANDOM_CONTRAST:
+            x = keras.layers.RandomContrast(
+                factor=self.config.RANDOM_CONTRAST,
+                seed=self.config.SEED
+            )(x)
+        if self.config.RANDOM_BLUR:
+            x = keras.layers.RandomGaussianBlur(
+                sigma=(0.0, self.config.RANDOM_BLUR),
+                seed=self.config.SEED
+            )(x)
+        if self.config.RANDOM_NOISE:
+            x = keras.layers.GaussianNoise(
+                stddev=self.config.RANDOM_NOISE,
+                seed=self.config.SEED
+            )(x)
+
+        # rescaling
+        x = keras.layers.Rescaling(1.0 / 255.0)(inputs)
+        
+        # build UNet model
+        outputs = UNet(self.config.num_classes)(x)
+        self.model = keras.Model(inputs=inputs, outputs=outputs)
+
+        # compile model
+        if mode == 'train':
+            optim = keras.optimizers.Adam(learning_rate=self.config.LEARNING_RATE)
+            self.model.compile(optimizer=optim, loss=keras.losses.BinaryCrossentropy())
         
         if mode == "test":
             if weights_path and os.path.exists(weights_path):
@@ -61,54 +114,64 @@ class SegmentationModel(object):
 
 
     def train(self, custom_callbacks=None):
+        """Train the model with the dataset."""
         checkpoint_dir = utils.get_dirpath_with_mkdir(
             self.config.log_dir, "weights"
         )
-        if self.config.SAVE_BEST:
-            checkpoint_path = os.path.join(checkpoint_dir, "best_model.h5")
-        else:
-            checkpoint_path = os.path.join(checkpoint_dir, "{epoch:04d}.h5")
 
         callbacks = [
-            tf.keras.callbacks.ModelCheckpoint(
-                checkpoint_path,
-                monitor='val_loss',
-                save_best_only=self.config.SAVE_BEST,
-                save_weights_only=True,
-                period=1 if self.config.SAVE_BEST else 20, # TODO:user setting
-            ),
+            keras.callbacks.ModelCheckpoint(
+                    os.path.join(checkpoint_dir, "best.weights.h5"),
+                    save_weights_only=True,
+                    save_best_only=True,
+                )
         ]
+                
         if custom_callbacks:
             for c in custom_callbacks:
                 callbacks.append(c)
 
-        train_generator = SegDataGenerator(self.dataset, self.config, mode="train")
-        val_generator = SegDataGenerator(self.dataset, self.config, mode="val")
-
-        train_generator = tf.data.Dataset.from_generator(
-            train_generator.flow, (tf.float32, tf.float32),
-            output_shapes=(self.model.input_shape, self.model.output_shape)
-        )
-        val_generator = tf.data.Dataset.from_generator(
-            val_generator.flow, (tf.float32, tf.float32),
-            output_shapes=(self.model.input_shape, self.model.output_shape)
-        )
+        train_dataloader, val_dataloader = self.get_pytorch_dataloaders()
         
         self.model.fit(
-            train_generator,
+            train_dataloader,
             steps_per_epoch=self.dataset.train_steps,
             epochs=self.config.EPOCHS,
             verbose=0,
-            validation_data=val_generator,
+            validation_data=val_dataloader,
             validation_steps=self.dataset.val_steps,
             callbacks=callbacks
         )
 
         # save last model
-        if not self.config.SAVE_BEST:
-            checkpoint_path = os.path.join(checkpoint_dir, "last_model.h5")
-            self.model.save_weights(checkpoint_path)
+        checkpoint_path = os.path.join(checkpoint_dir, "last.weights.h5")
+        self.model.save_weights(checkpoint_path)
 
+    
+    def get_pytorch_dataloaders(self):
+        """Get PyTorch DataLoaders for training and validation."""
+        train_dataset = SegDataset(self.dataset, self.config, mode="train")
+        val_dataset = SegDataset(self.dataset, self.config, mode="val")
+        
+        train_loader = DataLoader(
+            train_dataset,
+            batch_size=self.config.total_batchsize,
+            shuffle=True,
+            num_workers=0,
+            pin_memory=torch.cuda.is_available(),
+            drop_last=True
+        )
+        
+        val_loader = DataLoader(
+            val_dataset,
+            batch_size=self.config.total_batchsize,
+            shuffle=False,
+            num_workers=0,
+            pin_memory=torch.cuda.is_available(),
+            drop_last=False
+        )
+        
+        return train_loader, val_loader
 
     def stop_training(self):
         self.model.stop_training = True
@@ -311,87 +374,69 @@ class SegmentationModel(object):
     
     def convert2onnx(self):
         onnx_path = os.path.join(self.config.log_dir, "model.onnx")
-        # if os.path.exists(onnx_path):
-            # return
-        tf2onnx.convert.from_keras(self.model, opset=11, output_path=onnx_path)
+        if os.path.exists(onnx_path):
+            return True
+        
+        # Convert Keras model to ONNX format
+        try:
+            self.model.export(onnx_path, format="onnx")
+        except Exception as e:
+            print(f"Failed to convert model to ONNX: {e}")
+            return False
+        return True
 
 
-class SegDataGenerator(object):
-    def __init__(self, dataset:Dataset, config:AIConfig, mode="train") -> None:
+class SegDataset(TorchDataset):
+    """PyTorch Dataset for segmentation tasks."""
+    
+    def __init__(self, dataset: Dataset, config: AIConfig, mode="train") -> None:
         assert mode in ["train", "val", "test"]
-
+        
         self.dataset = dataset
         self.config = config
         self.mode = mode
-
-        self.augseq = config.get_augseq()
-        self.images = []
-        self.targets = []
-
-        self.image_ids = self.dataset.train_ids
-        self.augmentation = True
-        if self.mode == "val":
+        
+        # Select appropriate image IDs based on mode
+        if mode == "train":
+            self.image_ids = self.dataset.train_ids
+        elif mode == "val":
             self.image_ids = self.dataset.val_ids
-            self.augmentation = False
-        if self.mode == "test":
+        else:  # test
             self.image_ids = self.dataset.test_ids
-            self.augmentation = False
-        np.random.shuffle(self.image_ids)
-
-    def reset(self):
-        self.images.clear()
-        self.targets.clear()
-
-    def flow(self):
-        b = 0
-        i = 0
-
-        while True:
-            image_id = self.image_ids[i]
-            i += 1
-            if i >= len(self.image_ids):
-                i = 0
-                np.random.shuffle(self.image_ids)
-
-            img = self.dataset.load_image(image_id)
-            masks = self.dataset.load_masks(image_id)
-
-            if self.augmentation:
-                img, masks = self.augment_image(img, masks)
-                # if self.config.RANDOM_BRIGHTNESS > 0:
-                    # img = self.random_brightness(img)
             
-            self.images.append(img)
-            self.targets.append(masks)
-
-            b += 1
-
-            if b >= self.config.total_batchsize:
-                inputs = np.asarray(self.images, dtype=np.float32)
-                inputs = inputs / 255.0
-                outputs = np.asarray(self.targets, dtype=np.float32)
-                yield inputs, outputs
-                b = 0
-                self.reset()
-
-
-    def _hook(self, images, augmenter, parents, default):
-        """Determines which augmenters to apply to masks."""
-        MASK_AUGMENTERS = ["Sequential", "SomeOf", "OneOf", "Sometimes",
-                       "Fliplr", "Flipud", "CropAndPad",
-                       "Affine", "PiecewiseAffine"]
-        return augmenter.__class__.__name__ in MASK_AUGMENTERS
+        # Shuffle training data
+        if mode == "train":
+            np.random.shuffle(self.image_ids)
+        
     
+    def __len__(self):
+        return len(self.image_ids)
+    
+    def __getitem__(self, idx):
+        image_id = self.image_ids[idx]
+        
+        # Load image and mask
+        img = self.dataset.load_image(image_id)
+        masks = self.dataset.load_masks(image_id)
+        
+        # Convert to torch tensors
+        img_tensor = torch.from_numpy(img.astype(np.float32))
+        mask_tensor = torch.from_numpy(masks.astype(np.float32))
+        
+        # Normalize image to [0, 1] range
+        # img_tensor = img_tensor / 255.0
+        
+        # Ensure correct dimensions (H, W, C) -> (C, H, W)
+        # if img_tensor.dim() == 3:
+        #     img_tensor = img_tensor.permute(2, 0, 1)
+        # if mask_tensor.dim() == 3:
+        #     mask_tensor = mask_tensor.permute(2, 0, 1)
+        
+        return img_tensor, mask_tensor
+    
+    def on_epoch_end(self):
+        """Called at the end of each epoch for training mode."""
+        if self.mode == "train":
+            np.random.shuffle(self.image_ids)
 
-    def augment_image(self, img, masks):
-        det = self.augseq.to_deterministic()
-        img = det.augment_image(img)
-        # only apply mask augmenters to masks
-        res = []
-        for class_id in range(masks.shape[2]):
-            m = masks[:, :, class_id]
-            m = det.augment_image(m, hooks=imgaug.HooksImages(activator=self._hook))
-            res.append(m)
-        res = np.stack(res, axis=2)
-        return img, res
 

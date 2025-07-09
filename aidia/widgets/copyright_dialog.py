@@ -2,6 +2,7 @@ from qtpy import QtCore
 from qtpy import QtWidgets
 
 from aidia.qt import head_text, hline
+from aidia import __version__
 
 
 class CopyrightDialog(QtWidgets.QDialog):
@@ -13,12 +14,12 @@ class CopyrightDialog(QtWidgets.QDialog):
                             | QtCore.Qt.WindowTitleHint
                             | QtCore.Qt.WindowCloseButtonHint)
         
-        aidia_text = QtWidgets.QLabel("Aidia")
+        aidia_text = QtWidgets.QLabel(f"Aidia {__version__}")
         aidia_text2 = QtWidgets.QLabel("AI Development and Image Annotation")
         aidia_text3 = QtWidgets.QLabel("Developed by Kohei Torii, Tokushima University, Japan")
 
-        text = QtWidgets.QLabel("Copyright (C) 2021 Kohei Torii.")
-        text2 = QtWidgets.QLabel("""Copyright (C) 2021 Kohei Torii.
+        text = QtWidgets.QLabel("Copyright (C) 2021-2025 Kohei Torii.")
+        text2 = QtWidgets.QLabel("""Copyright (C) 2021-2025 Kohei Torii.
 Copyright (C) 2016 Kentaro Wada.
 Copyright (C) 2011 Michael Pitidis, Hussein Abdulwahid.
 
@@ -43,7 +44,7 @@ along with Aidia. If not, see <http://www.gnu.org/licenses/>.""")
         layout.addWidget(hline())
         layout.addWidget(head_text("Copyright"))
         layout.addWidget(text)
-        layout.addWidget(head_text("License"))
+        layout.addWidget(head_text("License (GPLv3)"))
         layout.addWidget(text2)
 
         self.setLayout(layout)

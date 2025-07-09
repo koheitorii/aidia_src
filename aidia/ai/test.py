@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import tensorflow as tf
+import keras
 
 from aidia import APP_DIR
 from aidia.ai.config import AIConfig
@@ -15,23 +15,23 @@ class TestModel():
         self.config = config
 
     def build_dataset(self, mode=None):
-        # (train_images, train_labels), (test_images, test_labels) = tf.keras.datasets.mnist.load_data(path=os.path.join(APP_DIR, 'ai', 'data'))
+        # (train_images, train_labels), (test_images, test_labels) = keras.datasets.mnist.load_data(path=os.path.join(APP_DIR, 'ai', 'data'))
         with np.load(os.path.join(APP_DIR, 'ai', 'data', 'mnist.npz'), allow_pickle=True) as f:
             x_train, y_train = f["x_train"], f["y_train"]
             x_test, y_test = f["x_test"], f["y_test"]
         self.dataset = [(x_train, y_train), (x_test, y_test)]
 
     def build_model(self, mode=None):
-        self.model = tf.keras.Sequential([
-            tf.keras.layers.Flatten(input_shape=(28, 28)),
-            tf.keras.layers.Dense(128, activation='relu'),
-            tf.keras.layers.Dense(10)
+        self.model = keras.Sequential([
+            keras.layers.Flatten(input_shape=(28, 28)),
+            keras.layers.Dense(128, activation='relu'),
+            keras.layers.Dense(10)
         ])
 
-        optim = tf.keras.optimizers.Adam(learning_rate=self.config.LEARNING_RATE)
+        optim = keras.optimizers.Adam(learning_rate=self.config.LEARNING_RATE)
         self.model.compile(
             optimizer=optim,
-            loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+            loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
             metrics=['accuracy'])
 
     def train(self, custom_callbacks=None):

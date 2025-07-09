@@ -16,7 +16,7 @@ def main():
         # long_description_content_type="text/markdown",
         author="Kohei Torii",
         author_email="p1an0singer1995@gmail.com",
-        url="https://kottonhome.sakura.ne.jp/index.html",
+        url="https://trklibrary.com",
         install_requires=open("requirements.txt").read().splitlines(),
         # install_requires=get_install_requires(),
         license="GPLv3",
@@ -28,7 +28,7 @@ def main():
             "Natural Language :: English",
             "Operating System :: OS Independent",
             "Programming Language :: Python",
-            "Programming Language :: Python :: 3.9",
+            "Programming Language :: Python :: 3.13",
             "Programming Language :: Python :: 3 :: Only",
         ],
         package_data={"aidia": [
