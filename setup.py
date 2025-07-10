@@ -28,7 +28,7 @@ def main():
             "Natural Language :: English",
             "Operating System :: OS Independent",
             "Programming Language :: Python",
-            "Programming Language :: Python :: 3.13",
+            "Programming Language :: Python :: 3.12",
             "Programming Language :: Python :: 3 :: Only",
         ],
         package_data={"aidia": [

@@ -1,4 +1,4 @@
-numpy
+numpy==1.26.4
 opencv-python-headless
 PyQt6==6.9.1
 QtPy
@@ -15,4 +15,3 @@ scikit-learn
 keras
 onnxruntime==1.17.3
 onnx
-imgaug==0.3.0
