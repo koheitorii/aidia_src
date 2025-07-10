@@ -15,6 +15,7 @@ env/
 *.log
 *.egg-info
 *.spec
+*.pt
 
 version.txt
 build.py

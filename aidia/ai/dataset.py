@@ -21,7 +21,7 @@ class Dataset(object):
         self.config = config
         self.dataset_num = config.DATASET_NUM
 
-        self.yaml_path = os.path.join(config.log_dir, "dataset_for_yolo.yaml")
+        self.path_yaml = os.path.join(config.log_dir, "dataset_for_yolo.yaml")
 
         if self.config.TASK == CLS:
             self.target_shape = [
@@ -456,15 +456,18 @@ class Dataset(object):
             shape_type = a["shape_type"]
             if shape_type in [DrawMode.POLYGON, DrawMode.RECTANGLE]:
                 points = a["points"]
+                if len(points) < 2:
+                    continue
+                points = np.array(points, dtype=float)
                 label = a["label"]
-                if isinstance(label, list):
+                if isinstance(label, list): # pick first label
                     label = label[0]
                 class_id = self.class_names.index(label)
                 if shape_type == DrawMode.POLYGON:
-                    xmin = np.min(points)
-                    ymin = np.min(points)
-                    xmax = np.max(points)
-                    ymax = np.max(points)
+                    xmin = np.min(points[:, 0])
+                    ymin = np.min(points[:, 1])
+                    xmax = np.max(points[:, 0])
+                    ymax = np.max(points[:, 1])
                 else:
                     x1, y1 = points[0]
                     x2, y2 = points[1]
@@ -500,38 +503,69 @@ class Dataset(object):
         return bboxes
 
 
-    def write_dataset_for_ultra(self):
+    def write_dataset_for_yolo(self):
         """Write dataset information for YOLO Ultra format."""
+
+        # Check if the directory exists, if not, create it
+        if not os.path.exists(os.path.dirname(self.path_yaml)):
+            os.makedirs(os.path.dirname(self.path_yaml))
+        
+        path_train_images = os.path.join(self.config.log_dir, "dataset_yolo", "train", "images")
+        path_val_images = os.path.join(self.config.log_dir, "dataset_yolo", "val", "images")
+        path_test_images = os.path.join(self.config.log_dir, "dataset_yolo", "test", "images")
+        path_train_labels = os.path.join(self.config.log_dir, "dataset_yolo", "train", "labels")
+        path_val_labels = os.path.join(self.config.log_dir, "dataset_yolo", "val", "labels")
+        path_test_labels = os.path.join(self.config.log_dir, "dataset_yolo", "test", "labels")
+
+        # Create directories if they do not exist
+        os.makedirs(path_train_images, exist_ok=True)
+        os.makedirs(path_val_images, exist_ok=True)
+        os.makedirs(path_test_images, exist_ok=True)
+        os.makedirs(path_train_labels, exist_ok=True)
+        os.makedirs(path_val_labels, exist_ok=True)
+        os.makedirs(path_test_labels, exist_ok=True)
+
+        # Prepare data for YAML file
         data = {
             "path": self.config.dataset_dir,
-            "train": [],
-            "val": [],
-            "test": [],
+            "train": path_train_images,
+            "val": path_val_images,
+            "test": path_test_images,
             "nc": self.num_classes,
             "names": self.class_names
         }
 
         for i in self.train_ids:
-            img_path = self.image_info[i]["path"]
-            if not os.path.exists(img_path):
-                continue
-            data["train"].append(img_path)
+            img = self.load_image(i, is_resize=True)
+            cv2.imwrite(os.path.join(path_train_images, f"{i:06d}.png"), img)
+            bboxes = self.get_ultra_bboxes(i)
+            if bboxes.size > 0:
+                label_path = os.path.join(path_train_labels, f"{i:06d}.txt")
+                with open(label_path, 'w') as f:
+                    for bbox in bboxes:
+                        f.write(" ".join(map(str, bbox)) + "\n")
 
         for i in self.val_ids:
-            img_path = self.image_info[i]["path"]
-            if not os.path.exists(img_path):
-                continue
-            data["val"].append(img_path)
+            img = self.load_image(i, is_resize=True)
+            cv2.imwrite(os.path.join(path_val_images, f"{i:06d}.png"), img)
+            bboxes = self.get_ultra_bboxes(i)
+            if bboxes.size > 0:
+                label_path = os.path.join(path_val_labels, f"{i:06d}.txt")
+                with open(label_path, 'w') as f:
+                    for bbox in bboxes:
+                        f.write(" ".join(map(str, bbox)) + "\n")
 
         for i in self.test_ids:
-            img_path = self.image_info[i]["path"]
-            if not os.path.exists(img_path):
-                continue
-            data["test"].append(img_path)
+            img = self.load_image(i, is_resize=True)
+            cv2.imwrite(os.path.join(path_test_images, f"{i:06d}.png"), img)
+            bboxes = self.get_ultra_bboxes(i)
+            if bboxes.size > 0:
+                label_path = os.path.join(path_test_labels, f"{i:06d}.txt")
+                with open(label_path, 'w') as f:
+                    for bbox in bboxes:
+                        f.write(" ".join(map(str, bbox)) + "\n")
         
 
         # Write to YAML file
-        if not os.path.exists(os.path.dirname(self.yaml_path)):
-            os.makedirs(os.path.dirname(self.yaml_path))
-        with open(self.yaml_path, 'w', encoding='utf-8') as f:
+        with open(self.path_yaml, 'w', encoding='utf-8') as f:
             yaml.dump(data, f, allow_unicode=True)

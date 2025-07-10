@@ -40,6 +40,46 @@ torch.backends.cudnn.deterministic = True
 import keras
 
 
+class AIParamComponent(object):
+    """Base class for AI parameter components."""
+
+    def __init__(self, type, tag, tips, validate_func=None, items=None, unit=None):
+        super().__init__()
+
+        if type == "text":
+            self.input_field = QtWidgets.QLineEdit()
+            self.input_field.setPlaceholderText(tips)
+            self.input_field.setToolTip(tips)
+            self.input_field.setMinimumWidth(200)
+            self.input_field.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            if validate_func is not None:
+                self.input_field.textChanged.connect(validate_func)
+        elif type == "combo":
+            self.input_field = QtWidgets.QComboBox()
+            self.input_field.setToolTip(tips)
+            self.input_field.setMinimumWidth(200)
+            if items is not None:
+                self.input_field.addItems(items)
+            if validate_func is not None:
+                self.input_field.currentTextChanged.connect(validate_func)
+        elif type == "checkbox":
+            self.input_field = QtWidgets.QCheckBox()
+            self.input_field.setToolTip(tips)
+            if validate_func is not None:
+                self.input_field.stateChanged.connect(validate_func)
+        else:
+            return None
+
+        self.tag = QtWidgets.QLabel(tag)
+
+        if unit is not None:
+            self.unit = QtWidgets.QLabel(unit)
+            self.unit.setToolTip(tips)
+        
+        self.state = CLEAR
+
+
+
 
 class AITrainDialog(QtWidgets.QDialog):
 
@@ -97,40 +137,34 @@ class AITrainDialog(QtWidgets.QDialog):
         self.right_row += 1
 
         # task selection
-        self.tag_task = QtWidgets.QLabel(self.tr("Task"))
-        self.input_task = QtWidgets.QComboBox()
-        self.input_task.setToolTip(self.tr(
-            """Select the task.
-Detection uses YOLO and Segmentation uses U-Net.
-If MNIST Test are selected, the training test using MNIST dataset are performed and you can check the calculation performance."""
-        ))
-        # self.input_task.setMinimumWidth(200)
-        self.input_task.addItems([DET, SEG, MNIST])
         def _validate(text):
             self.config.TASK = text
             self.switch_enabled_by_task(text)
-        self.input_task.currentTextChanged.connect(_validate)
-        self._add_basic_params(self.tag_task, self.input_task)
+        self.param_task = AIParamComponent(
+            type="combo",
+            tag=self.tr("Task"),
+            tips=self.tr("""Select the task.
+Detection uses YOLO and Segmentation uses U-Net.
+If MNIST Test are selected, the training test using MNIST dataset are performed and you can check the calculation performance."""),
+            validate_func=_validate,
+            items=[DET, SEG, MNIST]
+        )
+        self.add_param_component(self.param_task)
 
         # model selection
-        self.tag_model = QtWidgets.QLabel(self.tr("Model"))
-        self.input_model = QtWidgets.QComboBox()
-        self.input_model.setMinimumWidth(200)
         def _validate(text):
             self.config.MODEL = text
-        self.input_model.currentTextChanged.connect(_validate)
-        self._add_basic_params(self.tag_model, self.input_model)
+        self.param_model = AIParamComponent(
+            type="combo",
+            tag=self.tr("Model"),
+            tips=self.tr("""Select the model architecture."""),
+            validate_func=_validate
+        )
+        self.param_model.input_field.setMinimumWidth(200)
+        self.add_param_component(self.param_model)
 
         # name
-        self.tag_name = QtWidgets.QLabel(self.tr("Name"))
-        self.input_name = self.create_input_field(200)
-        self.input_name.setToolTip(self.tr(
-            """Set the experiment name.
-You cannot set existed experiment names."""
-        ))
-        # self.input_name.setAlignment(Qt.AlignCenter)
         def _validate(text):
-            # check trained data in log directory
             p1 = os.path.join(self.dataset_dir, AI_DIR_NAME, text, "weights")
             p2 = os.path.join(self.dataset_dir, AI_DIR_NAME, text, "dataset.json")
             p3 = os.path.join(self.dataset_dir, AI_DIR_NAME, text, "config.json")
@@ -138,116 +172,123 @@ You cannot set existed experiment names."""
                 and not os.path.exists(p1)
                 and not os.path.exists(p2)
                 and not os.path.exists(p3)):
-                self._set_ok(self.tag_name)
+                self._set_ok(self.param_name.tag)
                 self.config.NAME = text
             else:
-                self._set_error(self.tag_name)
-        self.input_name.textChanged.connect(_validate)
-        self._add_basic_params(self.tag_name, self.input_name)
+                self._set_error(self.param_name.tag)
+        self.param_name = AIParamComponent(
+            type="text",
+            tag=self.tr("Name"),
+            tips=self.tr("""Set the experiment name.\nYou cannot set existed experiment names."""),
+            validate_func=_validate,
+        )
+        self.add_param_component(self.param_name)
 
         # dataset idx
-        self.tag_dataset_num = QtWidgets.QLabel(self.tr("Dataset"))
-        # self.input_dataset_num = self.create_input_field(50)
-        self.input_dataset_pattern = QtWidgets.QComboBox()
-        self.input_dataset_pattern.addItems(["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4", "Pattern 5"])
-        self.input_dataset_pattern.setToolTip(self.tr(
-            """Select the dataset pattern.
-Aidia splits the data into a 4:1 ratio (train:test) depend on the selected pattern.
-You can use this function for 5-fold cross-validation."""
-        ))
         def _validate(text):
             self.config.DATASET_NUM = int(text.split(" ")[1])
-        self.input_dataset_pattern.currentTextChanged.connect(_validate)
-        self._add_basic_params(self.tag_dataset_num, self.input_dataset_pattern)
+        self.param_dataset = AIParamComponent(
+            type="combo",
+            tag=self.tr("Dataset"),
+            tips=self.tr("""Select the dataset pattern.
+Aidia splits the data into a 4:1 ratio (train:test) depend on the selected pattern.
+You can use this function for 5-fold cross-validation."""),
+            validate_func=_validate,
+            items=["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4", "Pattern 5"]
+        )
+        self.add_param_component(self.param_dataset)
 
         # input size
-        self.tag_size = QtWidgets.QLabel(self.tr("Input Size"))
-        self.input_size = self.create_input_field(100)
-        self.input_size.setToolTip(self.tr(
-            """Set the size of input images on a side.
-If you set 256, input images are resized to (256, 256)."""
-        ))
         def _validate(text):
             if text.isdigit() and 32 <= int(text) <= 2048 and int(text) % 32 == 0:
-                self._set_ok(self.tag_size)
+                self._set_ok(self.param_size.tag)
                 self.config.INPUT_SIZE = int(text)
             else:
-                self._set_error(self.tag_size)
-        self.input_size.textChanged.connect(_validate)
-        self._add_basic_params(self.tag_size, self.input_size)
+                self._set_error(self.param_size.tag)
+        self.param_size = AIParamComponent(
+            type="text",
+            tag=self.tr("Input Size"),
+            tips=self.tr("""Set the size of input images on a side.
+If you set 256, input images are resized to (256, 256)."""),
+            validate_func=_validate,
+        )
+        self.add_param_component(self.param_size)
 
         # epochs
-        self.tag_epochs = QtWidgets.QLabel(self.tr("Epochs"))
-        self.input_epochs = self.create_input_field(100)
-        self.input_epochs.setToolTip(self.tr(
-            """Set the epochs.
-If you set 100, all data are trained 100 times."""
-        ))
         def _validate(text):
             if text.isdigit() and 0 < int(text):
-                self._set_ok(self.tag_epochs)
+                self._set_ok(self.param_epochs.tag)
                 self.config.EPOCHS = int(text)
             else:
-                self._set_error(self.tag_epochs)
-        self.input_epochs.textChanged.connect(_validate)
-        self._add_basic_params(self.tag_epochs, self.input_epochs)
+                self._set_error(self.param_epochs.tag)
+        self.param_epochs = AIParamComponent(
+            type="text",
+            tag=self.tr("Epochs"),
+            tips=self.tr("""Set the epochs.
+If you set 100, all data are trained 100 times."""),
+            validate_func=_validate,
+        )
+        self.add_param_component(self.param_epochs)
 
         # batch size
-        self.tag_batchsize = QtWidgets.QLabel(self.tr("Batch Size"))
-        self.input_batchsize = self.create_input_field(100)
-        self.input_batchsize.setToolTip(self.tr(
-            """Set the batch size.
-If you set 8, 8 samples are trained per step."""
-        ))
         def _validate(text):
             if text.isdigit() and 0 < int(text) <= 256:
-                self._set_ok(self.tag_batchsize)
+                self._set_ok(self.param_batchsize.tag)
                 self.config.BATCH_SIZE = int(text)
             else:
-                self._set_error(self.tag_batchsize)
-        self.input_batchsize.textChanged.connect(_validate)
-        self._add_basic_params(self.tag_batchsize, self.input_batchsize)
+                self._set_error(self.param_batchsize.tag)
+        self.param_batchsize = AIParamComponent(
+            type="text",
+            tag=self.tr("Batch Size"),
+            tips=self.tr("""Set the batch size.
+If you set 8, 8 samples are trained per step."""),
+            validate_func=_validate,
+        )
+        self.add_param_component(self.param_batchsize)
 
         # learning rate
-        self.tag_lr = QtWidgets.QLabel(self.tr("Learning Rate"))
-        self.input_lr = self.create_input_field(100)
-        self.input_lr.setToolTip(self.tr(
-            """Set the initial learning rate of Adam.
-The value is 0.001 by default.
-Other parameters of Adam uses the default values of Keras 3."""
-        ))
         def _validate(text):
             if text.replace(".", "", 1).isdigit() and 0.0 < float(text) < 1.0:
-                self._set_ok(self.tag_lr)
+                self._set_ok(self.param_lr.tag)
                 self.config.LEARNING_RATE = float(text)
             else:
-                self._set_error(self.tag_lr)
-        self.input_lr.textChanged.connect(_validate)
-        self._add_basic_params(self.tag_lr, self.input_lr)
+                self._set_error(self.param_lr.tag)
+        self.param_lr = AIParamComponent(
+            type="text",
+            tag=self.tr("Learning Rate"),
+            tips=self.tr("""Set the initial learning rate of Adam.
+The value is 0.001 by default.
+Other parameters of Adam uses the default values of Keras 3."""),
+            validate_func=_validate,
+        )
+        self.add_param_component(self.param_lr)
 
         # label definition
-        self.tag_labels = QtWidgets.QLabel(self.tr("Label Definition"))
-        self.input_labels = QtWidgets.QTextEdit()
-        self.input_labels.setToolTip(self.tr(
-            """Set target labels.
-The labels are separated with line breaks."""))
-        # self.input_labels.setMinimumHeight(100)
         def _validate():
-            text = self.input_labels.toPlainText()
+            text = self.param_labels.input_field.toPlainText()
             text = text.strip().replace(" ", "")
             if len(text) == 0:
-                self._set_error(self.tag_labels)
+                self._set_error(self.param_labels.tag)
                 return
             parsed = text.split("\n")
             res = [p for p in parsed if p != ""]
             res = list(dict.fromkeys(res))   # delete duplicates
             if utils.is_full_width(text):  # error if the text includes 2-bytes codes.
-                self._set_error(self.tag_labels)
+                self._set_error(self.param_labels.tag)
             else:
-                self._set_ok(self.tag_labels)
+                self._set_ok(self.param_labels.tag)
                 self.config.LABELS = res
-        self.input_labels.textChanged.connect(_validate)
-        self._add_basic_params(self.tag_labels, self.input_labels, right=True, custom_size=(4, 1))
+        self.param_labels = AIParamComponent(
+            type="text",
+            tag=self.tr("Label Definition"),
+            tips=self.tr("""Set target labels.
+The labels are separated with line breaks."""),
+            validate_func=_validate,
+        )
+        self.param_labels.input_field = QtWidgets.QTextEdit()
+        self.param_labels.input_field.setToolTip(self.param_labels.input_field.placeholderText())
+        self.param_labels.input_field.textChanged.connect(_validate)
+        self.add_param_component(self.param_labels, right=True, custom_size=(4, 1))
 
         # save best only
         # self.tag_is_savebest = QtWidgets.QLabel(self.tr("Save Only the Best Weights"))
@@ -262,16 +303,18 @@ The labels are separated with line breaks."""))
         # self._add_basic_params(self.tag_is_savebest, self.input_is_savebest, right=True, reverse=True)
 
         # early stopping
-        self.tag_is_earlystop = QtWidgets.QLabel(self.tr("Early Stopping"))
-        self.tag_is_earlystop.setToolTip(self.tr("""(BETA) Enable Early Stopping."""))
-        self.input_is_earlystop = QtWidgets.QCheckBox()
-        def _validate(state): # check:2, empty:0
-            if state == 2:
-                self.config.EARLY_STOPPING = True
-            else:
-                self.config.EARLY_STOPPING = False
-        self.input_is_earlystop.stateChanged.connect(_validate)
-        self._add_basic_params(self.tag_is_earlystop, self.input_is_earlystop, right=True, reverse=True)
+        # def _validate(state): # check:2, empty:0
+        #     if state == 2:
+        #         self.config.EARLY_STOPPING = True
+        #     else:
+        #         self.config.EARLY_STOPPING = False
+        # self.param_is_earlystop = AIParamComponent(
+        #     type="checkbox",
+        #     tag=self.tr("Early Stopping"),
+        #     tips=self.tr("""(BETA) Enable Early Stopping."""),
+        #     validate_func=_validate
+        # )
+        # self.add_param_component(self.param_is_earlystop, right=True, reverse=True)
 
         # use multiple gpu
         # self.tag_is_multi = QtWidgets.QLabel(self.tr("Use Multiple GPUs"))
@@ -286,22 +329,25 @@ The labels are separated with line breaks."""))
         # self._add_basic_params(self.tag_is_multi, self.input_is_multi, right=True, reverse=True)
 
         # train target select
-        self.tag_is_dir_split = QtWidgets.QLabel(self.tr("Separate Data by Directory"))
-        self.input_is_dir_split = QtWidgets.QCheckBox()
         def _validate(state): # check:2, empty:0
             if state == 2:
                 self.config.DIR_SPLIT = True
             else:
                 self.config.DIR_SPLIT = False
-        self.input_is_dir_split.stateChanged.connect(_validate)
-        self._add_basic_params(self.tag_is_dir_split, self.input_is_dir_split, right=True, reverse=True)
+        self.param_is_dir_split = AIParamComponent(
+            type="checkbox",
+            tag=self.tr("Separate Data by Directory"),
+            tips=self.tr("""Separate data by directories when training."""),
+            validate_func=_validate
+        )
+        self.add_param_component(self.param_is_dir_split, right=True, reverse=True)
 
 
         ### add augment params ###
         # title
-        text_augment = qt.head_text(self.tr("Data Augmentation"))
-        text_augment.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
-        self._augment_layout.addWidget(text_augment, 0, 0, 1, 3)
+        title_augment = qt.head_text(self.tr("Data Augmentation"))
+        title_augment.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
+        self._augment_layout.addWidget(title_augment, 0, 0, 1, 3)
         self.augment_row += 1
 
         # vertical flip
@@ -566,28 +612,28 @@ The labels are separated with line breaks."""))
         self.config.SUBMODE = is_submode
 
         # basic params
-        self.input_task.setCurrentText(self.config.TASK)
+        self.param_task.input_field.setCurrentText(self.config.TASK)
         self.switch_enabled_by_task(self.config.TASK)
-        self.input_model.setCurrentText(self.config.MODEL)
-        self.input_name.setText(self.config.NAME)
-        self.input_dataset_pattern.setCurrentText("Pattern " + str(self.config.DATASET_NUM))
-        self.input_size.setText(str(self.config.INPUT_SIZE))
-        self.input_epochs.setText(str(self.config.EPOCHS))
-        self.input_batchsize.setText(str(self.config.BATCH_SIZE))
-        self.input_lr.setText(str(self.config.LEARNING_RATE))
+        self.param_model.input_field.setCurrentText(self.config.MODEL)
+        self.param_name.input_field.setText(self.config.NAME)
+        self.param_dataset.input_field.setCurrentText("Pattern " + str(self.config.DATASET_NUM))
+        self.param_size.input_field.setText(str(self.config.INPUT_SIZE))
+        self.param_epochs.input_field.setText(str(self.config.EPOCHS))
+        self.param_batchsize.input_field.setText(str(self.config.BATCH_SIZE))
+        self.param_lr.input_field.setText(str(self.config.LEARNING_RATE))
 
         if data_labels:
-            self.input_labels.setText("\n".join(data_labels))
+            self.param_labels.input_field.setText("\n".join(data_labels))
         else:
-            self.input_labels.setText("\n".join(self.config.LABELS))
+            self.param_labels.input_field.setText("\n".join(self.config.LABELS))
         # if self.config.gpu_num < 2:
         #     self.input_is_multi.setEnabled(False)
         # self.input_is_multi.setChecked(self.config.USE_MULTI_GPUS)
         # self.input_is_savebest.setChecked(self.config.SAVE_BEST)
-        self.input_is_earlystop.setChecked(self.config.EARLY_STOPPING)
+        # self.param_is_earlystop.input_field.setChecked(self.config.EARLY_STOPPING)
         if not self.config.SUBMODE:
-            self.input_is_dir_split.setEnabled(False)
-        self.input_is_dir_split.setChecked(self.config.DIR_SPLIT)
+            self.param_is_dir_split.input_field.setEnabled(False)
+        self.param_is_dir_split.input_field.setChecked(self.config.DIR_SPLIT)
 
         # augment params
         self.input_is_vflip.setChecked(self.config.RANDOM_VFLIP)
@@ -620,7 +666,7 @@ The labels are separated with line breaks."""))
             self.text_status.setText(self.tr("Terminated training."))
             return
         
-        self._set_error(self.tag_name) # to avoid NAME duplication.
+        self._set_error(self.param_name.tag) # to avoid NAME duplication.
 
         # display elapsed time
         now = time.time()
@@ -651,22 +697,22 @@ The labels are separated with line breaks."""))
             raise NotImplementedError
         
         elif task in [DET, SEG]:
-            self.input_model.clear()
+            self.param_model.input_field.clear()
             if task == DET:
-                self.input_model.addItems(ModelTypes.DET_MODEL)
+                self.param_model.input_field.addItems(ModelTypes.DET_MODEL)
             elif task == SEG:
-                self.input_model.addItems(ModelTypes.SEG_MODEL)
+                self.param_model.input_field.addItems(ModelTypes.SEG_MODEL)
             self.enable_all()
 
         elif task == MNIST:
-            self.input_model.clear()
+            self.param_model.input_field.clear()
             self.disable_all()
             self.switch_enabled([
-                self.tag_name,
-                self.tag_batchsize,
-                self.tag_epochs,
-                self.tag_lr,
-                self.tag_task], True)
+                self.param_name.tag,
+                self.param_batchsize.tag,
+                self.param_epochs.tag,
+                self.param_lr.tag,
+                self.param_task.tag], True)
             self.button_train.setEnabled(True)
 
         else:
@@ -687,10 +733,9 @@ The labels are separated with line breaks."""))
             self.input_fields[i].setEnabled(enabled)
         # if enabled and self.config.gpu_num < 2:
         #     self.tag_is_multi.setStyleSheet(LabelStyle.DISABLED)
-        #     self.input_is_multi.setEnabled(False)
-        if enabled and not self.config.SUBMODE:
-            self.tag_is_dir_split.setStyleSheet(LabelStyle.DISABLED)
-            self.input_is_dir_split.setEnabled(False)
+        #     self.input_is_multi.setEnabled(False)            if enabled and not self.config.SUBMODE:
+            self.param_is_dir_split.tag.setStyleSheet(LabelStyle.DISABLED)
+            self.param_is_dir_split.input_field.setEnabled(False)
 
     def switch_global_params(self):
         # if self.config.gpu_num < 2:
@@ -700,11 +745,11 @@ The labels are separated with line breaks."""))
         #     self.tag_is_multi.setStyleSheet(LabelStyle.DEFAULT)
         #     self.input_is_multi.setEnabled(True)
         if not self.config.SUBMODE or self.config.TASK in [MNIST]:
-            self.tag_is_dir_split.setStyleSheet(LabelStyle.DISABLED)
-            self.input_is_dir_split.setEnabled(False)
+            self.param_is_dir_split.tag.setStyleSheet(LabelStyle.DISABLED)
+            self.param_is_dir_split.input_field.setEnabled(False)
         else:
-            self.tag_is_dir_split.setStyleSheet(LabelStyle.DEFAULT)
-            self.input_is_dir_split.setEnabled(True)
+            self.param_is_dir_split.tag.setStyleSheet(LabelStyle.DEFAULT)
+            self.param_is_dir_split.input_field.setEnabled(True)
     
     def enable_all(self):
         for x in self.input_fields:
@@ -738,13 +783,13 @@ The labels are separated with line breaks."""))
             # self.reset_state()
             self.switch_enabled_by_task(self.config.TASK)
 
-    def _add_basic_params(self, tag:QtWidgets.QLabel, widget, right=False, reverse=False, custom_size=None):
-        self.error_flags[tag.text()] = 0
-        self.tags.append(tag)
-        self.input_fields.append(widget)
+    def add_param_component(self, object:AIParamComponent, right=False, reverse=False, custom_size=None):
+        self.error_flags[object.tag.text()] = 0
+        self.tags.append(object.tag)
+        self.input_fields.append(object.input_field)
         row = self.left_row
         pos = [1, 2]
-        align = [Qt.AlignRight, Qt.AlignLeft]
+        align = [Qt.AlignmentFlag.AlignRight, Qt.AlignmentFlag.AlignLeft]
         h, w = (1, 1)
         if right:
             row = self.right_row
@@ -755,8 +800,8 @@ The labels are separated with line breaks."""))
         if custom_size:
             h = custom_size[0]
             w = custom_size[1]
-        self._layout.addWidget(tag, row, pos[0], h, w, alignment=align[0])
-        self._layout.addWidget(widget, row, pos[1], h, w, alignment=align[1])
+        self._layout.addWidget(object.tag, row, pos[0], h, w, alignment=align[0])
+        self._layout.addWidget(object.input_field, row, pos[1], h, w, alignment=align[1])
         if right:
             self.right_row += h
         else:
@@ -1062,15 +1107,81 @@ class AITrainThread(QtCore.QThread):
 
         self.notifyMessage.emit(self.tr("Preparing..."))
 
-        cb_getprocess = GetProgress(self)
-        self.cb_getprocess = cb_getprocess
+        # set callbacks
+        self.batch = 0
+        self.epoch = 0
+        self.loss = 0.0
+        
+        # set progress callback
+        if ModelTypes.is_ultralytics(self.config.MODEL):
+            # for ultralytics models, use custom callback
+            def on_train_batch_end(trainer):
+                """Callback function for training batch end."""
+                if trainer.tloss.nelement() > 1:
+                    loss = trainer.tloss.sum().item()
+                else:
+                    loss = trainer.tloss.item()
+                logs = {
+                    "batch": self.batch + 1,
+                    "loss": loss,
+                }
+                self.loss = loss
+                self.batch += 1
+                self.batchLogList.emit(logs)
+            
+            def on_val_end(validator):
+                """Callback function for validation batch end."""
+                if validator.loss.nelement() > 1:
+                    val_loss = validator.loss.sum().item()
+                else:
+                    val_loss = validator.loss.item()
+                logs = {
+                    "epoch": self.epoch + 1,
+                    "loss": self.loss,
+                    "val_loss": val_loss,
+                }
+                self.epoch += 1
+                self.batch = 0
+                self.epochLogList.emit(logs)
+       
+            callbacks = [on_train_batch_end, on_val_end]
 
-        if self.config.EARLY_STOPPING:
-            cb = [cb_getprocess, keras.callbacks.EarlyStopping(patience=10)] # TODO
         else:
-            cb = [cb_getprocess]
+            class GetProgress(keras.callbacks.Callback):
+                """Custom keras callback to get progress values while AI training."""
+                def __init__(self, widget: AITrainThread):
+                    super().__init__()
+
+                    self.widget = widget
+                    self.is_fitting = False
+
+                def on_train_batch_end(self, batch, logs=None):
+                    if logs is not None:
+                        logs["batch"] = batch + 1
+                        self.widget.batchLogList.emit(logs)
+                        if not self.is_fitting:
+                            self.is_fitting = True
+                            self.widget.fitStarted.emit(True)
+
+                def on_epoch_end(self, epoch, logs=None):
+                    if logs is not None:
+                        if np.isnan(logs.get("loss")) or np.isnan(logs.get("val_loss")):
+                            self.widget.model.stop_training()
+                            raise errors.LossGetNanError
+                        logs["epoch"] = epoch + 1
+                        self.widget.epochLogList.emit(logs)
+
+            progress_callback = GetProgress(self)
+            callbacks = [progress_callback]
+            self.cb_getprocess = progress_callback
+            
+        # if self.config.EARLY_STOPPING:
+        #     cb = [cb_getprocess, keras.callbacks.EarlyStopping(patience=10)]
+        # else:
+        #     cb = [cb_getprocess]
+
         try:
-            model.train(cb)
+            model.train(callbacks)
         # except tf.errors.ResourceExhaustedError as e:
         #     self.errorMessage.emit(self.tr("Memory error. Please reduce the input size or batch size."))
         #     aidia_logger.error(e, exc_info=True)
@@ -1096,26 +1207,3 @@ class AITrainThread(QtCore.QThread):
             model.dataset.save(p)
 
 
-class GetProgress(keras.callbacks.Callback):
-    """Custom keras callback to get progress values while AI training."""
-    def __init__(self, widget: AITrainThread):
-        super().__init__()
-
-        self.widget = widget
-        self.is_fitting = False
-
-    def on_train_batch_end(self, batch, logs=None):
-        if logs is not None:
-            logs["batch"] = batch + 1
-            self.widget.batchLogList.emit(logs)
-            if not self.is_fitting:
-                self.is_fitting = True
-                self.widget.fitStarted.emit(True)
-
-    def on_epoch_end(self, epoch, logs=None):
-        if logs is not None:
-            if np.isnan(logs.get("loss")) or np.isnan(logs.get("val_loss")):
-                self.widget.model.stop_training()
-                raise errors.LossGetNanError
-            logs["epoch"] = epoch + 1
-            self.widget.epochLogList.emit(logs)

@@ -25,7 +25,7 @@ class DetectionModel(object):
 
     def build_dataset(self):
         self.dataset = Dataset(self.config)
-        self.dataset.write_dataset_for_ultra()
+        self.dataset.write_dataset_for_yolo()
     
 
     def load_dataset(self):
@@ -37,7 +37,7 @@ class DetectionModel(object):
         assert mode in ["train", "test"]
 
         if mode == "train":
-            self.model = YOLO(None, task="detect")
+            self.model = YOLO("yolo11n.yaml", task="detect")
         elif mode == "test":
             self.model = YOLO(weights_path, task="detect")
         else:
@@ -45,58 +45,33 @@ class DetectionModel(object):
 
 
     def train(self, custom_callbacks=None):
-        checkpoint_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'weights')
+        """Train YOLO model."""
+        assert self.dataset is not None, "Dataset must be built or loaded before training."
+        assert self.model is not None, "Model must be built before training."
+
+        if custom_callbacks is not None:
+            # add custom callbacks to the model
+            self.model.add_callback("on_train_batch_end", custom_callbacks[0])
+            self.model.add_callback("on_val_end", custom_callbacks[1])
 
         self.model.train(
-            data=self.dataset.yaml_path,
+            data=self.dataset.path_yaml,
             epochs=self.config.EPOCHS,
             imgsz=self.config.INPUT_SIZE,
             batch=self.config.BATCH_SIZE,
-            device=0 if self.config.gpu_num >= 0 else "cpu",
+            lr0=self.config.LEARNING_RATE,
             project=self.config.log_dir,
-            name=self.config.NAME,
-            # save_period=1 if self.config.SAVE_BEST else 20,
-            # save_best=self.config.SAVE_BEST,
+            name="yolo11",
+            fliplr=0.5 if self.config.RANDOM_HFLIP else 0.0,
+            flipud=0.5 if self.config.RANDOM_VFLIP else 0.0,
+            degrees=self.config.RANDOM_ROTATE,
+            scale=self.config.RANDOM_SCALE,
+            translate=self.config.RANDOM_SHIFT / self.config.INPUT_SIZE,
+            shear=self.config.RANDOM_SHEAR,
         )
-        # if self.config.SAVE_BEST:
-        #     checkpoint_path = os.path.join(checkpoint_dir, "best_model.h5")
-        # else:
-        #     checkpoint_path = os.path.join(checkpoint_dir, "{epoch:04d}.h5")
-
-        # callbacks = [
-        #     keras.callbacks.ModelCheckpoint(
-        #         checkpoint_path,
-        #         monitor='val_loss',
-        #         save_best_only=self.config.SAVE_BEST,
-        #         save_weights_only=True,
-        #         period=1 if self.config.SAVE_BEST else 20,
-        #     ),
-        # ]
-        # if custom_callbacks:
-        #     for c in custom_callbacks:
-        #         callbacks.append(c)
-
-        # train_generator = YOLODataGenerator(self.dataset, self.config, mode="train")
-        # val_generator = YOLODataGenerator(self.dataset, self.config, mode="val")
-
-        # self.model.fit(
-        #     train_generator,
-        #     steps_per_epoch=self.dataset.train_steps,
-        #     epochs=self.config.EPOCHS,
-        #     verbose=0,
-        #     validation_data=val_generator,
-        #     validation_steps=self.dataset.val_steps,
-        #     callbacks=callbacks
-        # )
-
-        # save last model
-        # if not self.config.SAVE_BEST:
-        #     checkpoint_path = os.path.join(checkpoint_dir, "last_model.h5")
-        #     self.model.save_weights(checkpoint_path)
-
 
     def stop_training(self):
-        self.model.stop_training = True
+        pass
 
 
     def evaluate(self, cb_widget=None):

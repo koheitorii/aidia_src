@@ -10,6 +10,7 @@ PyYAML
 # for AI utils
 ultralytics
 matplotlib
+japanize-matplotlib
 scikit-learn
 keras
 torch

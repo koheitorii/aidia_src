@@ -63,10 +63,21 @@ S_EPSILON = "approx_epsilon"
 S_AREA_LIMIT = "area_limit"
 
 # model definition
-class ModelTypes:
+class ModelTypes(object):
     CLS_MODEL = ["EfficientNetv2-s"]
-    DET_MODEL = ['YOLO11']
+    DET_MODEL = ['ultralytics_YOLO11n']
     SEG_MODEL = ['U-Net']
+
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def is_ultralytics(model_name: str) -> bool:
+        """Check if the model is from Ultralytics."""
+        if model_name.startswith("ultralytics_"):
+            return True
+        return False
+
 
 CFONT = "Arial"
 CFONT_SIZE = 10
