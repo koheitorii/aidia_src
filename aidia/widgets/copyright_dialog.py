@@ -14,10 +14,6 @@ class CopyrightDialog(QtWidgets.QDialog):
                             | QtCore.Qt.WindowTitleHint
                             | QtCore.Qt.WindowCloseButtonHint)
         
-        aidia_text = QtWidgets.QLabel(f"Aidia {__version__}")
-        aidia_text2 = QtWidgets.QLabel("AI Development and Image Annotation")
-        aidia_text3 = QtWidgets.QLabel("Developed by Kohei Torii, Tokushima University, Japan")
-
         text = QtWidgets.QLabel("Copyright (C) 2021-2025 Kohei Torii.")
         text2 = QtWidgets.QLabel("""Copyright (C) 2021-2025 Kohei Torii.
 Copyright (C) 2016 Kentaro Wada.
@@ -38,14 +34,16 @@ along with Aidia. If not, see <http://www.gnu.org/licenses/>.""")
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(head_text("About"))
-        layout.addWidget(aidia_text, alignment=QtCore.Qt.AlignCenter)
-        layout.addWidget(aidia_text2, alignment=QtCore.Qt.AlignCenter)
-        layout.addWidget(aidia_text3, alignment=QtCore.Qt.AlignCenter)
+        layout.addWidget(QtWidgets.QLabel(f"Aidia {__version__}"), alignment=QtCore.Qt.AlignCenter)
+        layout.addWidget(QtWidgets.QLabel("Developed by Kohei Torii, Tokushima University, Japan"), alignment=QtCore.Qt.AlignCenter)
         layout.addWidget(hline())
         layout.addWidget(head_text("Copyright"))
         layout.addWidget(text)
         layout.addWidget(head_text("License (GPLv3)"))
         layout.addWidget(text2)
+        layout.addWidget(head_text("Thanks to"))
+        layout.addWidget(QtWidgets.QLabel("ultralytics, https://www.ultralytics.com/"))
+        layout.addWidget(QtWidgets.QLabel("ICOOON MONO, https://icooon-mono.com/"))
 
         self.setLayout(layout)
 

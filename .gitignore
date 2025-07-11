@@ -3,11 +3,12 @@ dist/
 build/
 .vscode/
 Output/
+signtool/
+.env/
+.env_lite/
+
 pyinstaller*
 .DS_Store
-signtool/
-aidia/icons/
-env/
 
 *.h5
 *.iss

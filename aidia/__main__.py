@@ -9,15 +9,17 @@ from qtpy import QtCore
 from aidia import __appname__, __version__
 from aidia import APP_DIR, HOME_DIR, CFONT, CFONT_SIZE
 from aidia.config import get_config
-from aidia.qt import new_icon
 
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
 
-    # splash
+    # Show splash screen
     splash_path = os.path.join(APP_DIR, 'icons', 'splash.png')
     pixmap = QtGui.QPixmap(splash_path)
+    if pixmap.isNull():
+        print("Error: Splash image not found at {}".format(splash_path))
+        sys.exit(1)
     splash = QtWidgets.QSplashScreen(pixmap)
     splash.show()
 
@@ -47,9 +49,6 @@ def main():
         translator_base.load("qtbase_ja_JP", QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.TranslationsPath))
         #translator.load(QtCore.QLocale.system().name(), '{}/translate'.format(APP_DIR))
         translator.load('ja_JP', os.path.join(APP_DIR, 'translate'))
-
-    # For high resolution display.
-    # QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 
     app.setApplicationName(__appname__)
     # app.setWindowIcon(new_icon('icon'))

@@ -10,7 +10,7 @@ os.environ["KERAS_BACKEND"] = "torch"
 LITE = False
 
 __appname__ = "Aidia" if not LITE else "Aidia-lite"
-__version__ = "1.4.1"
+__version__ = "2.0.0-beta" if not LITE else "2.0.0-beta-lite"
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 HOME_DIR = os.path.expanduser("~")
