@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import time
@@ -10,7 +9,8 @@ from matplotlib.ticker import MaxNLocator
 from qtpy import QtCore, QtWidgets, QtGui
 from qtpy.QtCore import Qt
 
-from aidia import CLS, DET, SEG, MNIST, CLEAR, ERROR, AI_DIR_NAME
+from aidia import CLS, DET, SEG, MNIST, CLEAR, ERROR
+from aidia import LOCAL_DATA_DIR_NAME, CONFIG_JSON, DATASET_JSON
 from aidia import ModelTypes
 from aidia import LabelStyle
 from aidia import aidia_logger
@@ -40,10 +40,10 @@ torch.backends.cudnn.deterministic = True
 import keras
 
 
-class AIParamComponent(object):
+class ParamComponent(object):
     """Base class for AI parameter components."""
 
-    def __init__(self, type, tag, tips, validate_func=None, items=None, unit=None):
+    def __init__(self, type, tag, tips, validate_func=None, items=None):
         super().__init__()
 
         if type == "text":
@@ -52,6 +52,13 @@ class AIParamComponent(object):
             self.input_field.setToolTip(tips)
             self.input_field.setMinimumWidth(200)
             self.input_field.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            if validate_func is not None:
+                self.input_field.textChanged.connect(validate_func)
+        elif type == "textbox":
+            self.input_field = QtWidgets.QTextEdit()
+            self.input_field.setPlaceholderText(tips)
+            self.input_field.setToolTip(tips)
+            self.input_field.setMinimumWidth(200)
             if validate_func is not None:
                 self.input_field.textChanged.connect(validate_func)
         elif type == "combo":
@@ -71,11 +78,6 @@ class AIParamComponent(object):
             return None
 
         self.tag = QtWidgets.QLabel(tag)
-
-        if unit is not None:
-            self.unit = QtWidgets.QLabel(unit)
-            self.unit.setToolTip(tips)
-        
         self.state = CLEAR
 
 
@@ -120,11 +122,8 @@ class AITrainDialog(QtWidgets.QDialog):
         self.fig2, self.ax_pie = plt.subplots(figsize=(6, 6))
         self.ax_pie.axis("off")
 
-        self.error_flags = {}
-        self.input_fields = []
-        self.tags = []
-        self.units = []
-        self.param_idx = 0
+        self.param_objects = {}
+
         self.left_row = 0
         self.right_row = 0
         self.augment_row = 0
@@ -140,7 +139,7 @@ class AITrainDialog(QtWidgets.QDialog):
         def _validate(text):
             self.config.TASK = text
             self.switch_enabled_by_task(text)
-        self.param_task = AIParamComponent(
+        self.param_task = ParamComponent(
             type="combo",
             tag=self.tr("Task"),
             tips=self.tr("""Select the task.
@@ -154,29 +153,19 @@ If MNIST Test are selected, the training test using MNIST dataset are performed 
         # model selection
         def _validate(text):
             self.config.MODEL = text
-        self.param_model = AIParamComponent(
+        self.param_model = ParamComponent(
             type="combo",
             tag=self.tr("Model"),
             tips=self.tr("""Select the model architecture."""),
             validate_func=_validate
         )
-        self.param_model.input_field.setMinimumWidth(200)
         self.add_param_component(self.param_model)
 
         # name
         def _validate(text):
-            p1 = os.path.join(self.dataset_dir, AI_DIR_NAME, text, "weights")
-            p2 = os.path.join(self.dataset_dir, AI_DIR_NAME, text, "dataset.json")
-            p3 = os.path.join(self.dataset_dir, AI_DIR_NAME, text, "config.json")
-            if (len(text)
-                and not os.path.exists(p1)
-                and not os.path.exists(p2)
-                and not os.path.exists(p3)):
-                self._set_ok(self.param_name.tag)
-                self.config.NAME = text
-            else:
-                self._set_error(self.param_name.tag)
-        self.param_name = AIParamComponent(
+            text = text.strip().replace(" ", "_")
+            self.config.NAME = text
+        self.param_name = ParamComponent(
             type="text",
             tag=self.tr("Name"),
             tips=self.tr("""Set the experiment name.\nYou cannot set existed experiment names."""),
@@ -187,7 +176,7 @@ If MNIST Test are selected, the training test using MNIST dataset are performed 
         # dataset idx
         def _validate(text):
             self.config.DATASET_NUM = int(text.split(" ")[1])
-        self.param_dataset = AIParamComponent(
+        self.param_dataset = ParamComponent(
             type="combo",
             tag=self.tr("Dataset"),
             tips=self.tr("""Select the dataset pattern.
@@ -201,11 +190,11 @@ You can use this function for 5-fold cross-validation."""),
         # input size
         def _validate(text):
             if text.isdigit() and 32 <= int(text) <= 2048 and int(text) % 32 == 0:
-                self._set_ok(self.param_size.tag)
+                self.set_ok(self.param_size)
                 self.config.INPUT_SIZE = int(text)
             else:
-                self._set_error(self.param_size.tag)
-        self.param_size = AIParamComponent(
+                self.set_error(self.param_size)
+        self.param_size = ParamComponent(
             type="text",
             tag=self.tr("Input Size"),
             tips=self.tr("""Set the size of input images on a side.
@@ -217,11 +206,11 @@ If you set 256, input images are resized to (256, 256)."""),
         # epochs
         def _validate(text):
             if text.isdigit() and 0 < int(text):
-                self._set_ok(self.param_epochs.tag)
+                self.set_ok(self.param_epochs)
                 self.config.EPOCHS = int(text)
             else:
-                self._set_error(self.param_epochs.tag)
-        self.param_epochs = AIParamComponent(
+                self.set_error(self.param_epochs)
+        self.param_epochs = ParamComponent(
             type="text",
             tag=self.tr("Epochs"),
             tips=self.tr("""Set the epochs.
@@ -233,11 +222,11 @@ If you set 100, all data are trained 100 times."""),
         # batch size
         def _validate(text):
             if text.isdigit() and 0 < int(text) <= 256:
-                self._set_ok(self.param_batchsize.tag)
+                self.set_ok(self.param_batchsize)
                 self.config.BATCH_SIZE = int(text)
             else:
-                self._set_error(self.param_batchsize.tag)
-        self.param_batchsize = AIParamComponent(
+                self.set_error(self.param_batchsize)
+        self.param_batchsize = ParamComponent(
             type="text",
             tag=self.tr("Batch Size"),
             tips=self.tr("""Set the batch size.
@@ -249,11 +238,11 @@ If you set 8, 8 samples are trained per step."""),
         # learning rate
         def _validate(text):
             if text.replace(".", "", 1).isdigit() and 0.0 < float(text) < 1.0:
-                self._set_ok(self.param_lr.tag)
+                self.set_ok(self.param_lr)
                 self.config.LEARNING_RATE = float(text)
             else:
-                self._set_error(self.param_lr.tag)
-        self.param_lr = AIParamComponent(
+                self.set_error(self.param_lr)
+        self.param_lr = ParamComponent(
             type="text",
             tag=self.tr("Learning Rate"),
             tips=self.tr("""Set the initial learning rate of Adam.
@@ -268,26 +257,23 @@ Other parameters of Adam uses the default values of Keras 3."""),
             text = self.param_labels.input_field.toPlainText()
             text = text.strip().replace(" ", "")
             if len(text) == 0:
-                self._set_error(self.param_labels.tag)
+                self.set_error(self.param_labels)
                 return
             parsed = text.split("\n")
             res = [p for p in parsed if p != ""]
             res = list(dict.fromkeys(res))   # delete duplicates
             if utils.is_full_width(text):  # error if the text includes 2-bytes codes.
-                self._set_error(self.param_labels.tag)
+                self.set_error(self.param_labels)
             else:
-                self._set_ok(self.param_labels.tag)
+                self.set_ok(self.param_labels)
                 self.config.LABELS = res
-        self.param_labels = AIParamComponent(
-            type="text",
+        self.param_labels = ParamComponent(
+            type="textbox",
             tag=self.tr("Label Definition"),
             tips=self.tr("""Set target labels.
 The labels are separated with line breaks."""),
             validate_func=_validate,
         )
-        self.param_labels.input_field = QtWidgets.QTextEdit()
-        self.param_labels.input_field.setToolTip(self.param_labels.input_field.placeholderText())
-        self.param_labels.input_field.textChanged.connect(_validate)
         self.add_param_component(self.param_labels, right=True, custom_size=(4, 1))
 
         # save best only
@@ -334,7 +320,7 @@ The labels are separated with line breaks."""),
                 self.config.DIR_SPLIT = True
             else:
                 self.config.DIR_SPLIT = False
-        self.param_is_dir_split = AIParamComponent(
+        self.param_is_dir_split = ParamComponent(
             type="checkbox",
             tag=self.tr("Separate Data by Directory"),
             tips=self.tr("""Separate data by directories when training."""),
@@ -351,170 +337,144 @@ The labels are separated with line breaks."""),
         self.augment_row += 1
 
         # vertical flip
-        self.tag_is_vflip = QtWidgets.QLabel(self.tr("Vertical Flip"))
-        self.input_is_vflip = QtWidgets.QCheckBox()
-        self.unit_vflip = QtWidgets.QLabel()
-        self.units.append(self.unit_vflip)
-        def _validate(state): # check:2, empty:0
+        def _validate_vflip(state): # check:2, empty:0
             if state == 2:
                 self.config.RANDOM_VFLIP = True
-                self.unit_vflip.setText(self.tr("Enabled"))
             else:
                 self.config.RANDOM_VFLIP = False
-                self.unit_vflip.setText(self.tr("Disabled"))
-        self.input_is_vflip.stateChanged.connect(_validate)
-        self._add_augment_params(self.tag_is_vflip, self.input_is_vflip, self.unit_vflip)
+        self.param_vflip = ParamComponent(
+            type="checkbox",
+            tag=self.tr("Vertical Flip"),
+            tips=self.tr("Enable random vertical flip."),
+            validate_func=_validate_vflip
+        )
+        self.add_augment_params(self.param_vflip)
 
         # horizontal flip
-        self.tag_is_hflip = QtWidgets.QLabel(self.tr("Horizontal Flip"))
-        self.input_is_hflip = QtWidgets.QCheckBox()
-        self.unit_hflip = QtWidgets.QLabel()
-        self.units.append(self.unit_hflip)
-        def _validate(state): # check:2, empty:0
+        def _validate_hflip(state): # check:2, empty:0
             if state == 2:
                 self.config.RANDOM_HFLIP = True
-                self.unit_hflip.setText(self.tr("Enabled"))
             else:
                 self.config.RANDOM_HFLIP = False
-                self.unit_hflip.setText(self.tr("Disabled"))
-        self.input_is_hflip.stateChanged.connect(_validate)
-        self._add_augment_params(self.tag_is_hflip, self.input_is_hflip, self.unit_hflip)
+        self.param_hflip = ParamComponent(
+            type="checkbox",
+            tag=self.tr("Horizontal Flip"),
+            tips=self.tr("Enable random horizontal flip."),
+            validate_func=_validate_hflip
+        )
+        self.add_augment_params(self.param_hflip)
 
         # rotation
-        self.tag_rotate = QtWidgets.QLabel(self.tr("Rotation"))
-        self.input_rotate = self.create_input_field(50)
-        self.unit_rotate = QtWidgets.QLabel()
-        self.units.append(self.unit_rotate)
-        def _validate(text):
+        def _validate_rotate(text):
             if text.isdigit() and 0 < int(text) < 90:
                 self.config.RANDOM_ROTATE = int(text)
-                self.unit_rotate.setText(self.tr("(-{} to +{} degree)").format(
-                    int(text), int(text)
-                ))
             else:
                 self.config.RANDOM_ROTATE = 0
-                self.unit_rotate.setText(self.tr("Disabled"))
-        self.input_rotate.textChanged.connect(_validate)
-        self._add_augment_params(self.tag_rotate, self.input_rotate, self.unit_rotate)
+        self.param_rotate = ParamComponent(
+            type="text",
+            tag=self.tr("Rotation"),
+            tips=self.tr("Set rotation angle range in degrees (0-90)."),
+            validate_func=_validate_rotate
+        )
+        self.add_augment_params(self.param_rotate)
 
-        # zoom
-        self.tag_scale = QtWidgets.QLabel(self.tr("Scale"))
-        self.input_scale = self.create_input_field(50)
-        self.unit_scale = QtWidgets.QLabel()
-        self.units.append(self.unit_scale)
-        def _validate(text):
+        # scale
+        def _validate_scale(text):
             if text.replace(".", "", 1).isdigit() and 0.0 < float(text) < 1.0:
                 self.config.RANDOM_SCALE = float(text)
-                self.unit_scale.setText(self.tr("({:.1f} to {:.1f} times)").format(
-                    1.0 - float(text), 1.0 + float(text)
-                ))
             else:
                 self.config.RANDOM_SCALE = 0.0
-                self.unit_scale.setText(self.tr("Disabled"))
-        self.input_scale.textChanged.connect(_validate)
-        self._add_augment_params(self.tag_scale, self.input_scale, self.unit_scale)
+        self.param_scale = ParamComponent(
+            type="text",
+            tag=self.tr("Scale"),
+            tips=self.tr("Set scale variation range (0.0-1.0)."),
+            validate_func=_validate_scale
+        )
+        self.add_augment_params(self.param_scale)
 
         # shift
-        self.tag_shift = QtWidgets.QLabel(self.tr("Shift"))
-        self.input_shift = self.create_input_field(50)
-        self.unit_shift = QtWidgets.QLabel()
-        self.units.append(self.unit_shift)
-        def _validate(text):
+        def _validate_shift(text):
             if text.isdigit() and 0 < int(text) < self.config.INPUT_SIZE:
                 self.config.RANDOM_SHIFT = int(text)
-                self.unit_shift.setText(self.tr("({} to +{} px)").format(
-                    - int(text), int(text)
-                ))
             else:
                 self.config.RANDOM_SHIFT = 0
-                self.unit_shift.setText(self.tr("Disabled"))
-        self.input_shift.textChanged.connect(_validate)
-        self._add_augment_params(self.tag_shift, self.input_shift, self.unit_shift)
+        self.param_shift = ParamComponent(
+            type="text",
+            tag=self.tr("Shift"),
+            tips=self.tr("Set shift range in pixels."),
+            validate_func=_validate_shift
+        )
+        self.add_augment_params(self.param_shift)
 
         # shear
-        self.tag_shear = QtWidgets.QLabel(self.tr("Shear"))
-        self.input_shear = self.create_input_field(50)
-        self.unit_shear = QtWidgets.QLabel()
-        self.units.append(self.unit_shear)
-        def _validate(text):
+        def _validate_shear(text):
             if text.isdigit() and 0 < int(text) < 30:
                 self.config.RANDOM_SHEAR = int(text)
-                self.unit_shear.setText(self.tr("(-{} to +{} degree)").format(
-                    int(text), int(text)
-                ))
             else:
                 self.config.RANDOM_SHEAR = 0
-                self.unit_shear.setText(self.tr("Disabled"))
-        self.input_shear.textChanged.connect(_validate)
-        self._add_augment_params(self.tag_shear, self.input_shear, self.unit_shear)
+        self.param_shear = ParamComponent(
+            type="text",
+            tag=self.tr("Shear"),
+            tips=self.tr("Set shear angle range in degrees (0-30)."),
+            validate_func=_validate_shear
+        )
+        self.add_augment_params(self.param_shear)
 
         # blur
-        self.tag_blur = QtWidgets.QLabel(self.tr("Blur"))
-        self.input_blur = self.create_input_field(50)
-        self.unit_blur = QtWidgets.QLabel()
-        self.units.append(self.unit_blur)
-        def _validate(text):
+        def _validate_blur(text):
             if text.replace(".", "", 1).isdigit() and 0.0 < float(text) < 20.0:
                 self.config.RANDOM_BLUR = float(text)
-                self.unit_blur.setText(self.tr("(std = 0.0 to {})").format(
-                    float(text)
-                ))
             else:
                 self.config.RANDOM_BLUR = 0.0
-                self.unit_blur.setText(self.tr("Disabled"))
-        self.input_blur.textChanged.connect(_validate)
-        self._add_augment_params(self.tag_blur, self.input_blur, self.unit_blur)
+        self.param_blur = ParamComponent(
+            type="text",
+            tag=self.tr("Blur"),
+            tips=self.tr("Set blur standard deviation (0.0-20.0)."),
+            validate_func=_validate_blur
+        )
+        self.add_augment_params(self.param_blur)
 
         # noise
-        self.tag_noise = QtWidgets.QLabel(self.tr("Noise"))
-        self.input_noise = self.create_input_field(50)
-        self.unit_noise = QtWidgets.QLabel()
-        self.units.append(self.unit_noise)
-        def _validate(text):
+        def _validate_noise(text):
             if text.replace(".", "", 1).isdigit() and 0.0 < float(text) < 1.0:
                 self.config.RANDOM_NOISE = float(text)
-                self.unit_noise.setText(self.tr("(std = {})").format(
-                    float(text)
-                ))
             else:
                 self.config.RANDOM_NOISE = 0.0
-                self.unit_noise.setText(self.tr("Disabled"))
-        self.input_noise.textChanged.connect(_validate)
-        self._add_augment_params(self.tag_noise, self.input_noise, self.unit_noise)
+        self.param_noise = ParamComponent(
+            type="text",
+            tag=self.tr("Noise"),
+            tips=self.tr("Set noise standard deviation (0.0-1.0)."),
+            validate_func=_validate_noise
+        )
+        self.add_augment_params(self.param_noise)
 
         # brightness
-        self.tag_brightness = QtWidgets.QLabel(self.tr("Brightness"))
-        self.input_brightness = self.create_input_field(50)
-        self.unit_brightness = QtWidgets.QLabel()
-        self.units.append(self.unit_brightness)
-        def _validate(text):
+        def _validate_brightness(text):
             if text.isdigit() and 0 < int(text) < 255:
                 self.config.RANDOM_BRIGHTNESS = int(text)
-                self.unit_brightness.setText(self.tr("({} to {})").format(
-                    - int(text), int(text)
-                ))
             else:
                 self.config.RANDOM_BRIGHTNESS = 0
-                self.unit_brightness.setText(self.tr("Disabled"))
-        self.input_brightness.textChanged.connect(_validate)
-        self._add_augment_params(self.tag_brightness, self.input_brightness, self.unit_brightness)
+        self.param_brightness = ParamComponent(
+            type="text",
+            tag=self.tr("Brightness"),
+            tips=self.tr("Set brightness adjustment range (0-255)."),
+            validate_func=_validate_brightness
+        )
+        self.add_augment_params(self.param_brightness)
 
         # contrast
-        self.tag_contrast = QtWidgets.QLabel(self.tr("Contrast"))
-        self.input_contrast = self.create_input_field(50)
-        self.unit_contrast = QtWidgets.QLabel()
-        self.units.append(self.unit_contrast)
-        def _validate(text):
+        def _validate_contrast(text):
             if text.replace(".", "", 1).isdigit() and 0.0 < float(text) < 1.0:
                 self.config.RANDOM_CONTRAST = float(text)
-                self.unit_contrast.setText(self.tr("({:.1f} to {:.1f} times)").format(
-                    1.0 - float(text), 1.0 + float(text)
-                ))
             else:
                 self.config.RANDOM_CONTRAST = 0.0
-                self.unit_contrast.setText(self.tr("Disabled"))
-        self.input_contrast.textChanged.connect(_validate)
-        self._add_augment_params(self.tag_contrast, self.input_contrast, self.unit_contrast)
+        self.param_contrast = ParamComponent(
+            type="text",
+            tag=self.tr("Contrast"),
+            tips=self.tr("Set contrast variation range (0.0-1.0)."),
+            validate_func=_validate_contrast
+        )
+        self.add_augment_params(self.param_contrast)
 
         ### add buttons ###
         # train button
@@ -597,7 +557,7 @@ The labels are separated with line breaks."""),
             self.tag_directory.setText(self.tr("Target Directory:\n{}").format(dataset_dir))
 
         # create data directory
-        data_dirpath = utils.get_dirpath_with_mkdir(dataset_dir, AI_DIR_NAME)
+        data_dirpath = utils.get_dirpath_with_mkdir(dataset_dir, LOCAL_DATA_DIR_NAME)
         # if not os.path.exists(os.path.join(dataset_dir, AI_DIR_NAME)):
             # os.mkdir(os.path.join(dataset_dir, AI_DIR_NAME))
 
@@ -636,19 +596,19 @@ The labels are separated with line breaks."""),
         self.param_is_dir_split.input_field.setChecked(self.config.DIR_SPLIT)
 
         # augment params
-        self.input_is_vflip.setChecked(self.config.RANDOM_VFLIP)
-        self.input_is_hflip.setChecked(self.config.RANDOM_HFLIP)
-        self.input_rotate.setText(str(self.config.RANDOM_ROTATE))
-        self.input_shift.setText(str(self.config.RANDOM_SHIFT))
-        self.input_scale.setText(str(self.config.RANDOM_SCALE))
-        self.input_shear.setText(str(self.config.RANDOM_SHEAR))
-        self.input_blur.setText(str(self.config.RANDOM_BLUR))
-        self.input_noise.setText(str(self.config.RANDOM_NOISE))
-        self.input_brightness.setText(str(self.config.RANDOM_BRIGHTNESS))
-        self.input_contrast.setText(str(self.config.RANDOM_CONTRAST))
+        self.param_vflip.input_field.setChecked(self.config.RANDOM_VFLIP)
+        self.param_hflip.input_field.setChecked(self.config.RANDOM_HFLIP)
+        self.param_rotate.input_field.setText(str(self.config.RANDOM_ROTATE))
+        self.param_shift.input_field.setText(str(self.config.RANDOM_SHIFT))
+        self.param_scale.input_field.setText(str(self.config.RANDOM_SCALE))
+        self.param_shear.input_field.setText(str(self.config.RANDOM_SHEAR))
+        self.param_blur.input_field.setText(str(self.config.RANDOM_BLUR))
+        self.param_noise.input_field.setText(str(self.config.RANDOM_NOISE))
+        self.param_brightness.input_field.setText(str(self.config.RANDOM_BRIGHTNESS))
+        self.param_contrast.input_field.setText(str(self.config.RANDOM_CONTRAST))
 
         self.exec_()
-        if os.path.exists(os.path.join(dataset_dir, AI_DIR_NAME)):
+        if os.path.exists(os.path.join(dataset_dir, LOCAL_DATA_DIR_NAME)):
             self.config.save(config_path)
     
     ### Callbacks ###
@@ -666,7 +626,7 @@ The labels are separated with line breaks."""),
             self.text_status.setText(self.tr("Terminated training."))
             return
         
-        self._set_error(self.param_name.tag) # to avoid NAME duplication.
+        self.set_error(self.param_name) # to avoid NAME duplication.
 
         # display elapsed time
         now = time.time()
@@ -708,11 +668,11 @@ The labels are separated with line breaks."""),
             self.param_model.input_field.clear()
             self.disable_all()
             self.switch_enabled([
-                self.param_name.tag,
-                self.param_batchsize.tag,
-                self.param_epochs.tag,
-                self.param_lr.tag,
-                self.param_task.tag], True)
+                self.param_name,
+                self.param_batchsize,
+                self.param_epochs,
+                self.param_lr,
+                self.param_task], True)
             self.button_train.setEnabled(True)
 
         else:
@@ -723,17 +683,17 @@ The labels are separated with line breaks."""),
         self.button_train.setEnabled(True)
         self.button_stop.setEnabled(False)
 
-    def switch_enabled(self, targets:list[QtWidgets.QLabel], enabled:bool):
-        for t in targets:
+    def switch_enabled(self, targets: list[ParamComponent], enabled:bool):
+        for obj in targets:
             if enabled:
-                t.setStyleSheet(LabelStyle.DEFAULT)
+                obj.tag.setStyleSheet(LabelStyle.DEFAULT)
             else:
-                t.setStyleSheet(LabelStyle.DISABLED)
-            i = self.tags.index(t)
-            self.input_fields[i].setEnabled(enabled)
+                obj.tag.setStyleSheet(LabelStyle.DISABLED)
+            obj.input_field.setEnabled(enabled)
         # if enabled and self.config.gpu_num < 2:
         #     self.tag_is_multi.setStyleSheet(LabelStyle.DISABLED)
-        #     self.input_is_multi.setEnabled(False)            if enabled and not self.config.SUBMODE:
+        #     self.input_is_multi.setEnabled(False)
+        if enabled and not self.config.SUBMODE:
             self.param_is_dir_split.tag.setStyleSheet(LabelStyle.DISABLED)
             self.param_is_dir_split.input_field.setEnabled(False)
 
@@ -752,24 +712,17 @@ The labels are separated with line breaks."""),
             self.param_is_dir_split.input_field.setEnabled(True)
     
     def enable_all(self):
-        for x in self.input_fields:
-            x.setEnabled(True)
-        for x in self.tags:
-            x.setStyleSheet(LabelStyle.DEFAULT)
-        for x in self.units:
-            x.setStyleSheet(LabelStyle.DEFAULT)
-        for i, v in enumerate(self.error_flags.values()):
-            if v == 1:
-                self.tags[i].setStyleSheet(LabelStyle.ERROR)
+        for obj in self.param_objects.values():
+            obj.input_field.setEnabled(True)
+            obj.tag.setStyleSheet(LabelStyle.DEFAULT)
+            if obj.state == ERROR:
+                obj.tag.setStyleSheet(LabelStyle.ERROR)
 
     
     def disable_all(self):
-        for x in self.input_fields:
-            x.setEnabled(False)
-        for x in self.tags:
-            x.setStyleSheet(LabelStyle.DISABLED)
-        for x in self.units:
-            x.setStyleSheet(LabelStyle.DISABLED)
+        for obj in self.param_objects.values():
+            obj.input_field.setEnabled(False)
+            obj.tag.setStyleSheet(LabelStyle.DISABLED)
         self.button_train.setEnabled(False)
 
     def closeEvent(self, event):
@@ -783,10 +736,8 @@ The labels are separated with line breaks."""),
             # self.reset_state()
             self.switch_enabled_by_task(self.config.TASK)
 
-    def add_param_component(self, object:AIParamComponent, right=False, reverse=False, custom_size=None):
-        self.error_flags[object.tag.text()] = 0
-        self.tags.append(object.tag)
-        self.input_fields.append(object.input_field)
+    def add_param_component(self, obj:ParamComponent, right=False, reverse=False, custom_size=None):
+        self.param_objects[obj.tag.text()] = obj
         row = self.left_row
         pos = [1, 2]
         align = [Qt.AlignmentFlag.AlignRight, Qt.AlignmentFlag.AlignLeft]
@@ -800,33 +751,44 @@ The labels are separated with line breaks."""),
         if custom_size:
             h = custom_size[0]
             w = custom_size[1]
-        self._layout.addWidget(object.tag, row, pos[0], h, w, alignment=align[0])
-        self._layout.addWidget(object.input_field, row, pos[1], h, w, alignment=align[1])
+        self._layout.addWidget(obj.tag, row, pos[0], h, w, alignment=align[0])
+        self._layout.addWidget(obj.input_field, row, pos[1], h, w, alignment=align[1])
         if right:
             self.right_row += h
         else:
             self.left_row += h
     
-    def _add_augment_params(self, tag, widget, unit=None):
-        self.error_flags[tag.text()] = 0
-        self.tags.append(tag)
-        self.input_fields.append(widget)
+    def add_augment_params(self, obj:ParamComponent):
+        self.param_objects[obj.tag.text()] = obj
         row = self.augment_row
-        pos = [0, 1, 2]
-        align = [Qt.AlignRight, Qt.AlignCenter, Qt.AlignLeft]
-        self._augment_layout.addWidget(tag, row, pos[0], alignment=align[0])
-        self._augment_layout.addWidget(widget, row, pos[1], alignment=align[1])
-        if unit is not None:
-            self._augment_layout.addWidget(unit, row, pos[2], alignment=align[2])
+        self._augment_layout.addWidget(obj.tag, row, 0, alignment=Qt.AlignmentFlag.AlignRight)
+        self._augment_layout.addWidget(obj.input_field, row, 1, alignment=Qt.AlignmentFlag.AlignCenter)
         self.augment_row += 1
 
-    def _set_error(self, tag:QtWidgets.QLabel):
-        tag.setStyleSheet(LabelStyle.ERROR)
-        self.error_flags[tag.text()] = ERROR
+    def switch_enabled(self, target_tags:list[QtWidgets.QLabel], enabled:bool):
+        for tag in target_tags:
+            tag_text = tag.text()
+            if tag_text in self.param_objects:
+                obj = self.param_objects[tag_text]
+                if enabled:
+                    obj.tag.setStyleSheet(LabelStyle.DEFAULT)
+                    obj.input_field.setEnabled(True)
+                else:
+                    obj.tag.setStyleSheet(LabelStyle.DISABLED)
+                    obj.input_field.setEnabled(False)
+        
+        # Handle special cases
+        if enabled and not self.config.SUBMODE:
+            self.param_is_dir_split.tag.setStyleSheet(LabelStyle.DISABLED)
+            self.param_is_dir_split.input_field.setEnabled(False)
 
-    def _set_ok(self, tag:QtWidgets.QLabel):
-        tag.setStyleSheet(LabelStyle.DEFAULT)
-        self.error_flags[tag.text()] = CLEAR
+    def set_error(self, obj: ParamComponent):
+        obj.tag.setStyleSheet(LabelStyle.ERROR)
+        obj.state = ERROR
+
+    def set_ok(self, obj: ParamComponent):
+        obj.tag.setStyleSheet(LabelStyle.DEFAULT)
+        obj.state = CLEAR
 
     def update_figure(self):
         self.ax_loss.clear()
@@ -841,10 +803,10 @@ The labels are separated with line breaks."""),
             self.ax_loss.xaxis.set_major_locator(MaxNLocator(integer=True))
             mx = min((len(self.epoch) // 10 + 1) * 10, self.config.EPOCHS)
             self.ax_loss.set_xlim([1, mx])
-            if len(self.val_loss) > 1:
-                top_limit = np.max(self.val_loss[1:])
+            # if len(self.val_loss) > 1:
+                # top_limit = np.max(self.val_loss[1:])
                 # top_limit = np.mean(self.val_loss[1:]) * 1.5
-                self.ax_loss.set_ylim([0, top_limit])
+                # self.ax_loss.set_ylim([0, top_limit])
             self.ax_loss.legend(fontsize=16)
             self.ax_loss.grid()
             self.image_widget.loadPixmap(self._plt2img())
@@ -946,50 +908,43 @@ The labels are separated with line breaks."""),
         self.update_figure()
                 
 
-    def create_input_field(self, size):
-        l = QtWidgets.QLineEdit()
-        l.setAlignment(Qt.AlignCenter)
-        # l.setMaximumWidth(size)
-        # l.setMinimumWidth(size)
-        return l
-
-
-    def _print_errors(self):
-        for tag_text, flag in self.error_flags.items():
-            if flag == ERROR:
-                if tag_text == self.tr("Name"):
-                    self.text_status.setText(self.tr("Change the name."))
-                    return
-                if tag_text == self.tr("Input Size"):
-                    self.text_status.setText(self.tr("Set an appropriate input size."))
-                    return
-                if tag_text == self.tr("Epochs"):
-                    self.text_status.setText(self.tr("Set an appropriate epochs."))
-                    return
-                if tag_text == self.tr("Batch Size"):
-                    self.text_status.setText(self.tr("Set an appropriate batch size."))
-                    return
-                if tag_text == self.tr("Learning Rate"):
-                    self.text_status.setText(self.tr("Set an appropriate learning rate."))
-                    return
-                if tag_text == self.tr("Label Definition"):
-                    self.text_status.setText(self.tr("Set an appropriate label definition."))
-                    return
-
+    def check_errors(self):
+        for tag_text, obj in self.param_objects.items():
+            if obj.state == ERROR:
+                self.text_status.setText(self.tr("Please check {}.").format(tag_text))
+                return False
+        return True
+    
+    def may_continue(self, message="Continue?"):
+        mb = QtWidgets.QMessageBox
+        answer = mb.question(self,
+                             self.tr("Confirmation"),
+                             message,
+                             mb.Yes | mb.No,
+                             mb.Yes)
+        if answer == mb.Yes:
+            return True
+        elif answer == mb.No:
+            return False
+        else:  # answer == mb.Cancel
+            return False
 
     def train(self):
-        error = sum(self.error_flags.values())
-        if error > 0:
-            self._print_errors()
-            # self.text_status.setText(self.tr("Please check parameters."))
+        if not self.check_errors():
             return
+
+        if self.config.log_dir is not None and os.path.exists(os.path.join(self.config.log_dir, "config.json")):
+            answer = self.may_continue(self.tr("'{}' already exists. Overwrite?").format(os.path.basename(self.config.log_dir)))
+            if not answer:
+                self.text_status.setText(self.tr("Training was cancelled."))
+                return
         
         self.disable_all()
         self.reset_state()
 
         self.config.build_params()  # update parameters
 
-        config_path = os.path.join(self.dataset_dir, AI_DIR_NAME, "config.json")
+        config_path = os.path.join(self.dataset_dir, LOCAL_DATA_DIR_NAME, "config.json")
         self.config.save(config_path)
         self.ai.set_config(self.config)
         self.start_time = time.time()
@@ -1201,7 +1156,7 @@ class AITrainThread(QtCore.QThread):
         
         # save all training setting and used data
         if isinstance(model.dataset, Dataset):
-            config_path = os.path.join(self.config.dataset_dir, AI_DIR_NAME, "config.json")
+            config_path = os.path.join(self.config.dataset_dir, LOCAL_DATA_DIR_NAME, "config.json")
             shutil.copy(config_path, self.config.log_dir)
             p = os.path.join(self.config.log_dir, "dataset.json")
             model.dataset.save(p)

@@ -15,7 +15,9 @@ __version__ = "2.0.0"
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 HOME_DIR = os.path.expanduser("~")
 
-AI_DIR_NAME = 'aidia_data'
+LOCAL_DATA_DIR_NAME = 'aidia_data'
+CONFIG_JSON = 'config.json'
+DATASET_JSON = 'dataset.json'
 
 app_cfg_dir = os.path.join(HOME_DIR, ".aidia")
 if not os.path.exists(app_cfg_dir):

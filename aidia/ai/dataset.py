@@ -5,7 +5,7 @@ import glob
 import cv2
 import yaml
 
-from aidia import CLS, DET, SEG, EXTS, AI_DIR_NAME
+from aidia import CLS, DET, SEG, EXTS, LOCAL_DATA_DIR_NAME
 from aidia import DrawMode
 from aidia import aidia_logger
 from aidia import dicom
@@ -157,7 +157,7 @@ class Dataset(object):
             dir_list = glob.glob(os.path.join(self.config.dataset_dir, "**"))
             json_paths = []
             for subdir_path in dir_list:
-                if utils.get_basename(subdir_path) == AI_DIR_NAME:  # TODO
+                if utils.get_basename(subdir_path) == LOCAL_DATA_DIR_NAME:  # TODO
                     continue
                 subdir_jsons = glob.glob(os.path.join(subdir_path, "*.json"))
                 for p in subdir_jsons:

@@ -12,11 +12,11 @@ from aidia.qt import distance
 from aidia.image import gamma_correct, change_contrast, dicom_transform, graylevel_transform
 
 
-CURSOR_DEFAULT = QtCore.Qt.ArrowCursor
-CURSOR_POINT = QtCore.Qt.PointingHandCursor
-CURSOR_DRAW = QtCore.Qt.CrossCursor
-CURSOR_MOVE = QtCore.Qt.ClosedHandCursor
-CURSOR_GRAB = QtCore.Qt.OpenHandCursor
+CURSOR_DEFAULT = QtCore.Qt.CursorShape.ArrowCursor
+CURSOR_POINT = QtCore.Qt.CursorShape.PointingHandCursor
+CURSOR_DRAW = QtCore.Qt.CursorShape.CrossCursor
+CURSOR_MOVE = QtCore.Qt.CursorShape.ClosedHandCursor
+CURSOR_GRAB = QtCore.Qt.CursorShape.OpenHandCursor
 
 
 class Canvas(QtWidgets.QWidget):

@@ -10,7 +10,7 @@ from qtpy import QtCore, QtWidgets, QtGui
 from aidia import qt
 from aidia import utils
 from aidia import aidia_logger
-from aidia import HOME_DIR, CLS, DET, SEG, AI_DIR_NAME
+from aidia import HOME_DIR, CLS, DET, SEG, LOCAL_DATA_DIR_NAME
 from aidia import LabelStyle
 from aidia.ai.config import AIConfig
 from aidia.ai.dataset import Dataset
@@ -216,11 +216,11 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         #     self.reset_state()
 
         # pickup log directories
-        data_dir = os.path.join(dirpath, AI_DIR_NAME)
+        data_dir = os.path.join(dirpath, LOCAL_DATA_DIR_NAME)
         if os.path.exists(data_dir):
             targets = []
             for name in os.listdir(data_dir):
-                logdir = os.path.join(self.dataset_dir, AI_DIR_NAME, name)
+                logdir = os.path.join(self.dataset_dir, LOCAL_DATA_DIR_NAME, name)
                 if self._check_logdir(logdir):
                     targets.append(name)
             if len(targets):
@@ -270,7 +270,7 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         return image.fig2img(self.fig)
     
     def get_log_dirpath(self, name):
-        return os.path.join(self.dataset_dir, AI_DIR_NAME, name)
+        return os.path.join(self.dataset_dir, LOCAL_DATA_DIR_NAME, name)
     
     def get_weights_dirpath(self):
         return os.path.join(self.log_dir, "weights")
