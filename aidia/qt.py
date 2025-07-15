@@ -50,10 +50,12 @@ def new_action(parent, text, slot=None, shortcut=None, icon=None,
         if locale == "ja_JP":
             a.setIconText(text)
             a.setText(text.replace("\n", ""))
-            a.setIcon(new_icon(icon))
         else:
             a.setIconText(text.replace(' ', '\n'))
             a.setText(text)
+        if isinstance(icon, QtGui.QIcon.ThemeIcon):
+            a.setIcon(QtGui.QIcon.fromTheme(icon))
+        else:
             a.setIcon(new_icon(icon))
     if shortcut is not None:
         if isinstance(shortcut, (list, tuple)):

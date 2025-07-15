@@ -10,6 +10,7 @@ from glob import glob
 
 from qtpy import QtCore, QtGui, QtWidgets
 from qtpy.QtCore import Qt
+from qtpy.QtGui import QIcon
 
 from aidia import __appname__, __version__, PRETRAINED_DIR, LABEL_COLORMAP, HOME_DIR, LITE, EXTS, AI_DIR_NAME
 from aidia import DrawMode
@@ -69,7 +70,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.zoom_level = None
         self.fit_window = False
         self.label_dialog_pos = None
-        self.selected_polygon = None
+        self.selected_shapes = None
         self.work_dir = None
         self.prev_dir = None
         self.dicom_data = None
@@ -444,17 +445,10 @@ class MainWindow(QtWidgets.QMainWindow):
         create_action = functools.partial(qt.new_action, self)
         shortcuts = self._config["shortcuts"]
 
-        toggle_show_label_action = create_action(
-            self.tr("Toggle Labels Show and Hide"),
-            self.canvas.toggle_show_label,
-            shortcut="Space",
-            icon="toggle-label",
-            tip=self.tr("Toggle labels show and hide."),
-            enabled=True
-        )
-
         quit_action = create_action(
-            self.tr("&Quit"), self.close, shortcuts["quit"], "quit",
+            self.tr("&Quit"), self.close,
+            shortcuts["quit"],
+            QIcon.ThemeIcon.ApplicationExit,
             self.tr("Quit application.")
         )
 
@@ -462,7 +456,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("&Load Image"),
             self.open_file,
             shortcuts["open"],
-            "open",
+            QIcon.ThemeIcon.CameraPhoto,
             self.tr("Load image file.")
         )
    
@@ -471,7 +465,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.open_next_img,
             # shortcuts["open_next"],
             "Ctrl+Down",
-            "next",
+            QIcon.ThemeIcon.GoNext,
             self.tr("Open next image."),
             enabled=False
         )
@@ -480,19 +474,20 @@ class MainWindow(QtWidgets.QMainWindow):
             self.open_prev_img,
             # shortcuts["open_prev"],
             "Ctrl+Up",
-            "prev",
+            QIcon.ThemeIcon.GoPrevious,
             self.tr("Open previous image."),
             enabled=False
         )
         save_action = create_action(
             self.tr("&Save"),
-            self.save_file, shortcuts["save"], "save",
+            self.save_file, shortcuts["save"],
+            QIcon.ThemeIcon.DocumentSave,
             self.tr("Save labels to file."), enabled=False
         )
         save_as_action = create_action(
             self.tr("&Save As"), self.save_file_as,
             shortcuts["save_as"],
-            "save-as",
+            QIcon.ThemeIcon.DocumentSaveAs,
             self.tr("Save labels to a different file."),
             enabled=False
         )
@@ -500,7 +495,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("&Delete File"),
             self.delete_file,
             shortcuts["delete_file"],
-            "delete",
+            QIcon.ThemeIcon.EditDelete,
             self.tr("Delete current label file."),
             enabled=False
         )
@@ -510,18 +505,18 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("&Export Annotations"),
             self.export_annotations,
             # shortcuts["delete_file"],
-            # icon=None,
-            self.tr("Export JSON annotation files."),
+            icon=QIcon.ThemeIcon.DocumentSaveAs,
+            tip=self.tr("Export JSON annotation files."),
             enabled=True
         )
 
         # import pretrained model
         import_model_action = create_action(
-            self.tr("&Import Pretrained Model"),
-            self.import_model,
+            text=self.tr("&Import Pretrained Model"),
+            slot=self.import_model,
             # shortcuts["delete_file"],
-            # icon=None,
-            self.tr("Import pretrained models."),
+            icon=QIcon.ThemeIcon.ListAdd,
+            tip=self.tr("Import pretrained models."),
             enabled=True
         )
 
@@ -529,7 +524,7 @@ class MainWindow(QtWidgets.QMainWindow):
             text=self.tr("&Close"),
             slot=self.close_file,
             shortcut=shortcuts["close"],
-            icon="close",
+            icon=QIcon.ThemeIcon.WindowClose,
             tip=self.tr("Close current file.")
         )
 
@@ -585,7 +580,7 @@ class MainWindow(QtWidgets.QMainWindow):
             lambda: self.toggleDrawMode(DrawMode.EDIT),
             # shortcuts["edit_polygon"],
             ["E", "ESC"],
-            "edit",
+            QIcon.ThemeIcon.EditCut,
             self.tr("Move and edit the selected polygons."),
             checkable=True,
         )
@@ -595,7 +590,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Delete Polygons"),
             self.delete_selected_shape,
             shortcuts["delete_polygon"],
-            "cancel",
+            QIcon.ThemeIcon.EditDelete,
             self.tr("Delete the selected polygons."),
             enabled=False
         )
@@ -603,7 +598,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Duplicate Polygons"),
             self.copySelectedShape,
             shortcuts["duplicate_polygon"],
-            "copy",
+            QIcon.ThemeIcon.EditCopy,
             self.tr("Create a duplicate of the selected polygons."),
             enabled=False
         )
@@ -611,7 +606,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Undo last point"),
             self.canvas.undoLastPoint,
             shortcuts["undo_last_point"],
-            "undo",
+            QIcon.ThemeIcon.EditUndo,
             self.tr("Undo last drawn point."),
             enabled=False
         )
@@ -619,14 +614,14 @@ class MainWindow(QtWidgets.QMainWindow):
             text=self.tr("Add Point to Edge"),
             slot=self.canvas.addPointToEdge,
             shortcut=None,
-            icon="edit",
+            icon=QIcon.ThemeIcon.ListAdd,
             tip=self.tr("Add point to the nearest edge."),
             enabled=False
         )
         remove_point_action = create_action(
             text=self.tr("Remove Selected Point"),
             slot=self.canvas.removeSelectedPoint,
-            icon="edit",
+            icon=QIcon.ThemeIcon.ListRemove,
             tip="Remove selected point from polygon.",
             enabled=False
         )
@@ -634,39 +629,49 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tr("Undo"),
             self.undoShapeEdit,
             shortcuts["undo"],
-            "undo",
+            QIcon.ThemeIcon.EditUndo,
             self.tr("Undo last add and edit of shape."),
             enabled=False
         )
         hide_all_action = create_action(
             text=self.tr("&Hide\nPolygons"),
-            slot=functools.partial(self.toggle_polygons, False),
+            slot=functools.partial(self.toggle_show_shapes, False),
             shortcut=shortcuts["hide_all"],
-            icon="hide",
+            # icon="hide",
             tip=self.tr("Hide all polygons."),
             enabled=False
         )
         show_all_action = create_action(
             text=self.tr("&Show\nPolygons"),
-            slot=functools.partial(self.toggle_polygons, True),
+            slot=functools.partial(self.toggle_show_shapes, True),
             shortcut=shortcuts["show_all"],
-            icon="show",
+            # icon="show",
             tip=self.tr("Show all polygons."),
             enabled=False
         )
-        toggle_polygon_action = create_action(
+        toggle_show_shape_action = create_action(
             text=self.tr("&Toggle\nShow/Hide Selected Polygon"),
-            slot=self.toggle_single_polygon,
+            slot=self.toggle_show_shape,
             shortcut=shortcuts["toggle_polygon"],
-            icon="eye",
+            # icon="eye",
             tip=self.tr("Toggle show/hide selected polygon."),
             enabled=False
         )
+        toggle_show_label_action = create_action(
+            self.tr("Toggle Labels Show and Hide"),
+            self.canvas.toggle_show_label,
+            shortcut="Space",
+            # icon=QIcon.ThemeIcon.ViewShow,
+            # icon="eye",
+            tip=self.tr("Toggle labels show and hide."),
+            enabled=True
+        )
+
 
         reset_brightness_contrast_action = create_action(
             text=self.tr("&Reset Brightness and Contrast"),
             slot=self.canvas.reset_brightness_contrast,
-            icon="contrast",
+            icon=QIcon.ThemeIcon.ViewRefresh,
             tip=self.tr("Reset brightness and contrast."),
             enabled=False
         )
@@ -674,7 +679,7 @@ class MainWindow(QtWidgets.QMainWindow):
         help_action = create_action(
             self.tr("&Help"),
             self.tutorial,
-            icon="help",
+            icon=QIcon.ThemeIcon.HelpAbout,
             tip=self.tr("Show Aidia GitHub page.")
         )
 
@@ -698,21 +703,25 @@ class MainWindow(QtWidgets.QMainWindow):
         zoom_in_action = create_action(
             self.tr("Zoom &In"),
             functools.partial(self.add_zoom, 1.1),
-            shortcuts["zoom_in"], "zoom-in",
+            shortcuts["zoom_in"],
+            QIcon.ThemeIcon.ZoomIn,
             self.tr("Increase zoom level."), enabled=False)
         zoom_out_action = create_action(
             self.tr("&Zoom Out"),
             functools.partial(self.add_zoom, 0.9),
-            shortcuts["zoom_out"], "zoom-out",
+            shortcuts["zoom_out"],
+            QIcon.ThemeIcon.ZoomOut,
             self.tr("Decrease zoom level."), enabled=False)
         zoom_org_action = create_action(
             self.tr("&Original size"),
             functools.partial(self.set_zoom, 100),
-            shortcuts["zoom_to_original"], "zoom",
+            shortcuts["zoom_to_original"],
+            QIcon.ThemeIcon.ViewRestore,
             self.tr("Zoom to original size."), enabled=False)
         fit_window_action = create_action(
             self.tr("&Fit Window"), self.set_fit_window,
-            shortcuts["fit_window"], "fit-window",
+            shortcuts["fit_window"],
+            QIcon.ThemeIcon.ZoomFitBest,
             self.tr("Zoom follows window size."), checkable=True,
             enabled=False)
 
@@ -738,7 +747,7 @@ class MainWindow(QtWidgets.QMainWindow):
         popup_copyright_action = create_action(
             text=self.tr("&Copyright"),
             slot=self.popup_copyright,
-            icon="copyright",
+            icon=QIcon.ThemeIcon.DialogInformation,
             tip=self.tr("Open copyright information."),
             enabled=True
         )
@@ -746,7 +755,7 @@ class MainWindow(QtWidgets.QMainWindow):
         popup_setting_action = create_action(
             text=self.tr("&Setting"),
             slot=self.popup_setting,
-            icon="setting",
+            icon=QIcon.ThemeIcon.DocumentProperties,
             tip=self.tr("Open setting dialog."),
             enabled=True
         )
@@ -754,7 +763,7 @@ class MainWindow(QtWidgets.QMainWindow):
         save_canvas_img_action = create_action(
             text=self.tr("&Export PNG"),
             slot=self.export_canvas_img,
-            icon="save-as",
+            icon=QIcon.ThemeIcon.DocumentSaveAs,
             tip=self.tr("Export the canvas image to PNG image."),
             enabled=True
         )
@@ -762,6 +771,7 @@ class MainWindow(QtWidgets.QMainWindow):
         delete_pretrained_model_action = create_action(
             text=self.tr("&Delete Pretrained Models"),
             slot=self.delete_pretrained_model,
+            icon=QIcon.ThemeIcon.EditDelete,
             tip=self.tr("Delete pretrained model."),
             enabled=True
         )
@@ -769,7 +779,7 @@ class MainWindow(QtWidgets.QMainWindow):
         label_edit_action = create_action(
             text=self.tr("&Edit Label"),
             slot=self.edit_label_shape_selected,
-            icon='pen',
+            icon=QIcon.ThemeIcon.InputKeyboard,
             tip=self.tr("Edit labels directly"),
             enabled=True
         )
@@ -908,7 +918,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 delete_action,
                 undo_action,
                 undo_last_point_action,
-                toggle_polygon_action,
+                toggle_show_shape_action,
                 # show_all_action,
                 # hide_all_action,
                 reset_brightness_contrast_action,
@@ -921,13 +931,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 mode_edit_action,
             ),
             onShapesPresent=(save_as_action, hide_all_action,
-                             show_all_action, toggle_polygon_action),
+                             show_all_action, toggle_show_shape_action),
         )
 
         self.canvas.edgeSelected.connect(self.canvasShapeEdgeSelected)
         self.canvas.vertexSelected.connect(self.actions.removePoint.setEnabled)
 
         # menu bar
+        recent_files_menu = QtWidgets.QMenu(self.tr("Open &Recent"), self)
+        recent_files_menu.setIcon(QIcon.fromTheme(QIcon.ThemeIcon.DocumentOpenRecent))
         self.menus = qt.DictObject(
             file=self.menu(self.tr("&File")),
             edit=self.menu(self.tr("&Edit")),
@@ -935,7 +947,7 @@ class MainWindow(QtWidgets.QMainWindow):
             tools=self.menu(self.tr("&Tools")),
             setting=self.menu(self.tr("&Option")),
             # help=self.menu(self.tr("&Help")),
-            recentFiles=QtWidgets.QMenu(self.tr("Open &Recent")),
+            recentFiles=recent_files_menu,
             labelList=labelMenu,
         )
 
@@ -984,7 +996,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 None,
                 hide_all_action,
                 show_all_action,
-                toggle_polygon_action,
+                toggle_show_shape_action,
                 toggle_show_label_action,
                 None,
                 zoom_in_action,
@@ -1236,7 +1248,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.img_path = None
         self.dicom_data = None
         self.labelFile = None
-        self.selected_polygon = None
+        self.selected_shapes = None
         self.canvas.is_dicom = False
 
         self.update_state(NO_DATA)
@@ -1703,11 +1715,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.zoom_mode = self.FIT_WINDOW_MODE if value else self.MANUAL_ZOOM
         self.adjust_scale()
 
-    def toggle_polygons(self, value):
+    def toggle_show_shapes(self, value):
         [item.setCheckState(Qt.CheckState.Checked if value else Qt.CheckState.Unchecked)
          for item in self.labelList]
 
-    def toggle_single_polygon(self):
+    def toggle_show_shape(self):
         selected_items = [item for item in self.labelList.selectedItems()]
         if selected_items:
             for item in selected_items:
@@ -1715,9 +1727,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     item.setCheckState(Qt.Unchecked)
                 else:
                     item.setCheckState(Qt.Checked)
-                self.selected_polygon = item
-        elif self.selected_polygon:
-            item = self.selected_polygon
+                self.selected_shapes = item
+        elif self.selected_shapes:
+            item = self.selected_shapes
             if item.checkState() == Qt.Checked:
                 item.setCheckState(Qt.Unchecked)
             else:

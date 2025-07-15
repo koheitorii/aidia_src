@@ -42,8 +42,8 @@ class DICOM():
                     self.ww = ww
 
             self.id = 0
-            if hasattr(self.data, "PatientID"):
-                self.id = str(self.data.PatientID)
+            # if hasattr(self.data, "PatientID"):
+            #     self.id = str(self.data.PatientID)
             
             self.modality = ""
             if hasattr(self.data, "Modality"):

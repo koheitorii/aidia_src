@@ -55,6 +55,7 @@ def main():
     icons_dir = os.path.join(APP_DIR, 'icons')
     icon_path = os.path.join(icons_dir, 'icon.png')
     app.setWindowIcon(QtGui.QIcon(icon_path))
+    # app.setWindowIcon(QtGui.QIcon.fromTheme(QtGui.QIcon.ThemeIcon.Computer))
     if translator_base is not None and translator is not None:
         app.installTranslator(translator_base)
         app.installTranslator(translator)

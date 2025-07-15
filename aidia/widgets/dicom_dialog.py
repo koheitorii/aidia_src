@@ -52,7 +52,7 @@ class DICOMDialog(QtWidgets.QDialog):
             t1 = ""
             t2 = ""
 
-            t1 += self.tr("PatientID") + "\n"
+            # t1 += self.tr("PatientID") + "\n"
             t1 += self.tr("Modality") + "\n"
             t1 += self.tr("Manufacturer") + "\n"
             t1 += self.tr("InstanceNumber") + "\n"
