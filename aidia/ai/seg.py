@@ -173,8 +173,8 @@ class SegmentationModel(object):
         
         return train_loader, val_loader
 
-    def stop_training(self):
-        self.model.stop_training = True
+    # def stop_training(self):
+    #     self.model.stop_training = True
 
     def evaluate(self, cb_widget):
         res = {}

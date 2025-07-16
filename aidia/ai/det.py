@@ -3,7 +3,9 @@ import keras
 import numpy as np
 import glob
 import random
+import torch
 
+from aidia import ModelTypes
 from aidia.ai.dataset import Dataset
 from aidia.ai.config import AIConfig
 from aidia.image import det2merge
@@ -22,16 +24,13 @@ class DetectionModel(object):
     def set_config(self, config):
         self.config = config
 
-
     def build_dataset(self):
         self.dataset = Dataset(self.config)
         self.dataset.write_dataset_for_yolo()
-    
 
     def load_dataset(self):
         self.dataset = Dataset(self.config, load=True)
     
-
     def build_model(self, mode, weights_path=None):
         """Build YOLO model."""
         assert mode in ["train", "test"]
@@ -42,7 +41,6 @@ class DetectionModel(object):
             self.model = YOLO(weights_path, task="detect")
         else:
             raise ValueError("Mode must be 'train' or 'test'.")
-
 
     def train(self, custom_callbacks=None):
         """Train YOLO model."""
@@ -69,11 +67,6 @@ class DetectionModel(object):
             translate=self.config.RANDOM_SHIFT / self.config.INPUT_SIZE,
             shear=self.config.RANDOM_SHEAR,
         )
-
-    def stop_training(self):
-        """Stop training."""
-        raise TimeoutError # TODO: implement stop training
-
 
     def evaluate(self, cb_widget=None):
         sum_AP = 0.0

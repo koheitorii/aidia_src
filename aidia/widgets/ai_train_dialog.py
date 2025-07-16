@@ -86,6 +86,7 @@ class ParamComponent(object):
 class AITrainDialog(QtWidgets.QDialog):
 
     aiRunning = QtCore.Signal(bool)
+    # aiTerminated = QtCore.Signal()
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -502,7 +503,7 @@ The labels are separated with line breaks."""),
 
         # train button
         self.button_train = QtWidgets.QPushButton(self.tr("Train"))
-        self.button_train.setMinimumHeight(100)
+        self.button_train.setMinimumHeight(64)
         self.button_train.setStyleSheet("font-size: 20px;")
         self.button_train.clicked.connect(self.train)
         self._layout.addWidget(self.button_train, row, 1, 1, 4)
@@ -513,25 +514,29 @@ The labels are separated with line breaks."""),
         self._layout.addWidget(self.image_widget_loss, row, 1, 1, 4)
         row += 1
 
-        # progress bar
-        self.progress = QtWidgets.QProgressBar(self)
-        self.progress.setMaximum(100)
-        self.progress.setValue(0)
-        self._layout.addWidget(self.progress, row, 1, 1, 4)
-        row += 1
-
         # status
         self.text_status = QtWidgets.QLabel()
-        self._layout.addWidget(self.text_status, row, 1, 1, 3)
+        self._layout.addWidget(self.text_status, row, 1, 1, 2)
+        # row += 1
+
+        # progress bar
+        self.progress = QtWidgets.QProgressBar(self)
+        self.progress.setStyleSheet("""QProgressBar {
+    border: 2px solid grey;
+    border-radius: 5px;
+    text-align: center; }
+QProgressBar::chunk {
+    background-color: #05B8CC;
+    width: 20px; }""")
+        self.progress.setMaximum(100)
+        self.progress.setValue(0)
+        self._layout.addWidget(self.progress, row, 3, 1, 2)
         # row += 1
 
         # stop button
-        self.button_stop = QtWidgets.QPushButton(self.tr("Terminate"))
-        def _stop_training():
-            self.ai.quit()
-            self.button_stop.setEnabled(False)
-        self.button_stop.clicked.connect(_stop_training)
-        self._layout.addWidget(self.button_stop, row, 4, 1, 1, Qt.AlignRight)
+        # self.button_stop = QtWidgets.QPushButton(self.tr("Terminate"))
+        # self.button_stop.clicked.connect(self.stop_training)
+        # self._layout.addWidget(self.button_stop, row, 4, 1, 1, Qt.AlignRight)
         # row += 1
 
         ### add dataset information ###
@@ -550,16 +555,17 @@ The labels are separated with line breaks."""),
         self._dataset_layout.addWidget(self.image_widget_pie)
 
         ### set layouts ###
-        self._augment_widget.setLayout(self._augment_layout)
-        self._layout.addWidget(self._augment_widget, 0, 5, row - 1, 1)
         self._dataset_widget.setLayout(self._dataset_layout)
         self._layout.addWidget(self._dataset_widget, 0, 0, row + 1, 1)
 
+        self._augment_widget.setLayout(self._augment_layout)
+        self._layout.addWidget(self._augment_widget, 0, 5, row - 1, 1)
+        
         self.setLayout(self._layout)
 
         # connect AI thread
         self.ai = AITrainThread(self)
-        self.ai.fitStarted.connect(self.callback_fit_started)
+        # self.ai.fitStarted.connect(self.callback_fit_started)
         self.ai.notifyMessage.connect(self.update_status)
         self.ai.errorMessage.connect(self.popup_error)
         self.ai.datasetInfo.connect(self.update_dataset)
@@ -567,8 +573,13 @@ The labels are separated with line breaks."""),
         self.ai.batchLogList.connect(self.update_batch)
         self.ai.finished.connect(self.ai_finished)
 
+        # self.aiTerminated.connect(self.ai.quit)
+
         self.text_status.setText(self.tr("Ready"))
 
+    # def stop_training(self):
+    #     self.aiTerminated.emit()
+    #     self.button_stop.setEnabled(False)
 
     def popup(self, dataset_dir, is_submode=False, data_labels=None):
         """Popup train window and set config parameters to input fields."""
@@ -587,7 +598,7 @@ The labels are separated with line breaks."""),
 
         # load config parameters
         self.config = AIConfig(dataset_dir)
-        config_path = os.path.join(data_dirpath, "config.json")
+        config_path = os.path.join(data_dirpath, CONFIG_JSON)
         if os.path.exists(config_path):
             try:
                 self.config.load(config_path)
@@ -641,8 +652,8 @@ The labels are separated with line breaks."""),
         self.switch_enabled_by_task(self.config.TASK)
 
         # raise error handle
-        config_path = os.path.join(self.config.log_dir, "config.json")
-        dataset_path = os.path.join(self.config.log_dir, "dataset.json")
+        config_path = os.path.join(self.config.log_dir, CONFIG_JSON)
+        dataset_path = os.path.join(self.config.log_dir, DATASET_JSON)
         if not os.path.exists(config_path) or not os.path.exists(dataset_path):
             # self.text_status.setText(self.tr("Training was failed."))
             self.reset_state()
@@ -674,8 +685,8 @@ The labels are separated with line breaks."""),
         # open log directory
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.config.log_dir))
 
-    def callback_fit_started(self, value):
-        self.button_stop.setEnabled(True)
+    # def callback_fit_started(self, value):
+    #     self.button_stop.setEnabled(True)
 
     def switch_enabled_by_task(self, task):
         if task == CLS:
@@ -706,7 +717,7 @@ The labels are separated with line breaks."""),
         # global setting
         self.switch_global_params()
         self.button_train.setEnabled(True)
-        self.button_stop.setEnabled(False)
+        # self.button_stop.setEnabled(False)
 
     def switch_enabled(self, targets: list[ParamComponent], enabled:bool):
         for obj in targets:
@@ -756,7 +767,7 @@ The labels are separated with line breaks."""),
     def showEvent(self, event):
         if self.ai.isRunning():
             self.disable_all()
-            self.button_stop.setEnabled(True)
+            # self.button_stop.setEnabled(True)
         else:
             # self.reset_state()
             self.switch_enabled_by_task(self.config.TASK)
@@ -805,7 +816,7 @@ The labels are separated with line breaks."""),
         self.ax_loss.set_ylabel("Loss", fontsize=16, color=qt.get_default_color())
         self.ax_loss.tick_params(axis='both', labelsize=14, colors=qt.get_default_color())
         self.ax_loss.patch.set_alpha(0.0)
-        self.ax_loss.grid()
+        self.ax_loss.grid(alpha=0.3, color=qt.get_default_color(), linestyle="--", linewidth=1)
         if len(self.epoch):
             if len(self.loss):
                 self.ax_loss.plot(self.epoch, self.loss, color="red", linestyle="solid", label="train")
@@ -814,7 +825,7 @@ The labels are separated with line breaks."""),
             self.ax_loss.xaxis.set_major_locator(MaxNLocator(integer=True))
             mx = min((len(self.epoch) // 10 + 1) * 10, self.config.EPOCHS)
             self.ax_loss.set_xlim([1, mx])
-            self.ax_loss.legend(fontsize=16, labelcolor=qt.get_default_color(), framealpha=0.3)
+            self.ax_loss.legend(fontsize=16, labelcolor=qt.get_default_color(), frameon=False)
             self.add_fig_loss()
 
     def add_fig_loss(self):
@@ -890,13 +901,13 @@ The labels are separated with line breaks."""),
         batch = value.get("batch")
         loss = value.get("loss")
 
-        text = f"epoch: {epoch}/{self.config.EPOCHS} "
+        text = f"epoch: {epoch:>4}/{self.config.EPOCHS} "
         if batch is not None:
-            text += f"batch: {batch} / {self.train_steps} "
+            text += f"batch: {batch:>6} / {self.train_steps} "
         if loss is not None:
-            text += f"loss: {loss:.6f} "
+            text += f"loss: {loss:>8.4f} "
         if len(self.val_loss):
-            text += f"val_loss: {self.val_loss[-1]:.6f}"
+            text += f"val_loss: {self.val_loss[-1]:>8.4f}"
         
         self.text_status.setText(text)
     
@@ -941,8 +952,10 @@ The labels are separated with line breaks."""),
     def train(self):
         if not self.check_errors():
             return
+        
+        self.config.build_params()  # update parameters
 
-        if self.config.log_dir is not None and os.path.exists(os.path.join(self.config.log_dir, "config.json")):
+        if self.config.log_dir is not None and os.path.exists(self.config.log_dir):
             answer = self.may_continue(self.tr("'{}' already exists. Overwrite?").format(os.path.basename(self.config.log_dir)))
             if not answer:
                 self.text_status.setText(self.tr("Training was cancelled."))
@@ -953,9 +966,7 @@ The labels are separated with line breaks."""),
         self.disable_all()
         self.reset_state()
 
-        self.config.build_params()  # update parameters
-
-        config_path = os.path.join(self.dataset_dir, LOCAL_DATA_DIR_NAME, "config.json")
+        config_path = os.path.join(self.dataset_dir, LOCAL_DATA_DIR_NAME, CONFIG_JSON)
         self.config.save(config_path)
         self.ai.set_config(self.config)
         self.start_time = time.time()
@@ -974,7 +985,7 @@ The labels are separated with line breaks."""),
 
 class AITrainThread(QtCore.QThread):
 
-    fitStarted = QtCore.Signal(bool)
+    # fitStarted = QtCore.Signal(bool)
     epochLogList = QtCore.Signal(dict)
     batchLogList = QtCore.Signal(dict)
     notifyMessage = QtCore.Signal(str)
@@ -985,16 +996,17 @@ class AITrainThread(QtCore.QThread):
         super().__init__(parent)
         self.config = None
         self.model = None
+        # self.stop_training = False
 
     def set_config(self, config: AIConfig):
         self.config = config
 
-    def quit(self):
-        super().quit()
-        self.model.stop_training()
-        self.notifyMessage.emit(self.tr("Interrupt training."))
-        return
-    
+    # def quit(self):
+    #     super().quit()
+    #     self.model.stop_training()
+    #     self.notifyMessage.emit(self.tr("Interrupt training."))
+    #     return
+
     def run(self):
         if self.config is None:
             self.errorMessage.emit(self.tr("Not configured. Terminated."))
@@ -1121,9 +1133,9 @@ class AITrainThread(QtCore.QThread):
 
                 def on_epoch_end(self, epoch, logs=None):
                     if logs is not None:
-                        if np.isnan(logs.get("loss")) or np.isnan(logs.get("val_loss")):
-                            self.widget.model.stop_training()
-                            raise errors.LossGetNanError
+                        # if np.isnan(logs.get("loss")) or np.isnan(logs.get("val_loss")):
+                        #     self.widget.model.stop_training()
+                        #     raise errors.LossGetNanError
                         logs["epoch"] = epoch + 1
                         self.widget.epochLogList.emit(logs)
 
@@ -1131,20 +1143,8 @@ class AITrainThread(QtCore.QThread):
             callbacks = [progress_callback]
             
         try:
-            self.fitStarted.emit(True)
+            # self.fitStarted.emit(True)
             model.train(callbacks)
-        # except tf.errors.ResourceExhaustedError as e:
-        #     self.errorMessage.emit(self.tr("Memory error. Please reduce the input size or batch size."))
-        #     aidia_logger.error(e, exc_info=True)
-        #     return
-        # except tf.errors.NotFoundError as e:
-        #     self.errorMessage.emit(self.tr("Memory error. Please reduce the input size or batch size."))
-        #     aidia_logger.error(e, exc_info=True)
-        #     return
-        except errors.LossGetNanError as e:
-            self.errorMessage.emit(self.tr("Loss got NaN. Please adjust the learning rate."))
-            aidia_logger.error(e, exc_info=True)
-            return
         except Exception as e:
             self.errorMessage.emit(self.tr("Failed to train."))
             aidia_logger.error(e, exc_info=True)
