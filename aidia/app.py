@@ -676,13 +676,6 @@ class MainWindow(QtWidgets.QMainWindow):
             enabled=False
         )
 
-        help_action = create_action(
-            self.tr("&Help"),
-            self.tutorial,
-            icon=QIcon.ThemeIcon.HelpAbout,
-            tip=self.tr("Show Aidia GitHub page.")
-        )
-
         zoom = QtWidgets.QWidgetAction(self)
         zoom.setDefaultWidget(self.zoom_widget)
         self.zoom_widget.setWhatsThis(
@@ -967,12 +960,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 quit_action,
             ),
         )
-        # utils.addActions(self.menus.help, (help_action,))
         qt.add_actions(
             self.menus.setting,
             (
                 popup_setting_action,
-                help_action,
                 popup_copyright_action,
             ),
         )
@@ -1286,10 +1277,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.labelList.clear()
         self.loadShapes(self.canvas.shapes)
         self.actions.undo.setEnabled(self.canvas.isShapeRestorable)
-
-
-    def tutorial(self):
-        webbrowser.open(WEB_URL)
 
 
     def toggleDrawingSensitive(self, drawing=True):

@@ -1,21 +1,39 @@
+import os
+import numpy as np
+import cv2
 from qtpy import QtWidgets, QtGui, QtCore
+
+from aidia.image import imread
 
 class ImageWidget(QtWidgets.QWidget):
     
-    def __init__(self, parent, image=None):
+    def __init__(self, parent, image=None, resize=None, alpha=False):
         super().__init__(parent=parent)
 
         self._painter = QtGui.QPainter()
+
         self.pixmap = QtGui.QPixmap()
         if image is not None:
-            self.loadPixmap(image)
+            if isinstance(image, str):
+                if not os.path.exists(image):
+                    raise FileNotFoundError(f"Image file not found: {image}")
+                image = imread(image, alpha=alpha)
+                if resize is not None:
+                    image = cv2.resize(image, resize, interpolation=cv2.INTER_AREA)
+                self.loadPixmap(image)
+            elif isinstance(image, np.ndarray):
+                self.loadPixmap(image)
         self.show()
     
-    def loadPixmap(self, image):
+    def loadPixmap(self, image: np.ndarray):
         byte_per_line = image[0].nbytes
         h, w = image.shape[0:2]
-        image = QtGui.QImage(image.flatten(), w, h, byte_per_line,
-                            QtGui.QImage.Format_RGB888)
+        if image.shape[2] == 4:
+            image = QtGui.QImage(image.flatten(), w, h, byte_per_line,
+                            QtGui.QImage.Format.Format_RGBA8888)
+        else:
+            image = QtGui.QImage(image.flatten(), w, h, byte_per_line,
+                            QtGui.QImage.Format.Format_RGB888)
         self.pixmap = QtGui.QPixmap.fromImage(image)
         self.setMinimumHeight(10)
         self.setMinimumWidth(10)

@@ -15,6 +15,22 @@ def is_dark_mode():
     return window_color.lightness() < 128
 
 
+def get_default_color(is_qcolor=False):
+    """Get the default color based on the current theme."""
+    if is_dark_mode():
+        if is_qcolor:
+            return QtGui.QColor(255, 255, 255)
+        else:
+            return "white"  # For dark mode, return white as default color
+    else:
+        if is_qcolor:
+            return QtGui.QColor(0, 0, 0)
+        else:
+            # For light mode, return black as default color
+            # This is useful for text or other elements that should be black in light mode
+            return "black"
+
+
 def new_icon(icon):
     icons_dir = osp.join(osp.dirname(osp.abspath(__file__)), 'icons')
     icon_path = osp.join(icons_dir, '%s.png' % icon)

@@ -71,7 +71,8 @@ class DetectionModel(object):
         )
 
     def stop_training(self):
-        pass
+        """Stop training."""
+        raise TimeoutError # TODO: implement stop training
 
 
     def evaluate(self, cb_widget=None):

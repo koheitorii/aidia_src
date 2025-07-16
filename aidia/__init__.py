@@ -59,6 +59,8 @@ CLS = "Classification"
 DET = "Detection"
 SEG = "Segmentation"
 MNIST = "MNIST Test"
+# task name list
+TASK_LIST = [DET, SEG, MNIST]
 
 # setting tag definition
 S_EPSILON = "approx_epsilon"
@@ -81,9 +83,6 @@ class ModelTypes(object):
         return False
 
 
-CFONT = "Arial"
-CFONT_SIZE = 10
-
 # for error handling
 CLEAR, ERROR = 0, 1
 
@@ -100,12 +99,8 @@ if os.name == "posix":
     CFONT = "Hiragino Sans"
     CFONT_SIZE = 12
 elif os.name == "nt":
-    # CFONT = "Meiryo"
-    CFONT = "BIZ UDゴシック"
-    # CFONT = "MS Gothic"
-    # CFONT = "Yu Gothic"
-    # CFONT = "Yu Gothic UI"
-    # CFONT = "Yu Mincho"
+    CFONT = "Arial, BIZ UDゴシック"
+    # CFONT = "Arial, sans-serif"
     CFONT_SIZE = 10
 
 del os

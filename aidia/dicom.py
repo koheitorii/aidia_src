@@ -41,7 +41,7 @@ class DICOM():
                 else:
                     self.ww = ww
 
-            self.id = 0
+            # self.id = 0
             # if hasattr(self.data, "PatientID"):
             #     self.id = str(self.data.PatientID)
             

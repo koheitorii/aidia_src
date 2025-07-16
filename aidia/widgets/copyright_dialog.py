@@ -1,9 +1,10 @@
+import os
 from qtpy import QtCore
 from qtpy import QtWidgets
 
 from aidia.qt import head_text, hline
-from aidia import __version__
-
+from aidia import __version__, APP_DIR
+from aidia.widgets.image_widget import ImageWidget
 
 class CopyrightDialog(QtWidgets.QDialog):
     def __init__(self, parent=None):
@@ -14,6 +15,22 @@ class CopyrightDialog(QtWidgets.QDialog):
                             | QtCore.Qt.WindowTitleHint
                             | QtCore.Qt.WindowCloseButtonHint)
         
+        self.setWindowTitle(self.tr("About Aidia"))
+
+        app_title = QtWidgets.QLabel(f"Aidia {__version__}")
+        app_title.setStyleSheet("font-size: 24px; font-weight: bold;")
+
+        homepage_link = QtWidgets.QLabel('Official Website: <a href="https://trklibrary.com/">https://trklibrary.com/</a>')
+        homepage_link.setOpenExternalLinks(True)
+        ultralytics_link = QtWidgets.QLabel('ultralytics: <a href="https://www.ultralytics.com/">https://www.ultralytics.com/</a>')
+        ultralytics_link.setOpenExternalLinks(True)
+        icooon_mono_link = QtWidgets.QLabel('ICOOON MONO: <a href="https://icooon-mono.com/">https://icooon-mono.com/</a>')
+        icooon_mono_link.setOpenExternalLinks(True)
+        labelme_link = QtWidgets.QLabel('labelme: <a href=https://github.com/wkentaro/labelme>https://github.com/wkentaro/labelme</a>')
+        labelme_link.setOpenExternalLinks(True)
+
+        app_icon = ImageWidget(self, image=os.path.join(APP_DIR, 'icons', 'icon.png'), resize=(256, 256), alpha=True)
+        app_icon.setFixedSize(256, 256)
         text = QtWidgets.QLabel("Copyright (C) 2021-2025 Kohei Torii.")
         text2 = QtWidgets.QLabel("""Copyright (C) 2021-2025 Kohei Torii.
 Copyright (C) 2016 Kentaro Wada.
@@ -34,16 +51,19 @@ along with Aidia. If not, see <http://www.gnu.org/licenses/>.""")
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(head_text("About"))
-        layout.addWidget(QtWidgets.QLabel(f"Aidia {__version__}"), alignment=QtCore.Qt.AlignCenter)
-        layout.addWidget(QtWidgets.QLabel("Developed by Kohei Torii, Tokushima University, Japan"), alignment=QtCore.Qt.AlignCenter)
+        layout.addWidget(app_icon, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(app_title, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QtWidgets.QLabel("Developed by Kohei Torii, Tokushima University, Japan"), alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(homepage_link, alignment=QtCore.Qt.AlignCenter)
         layout.addWidget(hline())
         layout.addWidget(head_text("Copyright"))
         layout.addWidget(text)
         layout.addWidget(head_text("License (GPLv3)"))
         layout.addWidget(text2)
         layout.addWidget(head_text("Thanks to"))
-        layout.addWidget(QtWidgets.QLabel("ultralytics, https://www.ultralytics.com/"))
-        layout.addWidget(QtWidgets.QLabel("ICOOON MONO, https://icooon-mono.com/"))
+        layout.addWidget(labelme_link)
+        layout.addWidget(ultralytics_link)
+        layout.addWidget(icooon_mono_link)
 
         self.setLayout(layout)
 

@@ -72,7 +72,7 @@ class DICOMDialog(QtWidgets.QDialog):
             t1 += self.tr("WindowWidth") + "\n"
             t1 += self.tr("PhotometricInterpretation")
 
-            t2 += f"{d.id}\n"
+            # t2 += f"{d.id}\n"
             t2 += d.modality + "\n"
             t2 += d.manufacturer + "\n"
             t2 += str(d.slice_number) + "\n"

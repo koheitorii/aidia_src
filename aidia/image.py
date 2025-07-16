@@ -10,15 +10,22 @@ from qtpy import QtGui
 
 EXTS = [".{}".format(fmt.data().decode("ascii").lower()) for fmt in QtGui.QImageReader.supportedImageFormats()]
 
-def imread(filename, flags=cv2.IMREAD_COLOR, dtype=np.uint8):
+def imread(filename, dtype=np.uint8, alpha=False):
     """Load a RGB image with OpenCV.
     
     This function supports the file name including 2-bytes codes.
     """
     try:
+        if alpha:
+            flags = cv2.IMREAD_UNCHANGED
+        else:
+            flags = cv2.IMREAD_COLOR
         n = np.fromfile(filename, dtype)
         img = cv2.imdecode(n, flags)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        if alpha:
+            img = cv2.cvtColor(img, cv2.COLOR_BGRA2RGBA)
+        else:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         return img
     except Exception as e:
         return None
@@ -397,7 +404,7 @@ def mask2rect(mask):
     return rect_list
 
 
-def fig2img(fig: plt.Figure) -> np.ndarray:
+def fig2img(fig: plt.Figure, add_alpha=False) -> np.ndarray:
     """Convert a matplotlib figure to an RGB image."""
     if fig is None:
         return None
@@ -409,7 +416,14 @@ def fig2img(fig: plt.Figure) -> np.ndarray:
     data = fig.canvas.tostring_argb()
     w, h = fig.canvas.get_width_height()
     c = len(data) // (w * h)
-    return np.frombuffer(data, dtype=np.uint8).reshape(h, w, c)[..., 1:]  # remove alpha channel
+    if add_alpha:
+        # Convert ARGB to RGBA
+        data = np.frombuffer(data, dtype=np.uint8).reshape(h, w, c)
+        data = data[..., [1, 2, 3, 0]]  # Reorder channels to RGBA
+        return data
+    else:
+        # Convert ARGB to RGB and remove alpha channel
+        return np.frombuffer(data, dtype=np.uint8).reshape(h, w, c)[..., 1:]  # remove alpha channel
 
 
 def save_canvas_img(canvas_img: np.ndarray, path: str) -> bool:

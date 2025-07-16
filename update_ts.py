@@ -9,7 +9,7 @@ def find_python_files():
     python_files = []
     
     # カレントディレクトリとサブディレクトリからPythonファイルを検索
-    for pattern in ['*.py', '**/*.py']:
+    for pattern in ['aidia/*.py', 'aidia/**/*.py', 'aidia/widgets/*.py', 'aidia/widgets/**/*.py']:
         python_files.extend(glob.glob(pattern, recursive=True))
     
     # __pycache__や.envなどの不要なディレクトリを除外

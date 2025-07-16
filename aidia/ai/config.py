@@ -67,6 +67,8 @@ class AIConfig(object):
         self.total_batchsize = self.BATCH_SIZE
         if self.dataset_dir is not None:
             self.log_dir = os.path.join(self.dataset_dir, LOCAL_DATA_DIR_NAME, self.NAME)
+            if not os.path.exists(self.log_dir):
+                os.makedirs(self.log_dir, exist_ok=True)
         self.image_size = (self.INPUT_SIZE, self.INPUT_SIZE)
         self.num_classes = len(self.LABELS)
 

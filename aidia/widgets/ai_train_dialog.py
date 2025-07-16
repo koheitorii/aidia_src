@@ -9,7 +9,7 @@ from matplotlib.ticker import MaxNLocator
 from qtpy import QtCore, QtWidgets, QtGui
 from qtpy.QtCore import Qt
 
-from aidia import CLS, DET, SEG, MNIST, CLEAR, ERROR
+from aidia import CLS, DET, SEG, MNIST, CLEAR, ERROR, TASK_LIST
 from aidia import LOCAL_DATA_DIR_NAME, CONFIG_JSON, DATASET_JSON
 from aidia import ModelTypes
 from aidia import LabelStyle
@@ -68,7 +68,7 @@ class ParamComponent(object):
             if items is not None:
                 self.input_field.addItems(items)
             if validate_func is not None:
-                self.input_field.currentTextChanged.connect(validate_func)
+                self.input_field.currentIndexChanged.connect(validate_func)
         elif type == "checkbox":
             self.input_field = QtWidgets.QCheckBox()
             self.input_field.setToolTip(tips)
@@ -116,10 +116,12 @@ class AITrainDialog(QtWidgets.QDialog):
         self.train_steps = 0
         self.val_steps = 0
 
-        self.fig, self.ax_loss = plt.subplots(figsize=(12, 6))
+        self.fig_loss, self.ax_loss = plt.subplots(figsize=(12, 6))
+        self.fig_loss.patch.set_alpha(0.0)
         self.ax_loss.axis("off")
         
-        self.fig2, self.ax_pie = plt.subplots(figsize=(6, 6))
+        self.fig_pie, self.ax_pie = plt.subplots(figsize=(6, 6))
+        self.fig_pie.patch.set_alpha(0.0)
         self.ax_pie.axis("off")
 
         self.param_objects = {}
@@ -136,23 +138,34 @@ class AITrainDialog(QtWidgets.QDialog):
         self.right_row += 1
 
         # task selection
-        def _validate(text):
-            self.config.TASK = text
-            self.switch_enabled_by_task(text)
+        def _validate(idx):
+            idx = int(idx)
+            self.config.TASK = TASK_LIST[idx]
+            self.switch_enabled_by_task(self.config.TASK)
         self.param_task = ParamComponent(
             type="combo",
             tag=self.tr("Task"),
             tips=self.tr("""Select the task.
 Detection uses YOLO and Segmentation uses U-Net.
-If MNIST Test are selected, the training test using MNIST dataset are performed and you can check the calculation performance."""),
+If Performance Test are selected, the training test using MNIST dataset are performed and you can check the calculation performance."""),
             validate_func=_validate,
-            items=[DET, SEG, MNIST]
+            items=[
+                self.tr('Detection'),
+                self.tr('Segmentation'),
+                self.tr('Performance Test'),
+            ]
         )
         self.add_param_component(self.param_task)
 
         # model selection
-        def _validate(text):
-            self.config.MODEL = text
+        def _validate(idx):
+            idx = int(idx)
+            if self.config.TASK == DET:
+                self.config.MODEL = ModelTypes.DET_MODEL[idx]
+            elif self.config.TASK == SEG:
+                self.config.MODEL = ModelTypes.SEG_MODEL[idx]
+            else:
+                self.config.MODEL = ''
         self.param_model = ParamComponent(
             type="combo",
             tag=self.tr("Model"),
@@ -168,14 +181,14 @@ If MNIST Test are selected, the training test using MNIST dataset are performed 
         self.param_name = ParamComponent(
             type="text",
             tag=self.tr("Name"),
-            tips=self.tr("""Set the experiment name.\nYou cannot set existed experiment names."""),
+            tips=self.tr("""Set the experiment name."""),
             validate_func=_validate,
         )
         self.add_param_component(self.param_name)
 
         # dataset idx
-        def _validate(text):
-            self.config.DATASET_NUM = int(text.split(" ")[1])
+        def _validate(idx):
+            self.config.DATASET_NUM = int(idx+1)
         self.param_dataset = ParamComponent(
             type="combo",
             tag=self.tr("Dataset"),
@@ -183,7 +196,13 @@ If MNIST Test are selected, the training test using MNIST dataset are performed 
 Aidia splits the data into a 4:1 ratio (train:test) depend on the selected pattern.
 You can use this function for 5-fold cross-validation."""),
             validate_func=_validate,
-            items=["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4", "Pattern 5"]
+            items=[
+                self.tr("Pattern 1"),
+                self.tr("Pattern 2"),
+                self.tr("Pattern 3"),
+                self.tr("Pattern 4"),
+                self.tr("Pattern 5"),
+            ]
         )
         self.add_param_component(self.param_dataset)
 
@@ -348,7 +367,7 @@ The labels are separated with line breaks."""),
             tips=self.tr("Enable random vertical flip."),
             validate_func=_validate_vflip
         )
-        self.add_augment_params(self.param_vflip)
+        self.add_augment_param(self.param_vflip)
 
         # horizontal flip
         def _validate_hflip(state): # check:2, empty:0
@@ -362,7 +381,7 @@ The labels are separated with line breaks."""),
             tips=self.tr("Enable random horizontal flip."),
             validate_func=_validate_hflip
         )
-        self.add_augment_params(self.param_hflip)
+        self.add_augment_param(self.param_hflip)
 
         # rotation
         def _validate_rotate(text):
@@ -376,7 +395,7 @@ The labels are separated with line breaks."""),
             tips=self.tr("Set rotation angle range in degrees (0-90)."),
             validate_func=_validate_rotate
         )
-        self.add_augment_params(self.param_rotate)
+        self.add_augment_param(self.param_rotate)
 
         # scale
         def _validate_scale(text):
@@ -390,7 +409,7 @@ The labels are separated with line breaks."""),
             tips=self.tr("Set scale variation range (0.0-1.0)."),
             validate_func=_validate_scale
         )
-        self.add_augment_params(self.param_scale)
+        self.add_augment_param(self.param_scale)
 
         # shift
         def _validate_shift(text):
@@ -404,7 +423,7 @@ The labels are separated with line breaks."""),
             tips=self.tr("Set shift range in pixels."),
             validate_func=_validate_shift
         )
-        self.add_augment_params(self.param_shift)
+        self.add_augment_param(self.param_shift)
 
         # shear
         def _validate_shear(text):
@@ -418,7 +437,7 @@ The labels are separated with line breaks."""),
             tips=self.tr("Set shear angle range in degrees (0-30)."),
             validate_func=_validate_shear
         )
-        self.add_augment_params(self.param_shear)
+        self.add_augment_param(self.param_shear)
 
         # blur
         def _validate_blur(text):
@@ -432,7 +451,7 @@ The labels are separated with line breaks."""),
             tips=self.tr("Set blur standard deviation (0.0-20.0)."),
             validate_func=_validate_blur
         )
-        self.add_augment_params(self.param_blur)
+        self.add_augment_param(self.param_blur)
 
         # noise
         def _validate_noise(text):
@@ -446,7 +465,7 @@ The labels are separated with line breaks."""),
             tips=self.tr("Set noise standard deviation (0.0-1.0)."),
             validate_func=_validate_noise
         )
-        self.add_augment_params(self.param_noise)
+        self.add_augment_param(self.param_noise)
 
         # brightness
         def _validate_brightness(text):
@@ -460,7 +479,7 @@ The labels are separated with line breaks."""),
             tips=self.tr("Set brightness adjustment range (0-255)."),
             validate_func=_validate_brightness
         )
-        self.add_augment_params(self.param_brightness)
+        self.add_augment_param(self.param_brightness)
 
         # contrast
         def _validate_contrast(text):
@@ -474,19 +493,24 @@ The labels are separated with line breaks."""),
             tips=self.tr("Set contrast variation range (0.0-1.0)."),
             validate_func=_validate_contrast
         )
-        self.add_augment_params(self.param_contrast)
+        self.add_augment_param(self.param_contrast)
 
         ### add buttons ###
+
+        # update lowest row
+        row = max(self.left_row, self.right_row)
+
         # train button
         self.button_train = QtWidgets.QPushButton(self.tr("Train"))
+        self.button_train.setMinimumHeight(100)
+        self.button_train.setStyleSheet("font-size: 20px;")
         self.button_train.clicked.connect(self.train)
-        row = max(self.left_row, self.right_row)
         self._layout.addWidget(self.button_train, row, 1, 1, 4)
         row += 1
 
         # figure area
-        self.image_widget = ImageWidget(self, self._plt2img())
-        self._layout.addWidget(self.image_widget, row, 1, 1, 4)
+        self.image_widget_loss = ImageWidget(self)
+        self._layout.addWidget(self.image_widget_loss, row, 1, 1, 4)
         row += 1
 
         # progress bar
@@ -522,8 +546,8 @@ The labels are separated with line breaks."""),
         self.text_dataset.setAlignment(Qt.AlignLeading)
         self._dataset_layout.addWidget(self.text_dataset)
 
-        self.image_widget2 = ImageWidget(self, self._plt2img2())
-        self._dataset_layout.addWidget(self.image_widget2)
+        self.image_widget_pie = ImageWidget(self)
+        self._dataset_layout.addWidget(self.image_widget_pie)
 
         ### set layouts ###
         self._augment_widget.setLayout(self._augment_layout)
@@ -572,11 +596,11 @@ The labels are separated with line breaks."""),
         self.config.SUBMODE = is_submode
 
         # basic params
-        self.param_task.input_field.setCurrentText(self.config.TASK)
+        self.param_task.input_field.setCurrentIndex(TASK_LIST.index(self.config.TASK))
         self.switch_enabled_by_task(self.config.TASK)
         self.param_model.input_field.setCurrentText(self.config.MODEL)
         self.param_name.input_field.setText(self.config.NAME)
-        self.param_dataset.input_field.setCurrentText("Pattern " + str(self.config.DATASET_NUM))
+        self.param_dataset.input_field.setCurrentIndex(int(self.config.DATASET_NUM) - 1)
         self.param_size.input_field.setText(str(self.config.INPUT_SIZE))
         self.param_epochs.input_field.setText(str(self.config.EPOCHS))
         self.param_batchsize.input_field.setText(str(self.config.BATCH_SIZE))
@@ -626,8 +650,6 @@ The labels are separated with line breaks."""),
             self.text_status.setText(self.tr("Terminated training."))
             return
         
-        self.set_error(self.param_name) # to avoid NAME duplication.
-
         # display elapsed time
         now = time.time()
         etime = now - self.start_time
@@ -645,9 +667,12 @@ The labels are separated with line breaks."""),
         utils.save_dict_to_excel(df_dic, os.path.join(self.config.log_dir, "loss.xlsx"))
 
         # save figure
-        self.fig.savefig(os.path.join(self.config.log_dir, "loss.png"))
+        self.fig_loss.savefig(os.path.join(self.config.log_dir, "loss.png"))
 
         self.aiRunning.emit(False)
+
+        # open log directory
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.config.log_dir))
 
     def callback_fit_started(self, value):
         self.button_stop.setEnabled(True)
@@ -758,30 +783,14 @@ The labels are separated with line breaks."""),
         else:
             self.left_row += h
     
-    def add_augment_params(self, obj:ParamComponent):
+    def add_augment_param(self, obj:ParamComponent):
         self.param_objects[obj.tag.text()] = obj
         row = self.augment_row
         self._augment_layout.addWidget(obj.tag, row, 0, alignment=Qt.AlignmentFlag.AlignRight)
         self._augment_layout.addWidget(obj.input_field, row, 1, alignment=Qt.AlignmentFlag.AlignCenter)
         self.augment_row += 1
 
-    def switch_enabled(self, target_tags:list[QtWidgets.QLabel], enabled:bool):
-        for tag in target_tags:
-            tag_text = tag.text()
-            if tag_text in self.param_objects:
-                obj = self.param_objects[tag_text]
-                if enabled:
-                    obj.tag.setStyleSheet(LabelStyle.DEFAULT)
-                    obj.input_field.setEnabled(True)
-                else:
-                    obj.tag.setStyleSheet(LabelStyle.DISABLED)
-                    obj.input_field.setEnabled(False)
-        
-        # Handle special cases
-        if enabled and not self.config.SUBMODE:
-            self.param_is_dir_split.tag.setStyleSheet(LabelStyle.DISABLED)
-            self.param_is_dir_split.input_field.setEnabled(False)
-
+   
     def set_error(self, obj: ParamComponent):
         obj.tag.setStyleSheet(LabelStyle.ERROR)
         obj.state = ERROR
@@ -792,30 +801,29 @@ The labels are separated with line breaks."""),
 
     def update_figure(self):
         self.ax_loss.clear()
-        self.ax_loss.set_title('Loss Curve', fontsize=20)
+        self.ax_loss.set_xlabel("Epoch", fontsize=16, color=qt.get_default_color())
+        self.ax_loss.set_ylabel("Loss", fontsize=16, color=qt.get_default_color())
+        self.ax_loss.tick_params(axis='both', labelsize=14, colors=qt.get_default_color())
+        self.ax_loss.patch.set_alpha(0.0)
+        self.ax_loss.grid()
         if len(self.epoch):
             if len(self.loss):
-                self.ax_loss.plot(self.epoch, self.loss, color="red", linestyle="solid", label="Training")
+                self.ax_loss.plot(self.epoch, self.loss, color="red", linestyle="solid", label="train")
             if len(self.val_loss):
-                self.ax_loss.plot(self.epoch, self.val_loss, color="green", linestyle="solid", label="Validation")
-            self.ax_loss.set_xlabel("Epoch", fontsize=16)
-            self.ax_loss.set_ylabel("Loss", fontsize=16)
+                self.ax_loss.plot(self.epoch, self.val_loss, color="green", linestyle="solid", label="val")
             self.ax_loss.xaxis.set_major_locator(MaxNLocator(integer=True))
             mx = min((len(self.epoch) // 10 + 1) * 10, self.config.EPOCHS)
             self.ax_loss.set_xlim([1, mx])
-            # if len(self.val_loss) > 1:
-                # top_limit = np.max(self.val_loss[1:])
-                # top_limit = np.mean(self.val_loss[1:]) * 1.5
-                # self.ax_loss.set_ylim([0, top_limit])
-            self.ax_loss.legend(fontsize=16)
-            self.ax_loss.grid()
-            self.image_widget.loadPixmap(self._plt2img())
+            self.ax_loss.legend(fontsize=16, labelcolor=qt.get_default_color(), framealpha=0.3)
+            self.add_fig_loss()
 
-    def _plt2img(self):
-        return fig2img(self.fig)
+    def add_fig_loss(self):
+        self.image_widget_loss.loadPixmap(fig2img(self.fig_loss, add_alpha=True))
+        return
 
-    def _plt2img2(self):
-        return fig2img(self.fig2)
+    def add_fig_pie(self):
+        self.image_widget_pie.loadPixmap(fig2img(self.fig_pie, add_alpha=True))
+        return
 
     def update_dataset(self, value):
         dataset_num = value["dataset_num"]
@@ -862,13 +870,14 @@ The labels are separated with line breaks."""),
 
         # update label distribution
         self.ax_pie.clear()
-        self.ax_pie.set_title('Label Distribusion', fontsize=20)
+        self.ax_pie.set_title('Label Distribusion', fontsize=20, color="white" if qt.is_dark_mode() else "black")
         self.ax_pie.pie(num_per_class,
                     labels=class_names,
                     #  autopct="%1.1f%%",
                     wedgeprops={'linewidth': 1, 'edgecolor':"white"},
-                    textprops={'color': "black", 'fontsize': 16})
-        self.image_widget2.loadPixmap(self._plt2img2())
+                    textprops={'color': "white" if qt.is_dark_mode() else "black",
+                               'fontsize': 16})
+        self.add_fig_pie()
 
     def update_status(self, value):
         self.text_status.setText(str(value))
@@ -881,13 +890,13 @@ The labels are separated with line breaks."""),
         batch = value.get("batch")
         loss = value.get("loss")
 
-        text = f"Epoch: {epoch}/{self.config.EPOCHS} "
+        text = f"epoch: {epoch}/{self.config.EPOCHS} "
         if batch is not None:
-            text += f"Batch: {batch} / {self.train_steps} "
+            text += f"batch: {batch} / {self.train_steps} "
         if loss is not None:
-            text += f"Loss: {loss:.6f} "
+            text += f"loss: {loss:.6f} "
         if len(self.val_loss):
-            text += f"Val Loss: {self.val_loss[-1]:.6f}"
+            text += f"val_loss: {self.val_loss[-1]:.6f}"
         
         self.text_status.setText(text)
     
@@ -938,6 +947,8 @@ The labels are separated with line breaks."""),
             if not answer:
                 self.text_status.setText(self.tr("Training was cancelled."))
                 return
+            else:
+                shutil.rmtree(self.config.log_dir, ignore_errors=True)
         
         self.disable_all()
         self.reset_state()
@@ -957,8 +968,8 @@ The labels are separated with line breaks."""),
         self.val_loss = []
         self.progress.setValue(0)
         self.text_dataset.clear()
-        self.image_widget.clear()
-        self.image_widget2.clear()
+        self.image_widget_loss.clear()
+        self.image_widget_pie.clear()
 
 
 class AITrainThread(QtCore.QThread):
@@ -974,21 +985,16 @@ class AITrainThread(QtCore.QThread):
         super().__init__(parent)
         self.config = None
         self.model = None
-        self.cb_getprocess = None
 
     def set_config(self, config: AIConfig):
         self.config = config
 
     def quit(self):
-        if self.cb_getprocess.is_fitting:
-            super().quit()
-            self.model.stop_training()
-            self.notifyMessage.emit(self.tr("Interrupt training."))
-            return
-        else:
-            self.notifyMessage.emit(self.tr("Fitting process has not started yet."))
-            return
-
+        super().quit()
+        self.model.stop_training()
+        self.notifyMessage.emit(self.tr("Interrupt training."))
+        return
+    
     def run(self):
         if self.config is None:
             self.errorMessage.emit(self.tr("Not configured. Terminated."))
@@ -1062,12 +1068,11 @@ class AITrainThread(QtCore.QThread):
 
         self.notifyMessage.emit(self.tr("Preparing..."))
 
-        # set callbacks
+        # set progress callback
         self.batch = 0
         self.epoch = 0
         self.loss = 0.0
-        
-        # set progress callback
+
         if ModelTypes.is_ultralytics(self.config.MODEL):
             # for ultralytics models, use custom callback
             def on_train_batch_end(trainer):
@@ -1108,15 +1113,11 @@ class AITrainThread(QtCore.QThread):
                     super().__init__()
 
                     self.widget = widget
-                    self.is_fitting = False
 
                 def on_train_batch_end(self, batch, logs=None):
                     if logs is not None:
                         logs["batch"] = batch + 1
                         self.widget.batchLogList.emit(logs)
-                        if not self.is_fitting:
-                            self.is_fitting = True
-                            self.widget.fitStarted.emit(True)
 
                 def on_epoch_end(self, epoch, logs=None):
                     if logs is not None:
@@ -1128,14 +1129,9 @@ class AITrainThread(QtCore.QThread):
 
             progress_callback = GetProgress(self)
             callbacks = [progress_callback]
-            self.cb_getprocess = progress_callback
             
-        # if self.config.EARLY_STOPPING:
-        #     cb = [cb_getprocess, keras.callbacks.EarlyStopping(patience=10)]
-        # else:
-        #     cb = [cb_getprocess]
-
         try:
+            self.fitStarted.emit(True)
             model.train(callbacks)
         # except tf.errors.ResourceExhaustedError as e:
         #     self.errorMessage.emit(self.tr("Memory error. Please reduce the input size or batch size."))
