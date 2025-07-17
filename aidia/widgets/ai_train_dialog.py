@@ -54,11 +54,13 @@ class ParamComponent(object):
     def __init__(self, type, tag, tips, validate_func=None, items=None):
         super().__init__()
 
+        minimum_width = 250
+
         if type == "text":
             self.input_field = QtWidgets.QLineEdit()
             self.input_field.setPlaceholderText(tips)
             self.input_field.setToolTip(tips)
-            self.input_field.setMinimumWidth(200)
+            self.input_field.setMinimumWidth(minimum_width)
             self.input_field.setAlignment(Qt.AlignmentFlag.AlignCenter)
             if validate_func is not None:
                 self.input_field.textChanged.connect(validate_func)
@@ -66,13 +68,13 @@ class ParamComponent(object):
             self.input_field = QtWidgets.QTextEdit()
             self.input_field.setPlaceholderText(tips)
             self.input_field.setToolTip(tips)
-            self.input_field.setMinimumWidth(200)
+            self.input_field.setMinimumWidth(minimum_width)
             if validate_func is not None:
                 self.input_field.textChanged.connect(validate_func)
         elif type == "combo":
             self.input_field = QtWidgets.QComboBox()
             self.input_field.setToolTip(tips)
-            self.input_field.setMinimumWidth(200)
+            self.input_field.setMinimumWidth(minimum_width)
             if items is not None:
                 self.input_field.addItems(items)
             if validate_func is not None:
@@ -136,8 +138,14 @@ class AITrainDialog(QtWidgets.QDialog):
         title_main = qt.head_text(self.tr("Training Settings"))
         title_main.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         title_main.setMaximumHeight(30)
-        title_main.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
         self._layout.addWidget(title_main, 0, 1, 1, 4)
+        self.left_row_count += 1
+        self.right_row_count += 1
+
+        self.label_current_mode = QtWidgets.QLabel()
+        self.label_current_mode.setStyleSheet("QLabel{ font-size: 16px; }")
+        self.label_current_mode.setMaximumHeight(30)
+        self._layout.addWidget(self.label_current_mode, 1, 1, 1, 4, Qt.AlignmentFlag.AlignHCenter)
         self.left_row_count += 1
         self.right_row_count += 1
 
@@ -634,6 +642,11 @@ QProgressBar::chunk {
             except Exception as e:
                 aidia_logger.error(e, exc_info=True)
         self.config.SUBMODE = is_submode
+
+        if is_submode:
+            self.label_current_mode.setText(self.tr('Search data from <span style="color: red;"><b>PARENT</b></span> directory'))
+        else:
+            self.label_current_mode.setText(self.tr('Search data from <span style="color: green;"><b>CURRENT</b></span> directory'))
 
         # basic params
         self.param_task.input_field.setCurrentIndex(TASK_LIST.index(self.config.TASK))
@@ -1332,6 +1345,9 @@ class AITrainThread(QtCore.QThread):
             model.dataset.save(p)
 
         ### Evaluation ###
+        if ModelTypes.is_ultralytics(self.config.MODEL):
+            return
+        
         self.notifyMessage.emit(self.tr("Generate test result images..."))
 
         save_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'evaluation', 'test_images')

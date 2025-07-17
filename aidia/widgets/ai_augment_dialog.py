@@ -27,7 +27,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
         self._layout = QtWidgets.QVBoxLayout()
 
         # Title
-        title = qt.head_text(self.tr("Data Augmentation Settings"))
+        title = qt.head_text(self.tr("Advanced Data Augmentation Settings"))
         title.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
         self._layout.addWidget(title)
 
