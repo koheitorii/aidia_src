@@ -62,10 +62,11 @@ class DetectionModel(object):
             name="yolo11",
             fliplr=0.5 if self.config.RANDOM_HFLIP else 0.0,
             flipud=0.5 if self.config.RANDOM_VFLIP else 0.0,
-            degrees=self.config.RANDOM_ROTATE,
+            degrees=self.config.RANDOM_ROTATE * 180.0,
             scale=self.config.RANDOM_SCALE,
-            translate=self.config.RANDOM_SHIFT / self.config.INPUT_SIZE,
+            translate=self.config.RANDOM_SHIFT,
             shear=self.config.RANDOM_SHEAR,
+            hsv_v=self.config.RANDOM_BRIGHTNESS,
         )
 
     def evaluate(self, cb_widget=None):

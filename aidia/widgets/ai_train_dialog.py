@@ -9,7 +9,7 @@ from matplotlib.ticker import MaxNLocator
 from qtpy import QtCore, QtWidgets, QtGui
 from qtpy.QtCore import Qt
 
-from aidia import CLS, DET, SEG, MNIST, CLEAR, ERROR, TASK_LIST
+from aidia import CLS, DET, SEG, TEST, CLEAR, ERROR, TASK_LIST
 from aidia import LOCAL_DATA_DIR_NAME, CONFIG_JSON, DATASET_JSON
 from aidia import ModelTypes
 from aidia import LabelStyle
@@ -24,6 +24,7 @@ from aidia.ai.test import TestModel
 from aidia.ai.det import DetectionModel
 from aidia.ai.seg import SegmentationModel
 from aidia.widgets import ImageWidget
+from aidia.widgets.ai_augment_dialog import AIAugmentDialog
 
 import torch
 
@@ -70,7 +71,7 @@ class ParamComponent(object):
             if validate_func is not None:
                 self.input_field.currentIndexChanged.connect(validate_func)
         elif type == "checkbox":
-            self.input_field = QtWidgets.QCheckBox()
+            self.input_field = QtWidgets.QCheckBox(tag)
             self.input_field.setToolTip(tips)
             if validate_func is not None:
                 self.input_field.stateChanged.connect(validate_func)
@@ -101,14 +102,6 @@ class AITrainDialog(QtWidgets.QDialog):
 
         self.setMinimumSize(QtCore.QSize(1200, 800))
 
-        self._layout = QtWidgets.QGridLayout()
-        self._dataset_layout = QtWidgets.QVBoxLayout()
-        self._dataset_widget = QtWidgets.QWidget()
-        # self._dataset_widget.setMinimumWidth(200)
-        self._augment_layout = QtWidgets.QGridLayout()
-        self._augment_widget = QtWidgets.QWidget()
-        # self._augment_widget.setMinimumWidth(200)
-
         self.dataset_dir = None
         self.start_time = 0
         self.epoch = []
@@ -127,16 +120,41 @@ class AITrainDialog(QtWidgets.QDialog):
 
         self.param_objects = {}
 
-        self.left_row = 0
-        self.right_row = 0
-        self.augment_row = 0
+        self.left_row_count = 0
+        self.right_row_count = 0
+
+        # Create main layout
+        self._layout = QtWidgets.QGridLayout()
+
+        title_main = qt.head_text(self.tr("Training Settings"))
+        title_main.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        title_main.setMaximumHeight(30)
+        self._layout.addWidget(title_main, 0, 1, 1, 4)
+        self.left_row_count += 1
+        self.right_row_count += 1
+
+        self._dataset_layout = QtWidgets.QVBoxLayout()
+        self._dataset_widget = QtWidgets.QWidget()
+
+        title_dataset = qt.head_text(self.tr("Dataset Information"))
+        title_dataset.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        title_dataset.setMaximumHeight(30)
+        self._dataset_layout.addWidget(title_dataset)
+
+        self._augment_layout = QtWidgets.QVBoxLayout()
+        self._augment_widget = QtWidgets.QWidget()
+
+        title_augment = qt.head_text(self.tr("Data Augmentation"))
+        title_augment.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        title_augment.setMaximumHeight(30)
+        self._augment_layout.addWidget(title_augment)
 
         # directory information
-        self.tag_directory = QtWidgets.QLabel()
-        self.tag_directory.setMaximumHeight(100)
-        self._layout.addWidget(self.tag_directory, 0, 1, 1, 4)
-        self.left_row += 1
-        self.right_row += 1
+        # self.tag_directory = QtWidgets.QLabel()
+        # self.tag_directory.setMaximumHeight(100)
+        # self._layout.addWidget(self.tag_directory, 0, 1, 1, 4)
+        # self.left_row += 1
+        # self.right_row_count += 1
 
         # task selection
         def _validate(idx):
@@ -167,6 +185,8 @@ If Performance Test are selected, the training test using MNIST dataset are perf
                 self.config.MODEL = ModelTypes.SEG_MODEL[idx]
             else:
                 self.config.MODEL = ''
+            # Update augmentation parameters availability based on model
+            self.update_augment_availability()
         self.param_model = ParamComponent(
             type="combo",
             tag=self.tr("Model"),
@@ -334,6 +354,14 @@ The labels are separated with line breaks."""),
         # self.input_is_multi.stateChanged.connect(_validate)
         # self._add_basic_params(self.tag_is_multi, self.input_is_multi, right=True, reverse=True)
 
+        # label replacement button
+        button_label_replace = QtWidgets.QPushButton(self.tr("Label Replacement"))
+        button_label_replace.setToolTip(self.tr("Open label replacement dialog."))
+        button_label_replace.setAutoDefault(False)
+        self._layout.addWidget(button_label_replace, self.right_row_count, 3, 1, 2)
+        button_label_replace.clicked.connect(self.label_replace_popup)
+        self.right_row_count += 1
+
         # train target select
         def _validate(state): # check:2, empty:0
             if state == 2:
@@ -346,16 +374,9 @@ The labels are separated with line breaks."""),
             tips=self.tr("""Separate data by directories when training."""),
             validate_func=_validate
         )
-        self.add_param_component(self.param_is_dir_split, right=True, reverse=True)
-
+        self.add_param_component(self.param_is_dir_split, right=True)
 
         ### add augment params ###
-        # title
-        title_augment = qt.head_text(self.tr("Data Augmentation"))
-        title_augment.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
-        self._augment_layout.addWidget(title_augment, 0, 0, 1, 3)
-        self.augment_row += 1
-
         # vertical flip
         def _validate_vflip(state): # check:2, empty:0
             if state == 2:
@@ -385,138 +406,143 @@ The labels are separated with line breaks."""),
         self.add_augment_param(self.param_hflip)
 
         # rotation
-        def _validate_rotate(text):
-            if text.isdigit() and 0 < int(text) < 90:
-                self.config.RANDOM_ROTATE = int(text)
+        def _validate_rotate(state): # check:2, empty:0
+            if state == 2:
+                self.config.RANDOM_ROTATE = 0.1  # degrees
             else:
                 self.config.RANDOM_ROTATE = 0
         self.param_rotate = ParamComponent(
-            type="text",
+            type="checkbox",
             tag=self.tr("Rotation"),
-            tips=self.tr("Set rotation angle range in degrees (0-90)."),
+            tips=self.tr("Enable random rotation."),
             validate_func=_validate_rotate
         )
         self.add_augment_param(self.param_rotate)
 
         # scale
-        def _validate_scale(text):
-            if text.replace(".", "", 1).isdigit() and 0.0 < float(text) < 1.0:
-                self.config.RANDOM_SCALE = float(text)
+        def _validate_scale(state): # check:2, empty:0
+            if state == 2:
+                self.config.RANDOM_SCALE = 0.1  # scale factor
             else:
                 self.config.RANDOM_SCALE = 0.0
         self.param_scale = ParamComponent(
-            type="text",
+            type="checkbox",
             tag=self.tr("Scale"),
-            tips=self.tr("Set scale variation range (0.0-1.0)."),
+            tips=self.tr("Enable random scale variation."),
             validate_func=_validate_scale
         )
         self.add_augment_param(self.param_scale)
 
         # shift
-        def _validate_shift(text):
-            if text.isdigit() and 0 < int(text) < self.config.INPUT_SIZE:
-                self.config.RANDOM_SHIFT = int(text)
+        def _validate_shift(state): # check:2, empty:0
+            if state == 2:
+                self.config.RANDOM_SHIFT = 0.1  # pixels
             else:
-                self.config.RANDOM_SHIFT = 0
+                self.config.RANDOM_SHIFT = 0.0
         self.param_shift = ParamComponent(
-            type="text",
+            type="checkbox",
             tag=self.tr("Shift"),
-            tips=self.tr("Set shift range in pixels."),
+            tips=self.tr("Enable random shift."),
             validate_func=_validate_shift
         )
         self.add_augment_param(self.param_shift)
 
         # shear
-        def _validate_shear(text):
-            if text.isdigit() and 0 < int(text) < 30:
-                self.config.RANDOM_SHEAR = int(text)
+        def _validate_shear(state): # check:2, empty:0
+            if state == 2:
+                self.config.RANDOM_SHEAR = 0.1  # degrees
             else:
-                self.config.RANDOM_SHEAR = 0
+                self.config.RANDOM_SHEAR = 0.0
         self.param_shear = ParamComponent(
-            type="text",
+            type="checkbox",
             tag=self.tr("Shear"),
-            tips=self.tr("Set shear angle range in degrees (0-30)."),
+            tips=self.tr("Enable random shear."),
             validate_func=_validate_shear
         )
         self.add_augment_param(self.param_shear)
 
         # blur
-        def _validate_blur(text):
-            if text.replace(".", "", 1).isdigit() and 0.0 < float(text) < 20.0:
-                self.config.RANDOM_BLUR = float(text)
+        def _validate_blur(state): # check:2, empty:0
+            if state == 2:
+                self.config.RANDOM_BLUR = 0.1  # sigma
             else:
                 self.config.RANDOM_BLUR = 0.0
         self.param_blur = ParamComponent(
-            type="text",
+            type="checkbox",
             tag=self.tr("Blur"),
-            tips=self.tr("Set blur standard deviation (0.0-20.0)."),
+            tips=self.tr("Enable random blur."),
             validate_func=_validate_blur
         )
         self.add_augment_param(self.param_blur)
 
         # noise
-        def _validate_noise(text):
-            if text.replace(".", "", 1).isdigit() and 0.0 < float(text) < 1.0:
-                self.config.RANDOM_NOISE = float(text)
+        def _validate_noise(state): # check:2, empty:0
+            if state == 2:
+                self.config.RANDOM_NOISE = 0.1  # stddev
             else:
                 self.config.RANDOM_NOISE = 0.0
         self.param_noise = ParamComponent(
-            type="text",
+            type="checkbox",
             tag=self.tr("Noise"),
-            tips=self.tr("Set noise standard deviation (0.0-1.0)."),
+            tips=self.tr("Enable random noise."),
             validate_func=_validate_noise
         )
         self.add_augment_param(self.param_noise)
 
         # brightness
-        def _validate_brightness(text):
-            if text.isdigit() and 0 < int(text) < 255:
-                self.config.RANDOM_BRIGHTNESS = int(text)
+        def _validate_brightness(state): # check:2, empty:0
+            if state == 2:
+                self.config.RANDOM_BRIGHTNESS = 0.1  # brightness range
             else:
-                self.config.RANDOM_BRIGHTNESS = 0
+                self.config.RANDOM_BRIGHTNESS = 0.0
         self.param_brightness = ParamComponent(
-            type="text",
+            type="checkbox",
             tag=self.tr("Brightness"),
-            tips=self.tr("Set brightness adjustment range (0-255)."),
+            tips=self.tr("Enable random brightness adjustment."),
             validate_func=_validate_brightness
         )
         self.add_augment_param(self.param_brightness)
 
         # contrast
-        def _validate_contrast(text):
-            if text.replace(".", "", 1).isdigit() and 0.0 < float(text) < 1.0:
-                self.config.RANDOM_CONTRAST = float(text)
+        def _validate_contrast(state): # check:2, empty:0
+            if state == 2:
+                self.config.RANDOM_CONTRAST = 0.1
             else:
                 self.config.RANDOM_CONTRAST = 0.0
         self.param_contrast = ParamComponent(
-            type="text",
+            type="checkbox",
             tag=self.tr("Contrast"),
-            tips=self.tr("Set contrast variation range (0.0-1.0)."),
+            tips=self.tr("Enable random contrast variation."),
             validate_func=_validate_contrast
         )
         self.add_augment_param(self.param_contrast)
 
-        ### add buttons ###
+        # advanced settings
+        button_advanced = QtWidgets.QPushButton(self.tr("Advanced Settings"))
+        button_advanced.setToolTip(self.tr("Open advanced data augmentation settings."))
+        button_advanced.setAutoDefault(False)
+        button_advanced.clicked.connect(self.augment_setting_popup)
+        self._augment_layout.addWidget(button_advanced)
 
         # update lowest row
-        row = max(self.left_row, self.right_row)
+        row_count = max(self.left_row_count, self.right_row_count)
 
         # train button
         self.button_train = QtWidgets.QPushButton(self.tr("Train"))
         self.button_train.setMinimumHeight(64)
         self.button_train.setStyleSheet("font-size: 20px;")
         self.button_train.clicked.connect(self.train)
-        self._layout.addWidget(self.button_train, row, 1, 1, 4)
-        row += 1
+        self._layout.addWidget(self.button_train, row_count, 1, 1, 4)
+        row_count += 1
 
         # figure area
         self.image_widget_loss = ImageWidget(self)
-        self._layout.addWidget(self.image_widget_loss, row, 1, 1, 4)
-        row += 1
+        self._layout.addWidget(self.image_widget_loss, row_count, 1, 1, 4)
+        row_count += 1
 
         # status
         self.text_status = QtWidgets.QLabel()
-        self._layout.addWidget(self.text_status, row, 1, 1, 2)
+        self._layout.addWidget(self.text_status, row_count, 1, 1, 2)
         # row += 1
 
         # progress bar
@@ -530,7 +556,7 @@ QProgressBar::chunk {
     width: 20px; }""")
         self.progress.setMaximum(100)
         self.progress.setValue(0)
-        self._layout.addWidget(self.progress, row, 3, 1, 2)
+        self._layout.addWidget(self.progress, row_count, 3, 1, 2)
         # row += 1
 
         # stop button
@@ -539,16 +565,9 @@ QProgressBar::chunk {
         # self._layout.addWidget(self.button_stop, row, 4, 1, 1, Qt.AlignRight)
         # row += 1
 
-        ### add dataset information ###
-        # title
-        title_dataset = qt.head_text(self.tr("Dataset Information"))
-        title_dataset.setMaximumHeight(100)
-        title_dataset.setAlignment(Qt.AlignTop)
-        self._dataset_layout.addWidget(title_dataset)
-
         # dataset information
         self.text_dataset = QtWidgets.QLabel()
-        self.text_dataset.setAlignment(Qt.AlignLeading)
+        self.text_dataset.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self._dataset_layout.addWidget(self.text_dataset)
 
         self.image_widget_pie = ImageWidget(self)
@@ -556,10 +575,10 @@ QProgressBar::chunk {
 
         ### set layouts ###
         self._dataset_widget.setLayout(self._dataset_layout)
-        self._layout.addWidget(self._dataset_widget, 0, 0, row + 1, 1)
+        self._layout.addWidget(self._dataset_widget, 0, 0, row_count + 1, 1)
 
         self._augment_widget.setLayout(self._augment_layout)
-        self._layout.addWidget(self._augment_widget, 0, 5, row - 1, 1)
+        self._layout.addWidget(self._augment_widget, 0, 5, row_count - 1, 1)
         
         self.setLayout(self._layout)
 
@@ -585,11 +604,11 @@ QProgressBar::chunk {
         """Popup train window and set config parameters to input fields."""
         self.dataset_dir = dataset_dir
         self.setWindowTitle(self.tr("AI Training - {}").format(dataset_dir))
-        if is_submode and len(os.listdir(dataset_dir)) > 1:
-            dir_list = glob.glob(os.path.join(dataset_dir, "*/"))
-            self.tag_directory.setText(self.tr("Target Directory:\n{},\n{},\n...").format(dir_list[0], dir_list[1]))
-        else:
-            self.tag_directory.setText(self.tr("Target Directory:\n{}").format(dataset_dir))
+        # if is_submode and len(os.listdir(dataset_dir)) > 1:
+            # dir_list = glob.glob(os.path.join(dataset_dir, "*/"))
+            # self.tag_directory.setText(self.tr("Target Directory:\n{},\n{},\n...").format(dir_list[0], dir_list[1]))
+        # else:
+            # self.tag_directory.setText(self.tr("Target Directory:\n{}").format(dataset_dir))
 
         # create data directory
         data_dirpath = utils.get_dirpath_with_mkdir(dataset_dir, LOCAL_DATA_DIR_NAME)
@@ -631,16 +650,9 @@ QProgressBar::chunk {
         self.param_is_dir_split.input_field.setChecked(self.config.DIR_SPLIT)
 
         # augment params
-        self.param_vflip.input_field.setChecked(self.config.RANDOM_VFLIP)
-        self.param_hflip.input_field.setChecked(self.config.RANDOM_HFLIP)
-        self.param_rotate.input_field.setText(str(self.config.RANDOM_ROTATE))
-        self.param_shift.input_field.setText(str(self.config.RANDOM_SHIFT))
-        self.param_scale.input_field.setText(str(self.config.RANDOM_SCALE))
-        self.param_shear.input_field.setText(str(self.config.RANDOM_SHEAR))
-        self.param_blur.input_field.setText(str(self.config.RANDOM_BLUR))
-        self.param_noise.input_field.setText(str(self.config.RANDOM_NOISE))
-        self.param_brightness.input_field.setText(str(self.config.RANDOM_BRIGHTNESS))
-        self.param_contrast.input_field.setText(str(self.config.RANDOM_CONTRAST))
+        self.update_augment_checkboxes()
+        # Update augmentation parameter availability after loading config
+        self.update_augment_availability()
 
         self.exec_()
         if os.path.exists(os.path.join(dataset_dir, LOCAL_DATA_DIR_NAME)):
@@ -700,7 +712,7 @@ QProgressBar::chunk {
                 self.param_model.input_field.addItems(ModelTypes.SEG_MODEL)
             self.enable_all()
 
-        elif task == MNIST:
+        elif task == TEST:
             self.param_model.input_field.clear()
             self.disable_all()
             self.switch_enabled([
@@ -716,6 +728,8 @@ QProgressBar::chunk {
 
         # global setting
         self.switch_global_params()
+        # Update augmentation parameter availability
+        self.update_augment_availability()
         self.button_train.setEnabled(True)
         # self.button_stop.setEnabled(False)
 
@@ -740,7 +754,7 @@ QProgressBar::chunk {
         # else:
         #     self.tag_is_multi.setStyleSheet(LabelStyle.DEFAULT)
         #     self.input_is_multi.setEnabled(True)
-        if not self.config.SUBMODE or self.config.TASK in [MNIST]:
+        if not self.config.SUBMODE or self.config.TASK in [TEST]:
             self.param_is_dir_split.tag.setStyleSheet(LabelStyle.DISABLED)
             self.param_is_dir_split.input_field.setEnabled(False)
         else:
@@ -771,42 +785,47 @@ QProgressBar::chunk {
         else:
             # self.reset_state()
             self.switch_enabled_by_task(self.config.TASK)
+    
+    def label_replace_popup(self):
+        """Open label replacement dialog."""
+        pass
+  
 
-    def add_param_component(self, obj:ParamComponent, right=False, reverse=False, custom_size=None):
+    def add_param_component(self, obj:ParamComponent, right=False, custom_size=None):
+        """Add a parameter component to the layout."""
         self.param_objects[obj.tag.text()] = obj
-        row = self.left_row
+        row = self.left_row_count
         pos = [1, 2]
-        align = [Qt.AlignmentFlag.AlignRight, Qt.AlignmentFlag.AlignLeft]
         h, w = (1, 1)
         if right:
-            row = self.right_row
+            row = self.right_row_count
             pos = [3, 4]
-        if reverse:
-            pos = pos[::-1]
-            align = align[::-1]
         if custom_size:
             h = custom_size[0]
             w = custom_size[1]
-        self._layout.addWidget(obj.tag, row, pos[0], h, w, alignment=align[0])
-        self._layout.addWidget(obj.input_field, row, pos[1], h, w, alignment=align[1])
-        if right:
-            self.right_row += h
+        if isinstance(obj.input_field, QtWidgets.QCheckBox):
+            # checkbox is larger than other components
+            self._layout.addWidget(obj.input_field, row, pos[0], h, w+1)
         else:
-            self.left_row += h
+            self._layout.addWidget(obj.tag, row, pos[0], h, w, alignment=Qt.AlignmentFlag.AlignRight)
+            self._layout.addWidget(obj.input_field, row, pos[1], h, w, alignment=Qt.AlignmentFlag.AlignLeft)
+        if right:
+            self.right_row_count += h
+        else:
+            self.left_row_count += h
     
     def add_augment_param(self, obj:ParamComponent):
+        """Add a parameter component to the augmentation layout."""
         self.param_objects[obj.tag.text()] = obj
-        row = self.augment_row
-        self._augment_layout.addWidget(obj.tag, row, 0, alignment=Qt.AlignmentFlag.AlignRight)
-        self._augment_layout.addWidget(obj.input_field, row, 1, alignment=Qt.AlignmentFlag.AlignCenter)
-        self.augment_row += 1
-
+        self._augment_layout.addWidget(obj.input_field, alignment=Qt.AlignmentFlag.AlignLeft)
    
     def set_error(self, obj: ParamComponent):
+        """Set error state to the parameter component."""
         obj.tag.setStyleSheet(LabelStyle.ERROR)
         obj.state = ERROR
 
     def set_ok(self, obj: ParamComponent):
+        """Set ok state to the parameter component."""
         obj.tag.setStyleSheet(LabelStyle.DEFAULT)
         obj.state = CLEAR
 
@@ -815,6 +834,10 @@ QProgressBar::chunk {
         self.ax_loss.set_xlabel("Epoch", fontsize=16, color=qt.get_default_color())
         self.ax_loss.set_ylabel("Loss", fontsize=16, color=qt.get_default_color())
         self.ax_loss.tick_params(axis='both', labelsize=14, colors=qt.get_default_color())
+        self.ax_loss.spines['top'].set_visible(False)
+        self.ax_loss.spines['right'].set_visible(False)
+        self.ax_loss.spines['left'].set_color(qt.get_default_color())
+        self.ax_loss.spines['bottom'].set_color(qt.get_default_color())
         self.ax_loss.patch.set_alpha(0.0)
         self.ax_loss.grid(alpha=0.3, color=qt.get_default_color(), linestyle="--", linewidth=1)
         if len(self.epoch):
@@ -982,6 +1005,130 @@ QProgressBar::chunk {
         self.image_widget_loss.clear()
         self.image_widget_pie.clear()
 
+    def augment_setting_popup(self):
+        """Open data augmentation settings dialog."""
+        # Check if Ultralytics model and warn user about limitations
+        is_ultralytics = ModelTypes.is_ultralytics(self.config.MODEL)
+        
+        dialog = AIAugmentDialog(self)
+        
+        # If Ultralytics model, disable specific parameters in the dialog
+        if is_ultralytics:
+            # Set the values to 0 for Ultralytics models before opening dialog
+            original_contrast = self.config.RANDOM_CONTRAST
+            original_blur = self.config.RANDOM_BLUR
+            original_noise = self.config.RANDOM_NOISE
+            
+            self.config.RANDOM_CONTRAST = 0.0
+            self.config.RANDOM_BLUR = 0.0
+            self.config.RANDOM_NOISE = 0.0
+        
+        result = dialog.popup(self.config)
+        
+        if result == QtWidgets.QDialog.DialogCode.Accepted:
+            # For Ultralytics models, ensure disabled parameters remain 0
+            if is_ultralytics:
+                self.config.RANDOM_CONTRAST = 0.0
+                self.config.RANDOM_BLUR = 0.0
+                self.config.RANDOM_NOISE = 0.0
+            
+            # Update checkbox states based on new config values
+            self.update_augment_checkboxes()
+            # Update parameter availability
+            self.update_augment_availability()
+            self.text_status.setText(self.tr("Augmentation settings updated."))
+        else:
+            # Restore original values if user cancelled and it was Ultralytics
+            if is_ultralytics:
+                self.config.RANDOM_CONTRAST = original_contrast
+                self.config.RANDOM_BLUR = original_blur
+                self.config.RANDOM_NOISE = original_noise
+            self.text_status.setText(self.tr("Augmentation settings unchanged."))
+
+    def update_augment_checkboxes(self):
+        """Update augmentation checkbox states based on config values."""
+        self.param_vflip.input_field.setChecked(self.config.RANDOM_VFLIP)
+        self.param_hflip.input_field.setChecked(self.config.RANDOM_HFLIP)
+        if self.config.RANDOM_ROTATE > 0:
+            self.param_rotate.input_field.setChecked(True)
+        else:
+            self.param_rotate.input_field.setChecked(False)
+        if self.config.RANDOM_SHIFT > 0:
+            self.param_shift.input_field.setChecked(True)
+        else:
+            self.param_shift.input_field.setChecked(False)
+        if self.config.RANDOM_SCALE > 0:
+            self.param_scale.input_field.setChecked(True)
+        else:
+            self.param_scale.input_field.setChecked(False)
+        if self.config.RANDOM_SHEAR > 0:
+            self.param_shear.input_field.setChecked(True)
+        else:
+            self.param_shear.input_field.setChecked(False)
+        if self.config.RANDOM_BLUR > 0:
+            self.param_blur.input_field.setChecked(True)
+        else:
+            self.param_blur.input_field.setChecked(False)
+        if self.config.RANDOM_NOISE > 0:
+            self.param_noise.input_field.setChecked(True)
+        else:
+            self.param_noise.input_field.setChecked(False)
+        if self.config.RANDOM_BRIGHTNESS > 0:
+            self.param_brightness.input_field.setChecked(True)
+        else:
+            self.param_brightness.input_field.setChecked(False)
+        if self.config.RANDOM_CONTRAST > 0:
+            self.param_contrast.input_field.setChecked(True)
+        else:
+            self.param_contrast.input_field.setChecked(False)
+        
+    def update_augment_availability(self):
+        """Update augmentation parameter availability based on selected model."""
+
+        if self.config.TASK == TEST:
+            # For MNIST models, disable all augmentations
+            self.param_vflip.input_field.setEnabled(False)
+            self.param_hflip.input_field.setEnabled(False)
+            self.param_rotate.input_field.setEnabled(False)
+            self.param_scale.input_field.setEnabled(False)
+            self.param_shift.input_field.setEnabled(False)
+            self.param_shear.input_field.setEnabled(False)
+            self.param_blur.input_field.setEnabled(False)
+            self.param_noise.input_field.setEnabled(False)
+            self.param_brightness.input_field.setEnabled(False)
+            self.param_contrast.input_field.setEnabled(False)
+            return
+
+        is_ultralytics = ModelTypes.is_ultralytics(self.config.MODEL)
+            
+        # For Ultralytics models, disable contrast, blur, and noise
+        if is_ultralytics:
+            self.param_contrast.input_field.setEnabled(False)
+            self.param_contrast.input_field.setChecked(False)
+            self.param_contrast.tag.setStyleSheet(LabelStyle.DISABLED)
+            self.config.RANDOM_CONTRAST = 0.0
+        else:
+            self.param_contrast.input_field.setEnabled(True)
+            self.param_contrast.tag.setStyleSheet(LabelStyle.DEFAULT)
+    
+        if is_ultralytics:
+            self.param_blur.input_field.setEnabled(False)
+            self.param_blur.input_field.setChecked(False)
+            self.param_blur.tag.setStyleSheet(LabelStyle.DISABLED)
+            self.config.RANDOM_BLUR = 0.0
+        else:
+            self.param_blur.input_field.setEnabled(True)
+            self.param_blur.tag.setStyleSheet(LabelStyle.DEFAULT)
+    
+        if is_ultralytics:
+            self.param_noise.input_field.setEnabled(False)
+            self.param_noise.input_field.setChecked(False)
+            self.param_noise.tag.setStyleSheet(LabelStyle.DISABLED)
+            self.config.RANDOM_NOISE = 0.0
+        else:
+            self.param_noise.input_field.setEnabled(True)
+            self.param_noise.tag.setStyleSheet(LabelStyle.DEFAULT)
+        
 
 class AITrainThread(QtCore.QThread):
 
@@ -1013,7 +1160,7 @@ class AITrainThread(QtCore.QThread):
             return
 
         model = None
-        if self.config.TASK == MNIST:
+        if self.config.TASK == TEST:
             model = TestModel(self.config)
         elif self.config.TASK == DET:
             model = DetectionModel(self.config)
@@ -1107,6 +1254,8 @@ class AITrainThread(QtCore.QThread):
                     val_loss = validator.loss.sum().item()
                 else:
                     val_loss = validator.loss.item()
+                if np.isnan(val_loss):
+                    raise errors.LossGetNaNError
                 logs = {
                     "epoch": self.epoch + 1,
                     "loss": self.loss,
@@ -1133,9 +1282,8 @@ class AITrainThread(QtCore.QThread):
 
                 def on_epoch_end(self, epoch, logs=None):
                     if logs is not None:
-                        # if np.isnan(logs.get("loss")) or np.isnan(logs.get("val_loss")):
-                        #     self.widget.model.stop_training()
-                        #     raise errors.LossGetNanError
+                        if np.isnan(logs.get("loss")) or np.isnan(logs.get("val_loss")):
+                            raise errors.LossGetNaNError
                         logs["epoch"] = epoch + 1
                         self.widget.epochLogList.emit(logs)
 

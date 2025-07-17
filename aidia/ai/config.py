@@ -29,11 +29,11 @@ class AIConfig(object):
         self.EARLY_STOPPING = False
 
         # training setting
-        self.INPUT_SIZE = 224
-        self.BATCH_SIZE = 32
+        self.INPUT_SIZE = 256
+        self.BATCH_SIZE = 8
         self.TRAIN_STEP = None
         self.VAL_STEP = None
-        self.EPOCHS = 100
+        self.EPOCHS = 10
         self.LEARNING_RATE = 0.001
         self.LABELS = []
         self.N_SPLITS = 5
@@ -47,14 +47,14 @@ class AIConfig(object):
         # image augmentatin
         self.RANDOM_HFLIP = True
         self.RANDOM_VFLIP = True
-        self.RANDOM_ROTATE = 20
-        self.RANDOM_SCALE = 0.2
-        self.RANDOM_SHIFT = 20
-        self.RANDOM_SHEAR = 20
-        self.RANDOM_BRIGHTNESS = 20
+        self.RANDOM_ROTATE = 0.1
+        self.RANDOM_SCALE = 0.1
+        self.RANDOM_SHIFT = 0.1
+        self.RANDOM_SHEAR = 0.1
+        self.RANDOM_BRIGHTNESS = 0.1
         self.RANDOM_CONTRAST = 0.1
-        self.RANDOM_BLUR = 3.0  # 0 to n
-        self.RANDOM_NOISE = 15.0
+        self.RANDOM_BLUR = 0.1  # 0 to n
+        self.RANDOM_NOISE = 0.1
 
         self.build_params()
             

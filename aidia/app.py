@@ -287,18 +287,19 @@ class MainWindow(QtWidgets.QMainWindow):
             
         if not LITE:
             self.button_ai_train = QtWidgets.QPushButton(self)
-            self.button_ai_train.setText(self.tr("AI Training"))
+            self.button_ai_train.setText("AI")
+            self.button_ai_train.setMinimumHeight(50)
+            self.button_ai_train.setStyleSheet("QPushButton{ text-align: center; font-weight: bold; font-size: 24px; }")
             self.button_ai_train.clicked.connect(self.ai_train_popup)
             self.button_ai_train.setEnabled(True)
 
-            self.button_ai_eval = QtWidgets.QPushButton(self)
-            self.button_ai_eval.setText(self.tr("AI Evaluation"))
-            self.button_ai_eval.clicked.connect(self.ai_eval_popup)
-            self.button_ai_eval.setEnabled(True)
+            # self.button_ai_eval = QtWidgets.QPushButton(self)
+            # self.button_ai_eval.setText(self.tr("AI Evaluation"))
+            # self.button_ai_eval.clicked.connect(self.ai_eval_popup)
+            # self.button_ai_eval.setEnabled(True)
 
-            self.tag_is_submode = QtWidgets.QLabel(self.tr("from Parent Directory"))
-            self.tag_is_submode.setToolTip(self.tr("""Find data from the parent directory."""))
-            self.input_is_submode = QtWidgets.QCheckBox()
+            self.input_is_submode = QtWidgets.QCheckBox(self.tr("from Parent Directory"))
+            self.input_is_submode.setToolTip(self.tr("""Find data from the parent directory."""))
             self.input_is_submode.setChecked(self.is_submode)
             def _validate(state):
                 if state == 2:
@@ -306,12 +307,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 else:
                     self.is_submode = False
             self.input_is_submode.stateChanged.connect(_validate)
-
-            submode_layout = QtWidgets.QHBoxLayout()
-            submode_layout.addWidget(self.input_is_submode, alignment=Qt.AlignRight)
-            submode_layout.addWidget(self.tag_is_submode, alignment=Qt.AlignLeft)
-            submode_widget = QtWidgets.QWidget()
-            submode_widget.setLayout(submode_layout)
 
         self.ai_dock = QtWidgets.QDockWidget(self.tr("AI"), self)
         self.ai_dock.setObjectName("AI")
@@ -322,9 +317,9 @@ class MainWindow(QtWidgets.QMainWindow):
         ai_layout.addWidget(self.ai_select, 1, 0, 1, 3)
         ai_layout.addWidget(self.ai_import, 1, 3, 1, 1)
         if not LITE:
-            ai_layout.addWidget(self.button_ai_train, 2, 0, 1, 2)
-            ai_layout.addWidget(self.button_ai_eval, 2, 2, 1, 2)
-            ai_layout.addWidget(submode_widget, 3, 0, 1, 4, alignment=Qt.AlignCenter)
+            ai_layout.addWidget(self.button_ai_train, 2, 0, 1, 4)
+            # ai_layout.addWidget(self.button_ai_eval, 2, 2, 1, 2)
+            ai_layout.addWidget(self.input_is_submode, 3, 0, 1, 4, alignment=Qt.AlignmentFlag.AlignCenter)
             # ai_layout.addWidget(self.input_is_submode, 3, 0, 1, 1, Qt.AlignRight)
             # ai_layout.addWidget(self.tag_is_submode, 3, 1, 1, 3, Qt.AlignLeft)
         ai_widget = QtWidgets.QWidget()
@@ -1096,18 +1091,21 @@ class MainWindow(QtWidgets.QMainWindow):
             self.info_message(self.tr('''No GPU is available.<br>Please keep in mind that many times takes in training AI.'''))
 
     def init_dir(self):
+        """Initialize the working directory."""
         if self.work_dir is not None and os.path.exists(self.work_dir):
             self.import_from_dir(self.work_dir)
         else:
             self.work_dir = HOME_DIR
 
     def menu(self, title, actions=None):
+        """Create a menu with the given title and actions."""
         menu = self.menuBar().addMenu(title)
         if actions:
             qt.add_actions(menu, actions)
         return menu
     
     def toolbar_toggle_menu(self):
+        """Show a context menu for toggling toolbar buttons."""
         m = QtWidgets.QMenu()
         m.addActions([
             self.actions.showPolygonMode,
@@ -1133,6 +1131,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     ### Override Functions ###
     def closeEvent(self, event):
+        """Handle the close event of the application."""
         if not self.may_continue_unsaved():
             event.ignore()
         if not LITE and not self.may_continue_ai_running():
@@ -1160,9 +1159,11 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.settings.setValue("window/geometry", self.saveGeometry())
 
     def noShapes(self):
+        """Check if there are no shapes in the canvas."""
         return not len(self.labelList)
 
     def populateModeActions(self):
+        """Populate the toolbar and canvas menu with mode actions."""
         tool, menu = self.actions.tool, self.actions.canvas_menu
         self.tool_bar.clear()
         qt.add_actions(self.tool_bar, tool)
@@ -1179,7 +1180,6 @@ class MainWindow(QtWidgets.QMainWindow):
         )
         qt.add_actions(self.menus.edit, actions + self.actions.editMenu)
 
-
     def setDirty(self):
         """Manage unsaved annotation files."""
         self.dirty = True
@@ -1187,9 +1187,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.actions.undo.setEnabled(self.canvas.isShapeRestorable)
         if self.img_path is not None:
             self.update_title(set_dirty=True)
-         
 
     def setClean(self):
+        """Set the application state to clean."""
         self.dirty = False
         self.actions.save.setEnabled(False)
         # self.actions.createMode.setEnabled(True)
@@ -1203,8 +1203,8 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.actions.deleteFile.setEnabled(False)
 
-
     def update_title(self, set_dirty=False):
+        """Update the window title with the current image path and label file."""
         title = __appname__ + " " + __version__
         title += " - {}".format(self.img_path)
         if self.lf_path is not None and os.path.exists(self.lf_path):
@@ -1226,13 +1226,15 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
     def queueEvent(self, function):
+        """Queue an event to be executed in the main thread."""
         QtCore.QTimer.singleShot(0, function)
 
     def status(self, message, delay=5000):
+        """Update the status bar with a message."""
         self.statusBar().showMessage(message, delay)
 
-
     def resetState(self):
+        """Reset the application state."""
         self.labelList.clear()
         self.labelWidget.reset()
 
@@ -1256,28 +1258,27 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.canvas.resetState()
 
-
     def currentItem(self):
+        """Get the currently selected item in the label list."""
         items = self.labelList.selectedItems()
         if items:
             return items[0]
         return None
 
-
     def addRecentFile(self, filename):
+        """Add a file to the recent files list."""
         if filename in self.recentFiles:
             self.recentFiles.remove(filename)
         elif len(self.recentFiles) >= self.maxRecent:
             self.recentFiles.pop()
         self.recentFiles.insert(0, filename)
 
-
     def undoShapeEdit(self):
+        """Undo last shape edit."""
         self.canvas.restoreShape()
         self.labelList.clear()
         self.loadShapes(self.canvas.shapes)
         self.actions.undo.setEnabled(self.canvas.isShapeRestorable)
-
 
     def toggleDrawingSensitive(self, drawing=True):
         """Toggle drawing sensitive.
@@ -1300,8 +1301,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.canvas.setEditing(False)
             self.canvas.createMode = mode
 
-
     def updateFileMenu(self):
+        """Update the File menu with recent files."""
         current = self.img_path
 
         def exists(filename):
@@ -1320,10 +1321,9 @@ class MainWindow(QtWidgets.QMainWindow):
             action.triggered.connect(functools.partial(self.load_recent, f))
             menu.addAction(action)
 
-
     def popLabelListMenu(self, point):
+        """Show context menu for the label list widget."""
         self.menus.labelList.exec_(self.labelList.mapToGlobal(point))
-
 
     def update_label(self):
         """Get current labels of the label widget, and update shape labels."""
@@ -1349,8 +1349,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_shape_color(shape, color=(r, g, b))
         self.setDirty()
 
-
     def edit_label(self, item=None):
+        """Edit label of the current item or the given item."""
         if item and not isinstance(item, LabelListWidgetItem):
             raise TypeError("item must be LabelListWidgetItem type")
 
@@ -1366,13 +1366,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.labelWidget.reset()
         self.labelWidget.update(shape.label)
-
     
     def popup_copyright(self):
+        """Open the copyright dialog."""
         self.copyrightDialog.popUp()
 
-        
     def popup_setting(self):
+        """Open the setting dialog."""
         new_setting_dict = self.settingDialog.popUp({
                 S_EPSILON: self.approx_epsilon,
                 S_AREA_LIMIT: self.area_limit,
@@ -1380,7 +1380,6 @@ class MainWindow(QtWidgets.QMainWindow):
         if new_setting_dict:
             self.approx_epsilon = new_setting_dict[S_EPSILON]
             self.area_limit = new_setting_dict[S_AREA_LIMIT]
-
     
     def labelSearchChanged(self):
         """Call back function. Update target label and the shapes."""
@@ -1396,8 +1395,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.canvas.loadShapes([item.shape() for item in self.labelList])
             self.import_from_workdir()
 
-
     def nameSearchChanged(self):
+        """Call back function. Update target name and the image list."""
         if self.nameSearch.text():
             self.target_name = self.nameSearch.text()
             self.import_from_workdir()
@@ -1407,6 +1406,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def file_open_request(self, delta):
+        """Open next or previous image in the file list."""
         if delta > 0:
             self.open_prev_img()
         else:
@@ -1414,6 +1414,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def rowSelectionChanged(self, currentRow):
+        """Handle row selection change in the file list widget."""
         if not self.may_continue_unsaved():
             return
         item = self.fileListWidget.item(currentRow)
@@ -1429,6 +1430,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     # React to canvas signals.
     def shapeSelectionChanged(self, selected_shapes):
+        """Handle shape selection change in the canvas."""
         self._noSelectionSlot = True
         for shape in self.canvas.selectedShapes:
             shape.selected = False
@@ -1450,6 +1452,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     @staticmethod
     def has_duplicates(seq):
+        """Check if there are duplicates in a sequence."""
         # len(seq) != len(set(seq))
         dup_list = [k for k, v in collections.Counter(seq).items() if v > 1]
         if len(dup_list):
@@ -1458,6 +1461,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return None
 
     def add_label(self, shape):
+        """Add a label to the label list widget."""
         text = shape.label
         label_list_item = LabelListWidgetItem(text, shape)
         self.labelList.addItem(label_list_item)
@@ -1473,6 +1477,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.update_shape_color(shape, color=(r, g, b))
 
     def _get_rgb_by_label(self, shape):
+        """Get RGB color by label."""
         if self._config["shape_color"] == "auto":
             # item = self.labelList.findItemByShape(shape)
             # label_id = self.labelList.model().indexFromItem(item).row() + 1
@@ -1487,6 +1492,7 @@ class MainWindow(QtWidgets.QMainWindow):
             return self._config["label_colors"][shape.label]
     
     def update_shape_color(self, shape, color):
+        """Update the color of a shape."""
         r, g, b = color
         shape.line_color = QtGui.QColor(r, g, b)
         # shape.line_color = Qt.yellow
@@ -1586,20 +1592,20 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.canvas.deSelectShape()
 
     def labelItemChanged(self, item: LabelListWidgetItem):
+        """Handle label item change in the label list widget."""
         shape = item.shape()
         self.canvas.setShapeVisible(shape, item.checkState() == Qt.CheckState.Checked)
 
     def labelOrderChanged(self):
+        """Handle label order change in the label list widget."""
         self.setDirty()
         self.canvas.loadShapes([item.shape() for item in self.labelList])
-
     
     def add_label_data(self):
+        """Add label data to the label list widget."""
         item_name = os.path.basename(self.img_path)
         self.labels[item_name] = self.get_all_labels(self.labelFile)
-
-    # Callback functions:
-
+    
     def newShape(self):
         """Pop-up and give focus to the label editor.
 
@@ -2279,7 +2285,7 @@ class MainWindow(QtWidgets.QMainWindow):
         img_list = self.scan_all_imgs(dirpath)
         if img_list is None or len(img_list) == 0:
             self.reset_cursor()
-            self.error_message(self.tr("No images in the directory."))
+            # self.error_message(self.tr("No images in the directory."))
             return
         
         self.canvas.reset_params()
@@ -2566,10 +2572,10 @@ class MainWindow(QtWidgets.QMainWindow):
             
     def callback_ai_train_running(self, is_running):
         if is_running:
-            self.button_ai_eval.setEnabled(False)
+            # self.button_ai_eval.setEnabled(False)
             self.input_is_submode.setEnabled(False)
         else:
-            self.button_ai_eval.setEnabled(True)
+            # self.button_ai_eval.setEnabled(True)
             self.input_is_submode.setEnabled(True)
     
     def callback_ai_eval_running(self, is_running):

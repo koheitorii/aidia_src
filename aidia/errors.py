@@ -4,7 +4,7 @@ class DataLoadingError(Exception):
 class DataFewError(Exception):
     pass
 
-class LossGetNanError(Exception):
+class LossGetNaNError(Exception):
     pass
 
 class BatchsizeError(Exception):

@@ -50,7 +50,7 @@ class SegmentationModel(object):
             x = keras.layers.RandomFlip("vertical", seed=self.config.SEED)(x)
         if self.config.RANDOM_ROTATE:
             x = keras.layers.RandomRotation(
-                factor=self.config.RANDOM_ROTATE / 180.0 * np.pi,
+                factor=self.config.RANDOM_ROTATE,
                 seed=self.config.SEED
             )(x)
         if self.config.RANDOM_SCALE:
@@ -61,19 +61,19 @@ class SegmentationModel(object):
             )(x)
         if self.config.RANDOM_SHIFT:
             x = keras.layers.RandomTranslation(
-                height_factor=self.config.RANDOM_SHIFT / self.config.INPUT_SIZE,
-                width_factor=self.config.RANDOM_SHIFT / self.config.INPUT_SIZE,
+                height_factor=self.config.RANDOM_SHIFT,
+                width_factor=self.config.RANDOM_SHIFT,
                 seed=self.config.SEED
             )(x)
         if self.config.RANDOM_SHEAR:
             x = keras.layers.RandomShear(
-                x_factor=self.config.RANDOM_SHEAR / self.config.INPUT_SIZE,
-                y_factor=self.config.RANDOM_SHEAR / self.config.INPUT_SIZE,
+                x_factor=self.config.RANDOM_SHEAR,
+                y_factor=self.config.RANDOM_SHEAR,
                 seed=self.config.SEED
             )(x)
         if self.config.RANDOM_BRIGHTNESS:
             x = keras.layers.RandomBrightness(
-                factor=self.config.RANDOM_BRIGHTNESS / 255.0,
+                factor=self.config.RANDOM_BRIGHTNESS,
                 seed=self.config.SEED
             )(x)
         if self.config.RANDOM_CONTRAST:
@@ -83,17 +83,19 @@ class SegmentationModel(object):
             )(x)
         if self.config.RANDOM_BLUR:
             x = keras.layers.RandomGaussianBlur(
-                sigma=(0.0, self.config.RANDOM_BLUR),
-                seed=self.config.SEED
-            )(x)
-        if self.config.RANDOM_NOISE:
-            x = keras.layers.GaussianNoise(
-                stddev=self.config.RANDOM_NOISE,
+                factor=self.config.RANDOM_BLUR,
                 seed=self.config.SEED
             )(x)
 
         # rescaling
         x = keras.layers.Rescaling(1.0 / 255.0)(inputs)
+
+        # add noise
+        if self.config.RANDOM_NOISE:
+            x = keras.layers.GaussianNoise(
+                stddev=self.config.RANDOM_NOISE,
+                seed=self.config.SEED
+            )(x)
         
         # build UNet model
         outputs = UNet(self.config.num_classes)(x)

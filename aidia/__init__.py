@@ -58,9 +58,9 @@ class DrawMode:
 CLS = "Classification"
 DET = "Detection"
 SEG = "Segmentation"
-MNIST = "MNIST Test"
+TEST = "Performance Test"
 # task name list
-TASK_LIST = [DET, SEG, MNIST]
+TASK_LIST = [DET, SEG, TEST]
 
 # setting tag definition
 S_EPSILON = "approx_epsilon"
