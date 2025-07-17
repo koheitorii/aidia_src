@@ -21,4 +21,5 @@ from .tool_bar import ToolBar
 from .zoom_widget import ZoomWidget
 
 from .ai_augment_dialog import AIAugmentDialog
+from .ai_label_replace_dialog import AILabelReplaceDialog
 

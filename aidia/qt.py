@@ -8,12 +8,16 @@ from qtpy import QtGui
 from qtpy import QtWidgets
 
 
+class DictObject(object):
+    """A simple object that can be initialized with a dictionary."""
+    def __init__(self, **kwargs):
+        self.__dict__.update(kwargs)
+
 def is_dark_mode():
     """Check if the current application is in dark mode."""
     palette = QtWidgets.QApplication.palette()
     window_color = palette.color(QtGui.QPalette.Window)
     return window_color.lightness() < 128
-
 
 def get_default_color(is_qcolor=False):
     """Get the default color based on the current theme."""
@@ -30,8 +34,8 @@ def get_default_color(is_qcolor=False):
             # This is useful for text or other elements that should be black in light mode
             return "black"
 
-
 def new_icon(icon):
+    """Create a new icon from the specified icon name or path."""
     icons_dir = osp.join(osp.dirname(osp.abspath(__file__)), 'icons')
     icon_path = osp.join(icons_dir, '%s.png' % icon)
     
@@ -47,15 +51,14 @@ def new_icon(icon):
     
     return QtGui.QIcon(icon_path)
 
-
 def new_button(text, icon=None, slot=None):
+    """Create a new button with an icon and optional slot."""
     b = QtWidgets.QPushButton(text)
     if icon is not None:
         b.setIcon(new_icon(icon))
     if slot is not None:
         b.clicked.connect(slot)
     return b
-
 
 def new_action(parent, text, slot=None, shortcut=None, icon=None,
               tip=None, checkable=False, enabled=True, checked=False):
@@ -89,8 +92,8 @@ def new_action(parent, text, slot=None, shortcut=None, icon=None,
     a.setChecked(checked)
     return a
 
-
 def add_actions(widget, actions):
+    """Add a list of actions to a widget."""
     for action in actions:
         if action is None:
             widget.addSeparator()
@@ -99,21 +102,16 @@ def add_actions(widget, actions):
         else:
             widget.addAction(action)
 
-
 def labelValidator():
+    """Return a validator for label names."""
     return QtGui.QRegExpValidator(QtCore.QRegExp(r'^[^ \t].+'), None)
 
-
-class DictObject(object):
-    def __init__(self, **kwargs):
-        self.__dict__.update(kwargs)
-
-
 def distance(p):
+    """Calculate the Euclidean distance from the origin to the point p."""
     return sqrt(p.x() * p.x() + p.y() * p.y())
 
-
 def distancetoline(point, line):
+    """Calculate the distance from a point to a line segment defined by two points."""
     p1, p2 = line
     p1 = np.array([p1.x(), p1.y()])
     p2 = np.array([p2.x(), p2.y()])
@@ -124,19 +122,19 @@ def distancetoline(point, line):
         return np.linalg.norm(p3 - p2)
     return np.linalg.norm(np.cross(p2 - p1, p1 - p3)) / (np.linalg.norm(p2 - p1) + 1e-12)
 
-
 def fmtShortcut(text):
+    """Format a keyboard shortcut for display."""
     mod, key = text.split('+', 1)
     return '<b>%s</b>+<b>%s</b>' % (mod, key)
 
-
 def head_text(text):
+    """Create a bold label for headings."""
     bold_text = QtWidgets.QLabel(text)
     bold_text.setStyleSheet("font-size: 15pt; font-weight: bold")
     return bold_text
 
-
 def hline():
+    """Create a horizontal line widget."""
     hr_label = QtWidgets.QLabel()
     hr_label.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Raised)
     hr_label.setLineWidth(2)

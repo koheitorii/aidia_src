@@ -64,7 +64,6 @@ def read_image(img_path):
 
 def preprocessing(img, is_tensor=False):
     img = np.array(img, dtype=np.float32)
-    img = img / 255
     if is_tensor:
         img = np.expand_dims(img, axis=0)
     return img

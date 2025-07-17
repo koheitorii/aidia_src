@@ -2,7 +2,6 @@ import os
 import shutil
 import time
 import random
-import glob
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -12,11 +11,11 @@ from qtpy.QtCore import Qt
 from aidia import CLS, DET, SEG, TEST, CLEAR, ERROR, TASK_LIST
 from aidia import LOCAL_DATA_DIR_NAME, CONFIG_JSON, DATASET_JSON
 from aidia import ModelTypes
-from aidia import LabelStyle
 from aidia import aidia_logger
 from aidia import qt
 from aidia import utils
 from aidia import errors
+from aidia import image
 from aidia.image import fig2img
 from aidia.ai.config import AIConfig
 from aidia.ai.dataset import Dataset
@@ -25,6 +24,7 @@ from aidia.ai.det import DetectionModel
 from aidia.ai.seg import SegmentationModel
 from aidia.widgets import ImageWidget
 from aidia.widgets.ai_augment_dialog import AIAugmentDialog
+from aidia.widgets.ai_label_replace_dialog import AILabelReplaceDialog
 
 import torch
 
@@ -39,6 +39,13 @@ torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 
 import keras
+
+
+class LabelStyle:
+    """Styles for QLabel."""
+    DEFAULT = "QLabel{ color: white; }" if qt.is_dark_mode() else "QLabel{ color: black; }"
+    ERROR = "QLabel{ color: red; }"
+    DISABLED = "QLabel{ color: gray; }"
 
 
 class ParamComponent(object):
@@ -129,6 +136,7 @@ class AITrainDialog(QtWidgets.QDialog):
         title_main = qt.head_text(self.tr("Training Settings"))
         title_main.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         title_main.setMaximumHeight(30)
+        title_main.setFrameShadow(QtWidgets.QFrame.Shadow.Plain)
         self._layout.addWidget(title_main, 0, 1, 1, 4)
         self.left_row_count += 1
         self.right_row_count += 1
@@ -361,6 +369,7 @@ The labels are separated with line breaks."""),
         self._layout.addWidget(button_label_replace, self.right_row_count, 3, 1, 2)
         button_label_replace.clicked.connect(self.label_replace_popup)
         self.right_row_count += 1
+        self.button_label_replace = button_label_replace
 
         # train target select
         def _validate(state): # check:2, empty:0
@@ -523,6 +532,7 @@ The labels are separated with line breaks."""),
         button_advanced.setAutoDefault(False)
         button_advanced.clicked.connect(self.augment_setting_popup)
         self._augment_layout.addWidget(button_advanced)
+        self.button_advanced = button_advanced
 
         # update lowest row
         row_count = max(self.left_row_count, self.right_row_count)
@@ -636,10 +646,10 @@ QProgressBar::chunk {
         self.param_batchsize.input_field.setText(str(self.config.BATCH_SIZE))
         self.param_lr.input_field.setText(str(self.config.LEARNING_RATE))
 
-        if data_labels:
-            self.param_labels.input_field.setText("\n".join(data_labels))
-        else:
+        if len(self.config.LABELS) > 0:
             self.param_labels.input_field.setText("\n".join(self.config.LABELS))
+        else:
+            self.param_labels.input_field.setText("\n".join(data_labels))
         # if self.config.gpu_num < 2:
         #     self.input_is_multi.setEnabled(False)
         # self.input_is_multi.setChecked(self.config.USE_MULTI_GPUS)
@@ -701,6 +711,7 @@ QProgressBar::chunk {
     #     self.button_stop.setEnabled(True)
 
     def switch_enabled_by_task(self, task):
+        """Switch enabled state of parameters by task."""
         if task == CLS:
             raise NotImplementedError
         
@@ -711,7 +722,6 @@ QProgressBar::chunk {
             elif task == SEG:
                 self.param_model.input_field.addItems(ModelTypes.SEG_MODEL)
             self.enable_all()
-
         elif task == TEST:
             self.param_model.input_field.clear()
             self.disable_all()
@@ -721,8 +731,6 @@ QProgressBar::chunk {
                 self.param_epochs,
                 self.param_lr,
                 self.param_task], True)
-            self.button_train.setEnabled(True)
-
         else:
             raise ValueError
 
@@ -731,6 +739,8 @@ QProgressBar::chunk {
         # Update augmentation parameter availability
         self.update_augment_availability()
         self.button_train.setEnabled(True)
+        self.button_label_replace.setEnabled(True)
+        self.button_advanced.setEnabled(True)
         # self.button_stop.setEnabled(False)
 
     def switch_enabled(self, targets: list[ParamComponent], enabled:bool):
@@ -773,6 +783,8 @@ QProgressBar::chunk {
         for obj in self.param_objects.values():
             obj.input_field.setEnabled(False)
             obj.tag.setStyleSheet(LabelStyle.DISABLED)
+        self.button_label_replace.setEnabled(False)
+        self.button_advanced.setEnabled(False)
         self.button_train.setEnabled(False)
 
     def closeEvent(self, event):
@@ -788,7 +800,21 @@ QProgressBar::chunk {
     
     def label_replace_popup(self):
         """Open label replacement dialog."""
-        pass
+        dialog = AILabelReplaceDialog(self)
+        result = dialog.popup(self.config.REPLACE_DICT)
+        
+        if result == QtWidgets.QDialog.DialogCode.Accepted:
+            self.config.REPLACE_DICT = dialog.replace_dict
+            if self.config.REPLACE_DICT:
+                self.text_status.setText(
+                    self.tr("Label replacement dictionary updated with {} rules.").format(
+                        len(self.config.REPLACE_DICT)
+                    )
+                )
+            else:
+                self.text_status.setText(self.tr("Label replacement dictionary cleared."))
+        else:
+            self.text_status.setText(self.tr("Label replacement cancelled."))
   
 
     def add_param_component(self, obj:ParamComponent, right=False, custom_size=None):
@@ -904,12 +930,12 @@ QProgressBar::chunk {
 
         # update label distribution
         self.ax_pie.clear()
-        self.ax_pie.set_title('Label Distribusion', fontsize=20, color="white" if qt.is_dark_mode() else "black")
+        self.ax_pie.set_title('Label Distribusion', fontsize=20, color=qt.get_default_color())
         self.ax_pie.pie(num_per_class,
                     labels=class_names,
                     #  autopct="%1.1f%%",
-                    wedgeprops={'linewidth': 1, 'edgecolor':"white"},
-                    textprops={'color': "white" if qt.is_dark_mode() else "black",
+                    wedgeprops={'linewidth': 1, 'edgecolor': qt.get_default_color()},
+                    textprops={'color': qt.get_default_color(),
                                'fontsize': 16})
         self.add_fig_pie()
 
@@ -1305,4 +1331,68 @@ class AITrainThread(QtCore.QThread):
             p = os.path.join(self.config.log_dir, "dataset.json")
             model.dataset.save(p)
 
+        ### Evaluation ###
+        self.notifyMessage.emit(self.tr("Generate test result images..."))
+
+        save_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'evaluation', 'test_images')
+
+        n = model.dataset.num_test
+        predicts = []
+        for i in range(n):
+            image_id = model.dataset.test_ids[i]
+            img_path = model.dataset.image_info[image_id]["path"]
+            name = os.path.splitext(os.path.basename(img_path))[0]
+            if self.config.SUBMODE:
+                dirname = utils.get_basedir(img_path)
+                subdir_path = os.path.join(save_dir, dirname)
+                if not os.path.exists(subdir_path):
+                    os.mkdir(subdir_path)
+                save_path = os.path.join(save_dir, dirname, f"{name}.png")
+            else:
+                save_path = os.path.join(save_dir, f"{name}.png")
+            
+            # continue if output already exists
+            if os.path.exists(save_path):
+                # update 5 images to the widget
+                if len(predicts) <= 5:
+                    w = self.config.image_size[1]
+                    result_img = image.imread(save_path)
+                    if self.config.TASK in [SEG]:
+                        result_img = result_img[:, w:w*2]
+                    predicts.append(result_img)
+                else:
+                    self.predictList.emit(predicts)
+                    # predicts = []
+                    break
+                continue
+
+            try:
+                result_img = model.predict_by_id(image_id)
+            except FileNotFoundError as e:
+                self.notifyMessage.emit(self.tr("Error: {} was not found.").format(img_path))
+                return
+            image.imwrite(result_img, save_path)
+            # update latest 5 images to the widget
+            if len(predicts) <= 5:
+                w = self.config.image_size[1]
+                if self.config.TASK in [SEG]:
+                    result_img = result_img[:, w:w*2]
+                predicts.append(result_img)
+            else:
+                predicts = []
+    
+        self.notifyMessage.emit(self.tr("Evaluating..."))
+        try:
+            model.evaluate()
+        except Exception as e:
+            self.notifyMessage.emit(self.tr("Failed to evaluate."))
+            aidia_logger.error(e, exc_info=True)
+            return
+
+        self.notifyMessage.emit(self.tr("Convert model to ONNX..."))
+        if not model.convert2onnx():
+            self.notifyMessage.emit(self.tr("Failed to convert model to ONNX."))
+            return
+
+        self.notifyMessage.emit(self.tr("Done"))
 

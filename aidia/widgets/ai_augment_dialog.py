@@ -3,7 +3,6 @@ from qtpy import QtCore, QtWidgets
 from qtpy.QtCore import Qt
 
 from aidia import qt
-from aidia import LabelStyle
 from aidia import CLEAR, ERROR
 from aidia import ModelTypes
 from aidia.ai.config import AIConfig
@@ -28,13 +27,13 @@ class AIAugmentDialog(QtWidgets.QDialog):
         self._layout = QtWidgets.QVBoxLayout()
 
         # Title
-        title = qt.head_text(self.tr("Data Augmentation Parameters"))
+        title = qt.head_text(self.tr("Data Augmentation Settings"))
         title.setAlignment(Qt.AlignTop | Qt.AlignHCenter)
         self._layout.addWidget(title)
 
         # Description
         description = QtWidgets.QLabel(self.tr(
-            "Fine-tune data augmentation parameters. These settings control the intensity "
+            "Fine-tune data augmentation factors. These settings control the intensity "
             "of random transformations applied to training images to improve model generalization."
         ))
         description.setWordWrap(True)
@@ -83,7 +82,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
         
         # Rotation parameter
         self.rotation_spinbox = QtWidgets.QDoubleSpinBox()
-        self.rotation_spinbox.setRange(0.0, 1.0)
+        self.rotation_spinbox.setRange(0.0, 0.5)
         self.rotation_spinbox.setSingleStep(0.1)
         self.rotation_spinbox.setDecimals(2)
         self.rotation_spinbox.setToolTip(self.tr("Random rotation angle range (0-180 degrees)"))
@@ -91,7 +90,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
 
         # Scale parameter
         self.scale_spinbox = QtWidgets.QDoubleSpinBox()
-        self.scale_spinbox.setRange(0.0, 1.0)
+        self.scale_spinbox.setRange(0.0, 0.5)
         self.scale_spinbox.setSingleStep(0.1)
         self.scale_spinbox.setDecimals(2)
         self.scale_spinbox.setToolTip(self.tr("Random scale variation factor (0.0-1.0)"))
@@ -99,7 +98,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
 
         # Shift parameter
         self.shift_spinbox = QtWidgets.QDoubleSpinBox()
-        self.shift_spinbox.setRange(0.0, 1.0)
+        self.shift_spinbox.setRange(0.0, 0.5)
         self.shift_spinbox.setSingleStep(0.1)
         self.shift_spinbox.setDecimals(2)
         self.shift_spinbox.setToolTip(self.tr("Random translation factor (0.0-1.0)"))
@@ -107,7 +106,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
 
         # Shear parameter
         self.shear_spinbox = QtWidgets.QDoubleSpinBox()
-        self.shear_spinbox.setRange(0.0, 1.0)
+        self.shear_spinbox.setRange(0.0, 0.5)
         self.shear_spinbox.setSingleStep(0.1)
         self.shear_spinbox.setDecimals(2)
         self.shear_spinbox.setToolTip(self.tr("Random shear factor (0.0-1.0)"))
@@ -115,7 +114,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
 
         # Brightness parameter
         self.brightness_spinbox = QtWidgets.QDoubleSpinBox()
-        self.brightness_spinbox.setRange(0.0, 1.0)
+        self.brightness_spinbox.setRange(0.0, 0.5)
         self.brightness_spinbox.setSingleStep(0.1)
         self.brightness_spinbox.setDecimals(2)
         self.brightness_spinbox.setToolTip(self.tr("Random brightness adjustment factor (0.0-1.0)"))
@@ -123,7 +122,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
 
         # Contrast parameter
         self.contrast_spinbox = QtWidgets.QDoubleSpinBox()
-        self.contrast_spinbox.setRange(0.0, 1.0)
+        self.contrast_spinbox.setRange(0.0, 0.5)
         self.contrast_spinbox.setSingleStep(0.1)
         self.contrast_spinbox.setDecimals(2)
         self.contrast_spinbox.setToolTip(self.tr("Random contrast adjustment factor (0.0-1.0)"))
@@ -131,7 +130,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
 
         # Blur parameter
         self.blur_spinbox = QtWidgets.QDoubleSpinBox()
-        self.blur_spinbox.setRange(0.0, 1.0)
+        self.blur_spinbox.setRange(0.0, 0.5)
         self.blur_spinbox.setSingleStep(0.1)
         self.blur_spinbox.setDecimals(2)
         self.blur_spinbox.setToolTip(self.tr("Random blur factor (0.0-20.0)"))
@@ -139,7 +138,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
 
         # Noise parameter
         self.noise_spinbox = QtWidgets.QDoubleSpinBox()
-        self.noise_spinbox.setRange(0.0, 1.0)
+        self.noise_spinbox.setRange(0.0, 0.5)
         self.noise_spinbox.setSingleStep(0.1)
         self.noise_spinbox.setDecimals(2)
         self.noise_spinbox.setToolTip(self.tr("Random noise standard deviation (0.0-1.0)"))

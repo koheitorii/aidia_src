@@ -35,8 +35,10 @@ class AIConfig(object):
         self.VAL_STEP = None
         self.EPOCHS = 10
         self.LEARNING_RATE = 0.001
-        self.LABELS = []
         self.N_SPLITS = 5
+
+        self.LABELS = []
+        self.REPLACE_DICT = {}
 
         self.MODEL = "YOLOv4"
 

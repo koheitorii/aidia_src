@@ -67,7 +67,10 @@ class Dataset(object):
             self.load(p)
         else:
             self.load_classes()
-            self.load_data()
+            if len(config.REPLACE_DICT):
+                self.load_data(config.REPLACE_DICT)
+            else:
+                self.load_data()
             self.prepare()
 
     ### General Dataset Function ###
@@ -147,11 +150,13 @@ class Dataset(object):
         #TODO: add functions of saving only dataset information
 
     def load_classes(self):
+        """Load class information from config."""
         for idx, label in enumerate(self.config.LABELS):
             self.add_class(class_id=idx, class_name=str(label))
         self.num_per_class = np.zeros(len(self.class_info), np.uint)
 
-    def load_data(self):
+    def load_data(self, replace_dict:dict=None):
+        """Load data from dataset_dir."""
         if self.config.SUBMODE:
             _id = 0
             dir_list = glob.glob(os.path.join(self.config.dataset_dir, "**"))
@@ -181,22 +186,30 @@ class Dataset(object):
                     continue
                 label = shape["label"].split("_")
                 label = list(set(label))
+
+                # replace label if replace_dict is provided
+                if replace_dict is not None:
+                    for i, l in enumerate(label):
+                        if l in replace_dict.keys():
+                            label[i] = replace_dict[l]
+
+                # pick only labels that are in config.LABELS
                 new_label = []
                 for l in label:
                     if l in self.config.LABELS:
                         new_label.append(l)
                 
-                # TODO: multiple labels handling
-                # skip multi label data and no label data
-                if len(new_label) > 1 or len(new_label) == 0:
+                # skip no label data
+                if len(new_label) == 0:
                     continue
-
-                new_label = new_label[0]
-                label_index = self.config.LABELS.index(new_label)
-                self.num_per_class[label_index] += 1
-                shape["label"] = new_label
-                new_shapes.append(shape)
-                self.num_shapes += 1
+                
+                # TODO: multiple labels handling
+                for i, l in enumerate(new_label):
+                    label_index = self.config.LABELS.index(l)
+                    self.num_per_class[label_index] += 1
+                    shape["label"] = l
+                    new_shapes.append(shape)
+                    self.num_shapes += 1
 
             # skip no shapes data
             if len(new_shapes) == 0:
@@ -460,7 +473,7 @@ class Dataset(object):
                     continue
                 points = np.array(points, dtype=float)
                 label = a["label"]
-                if isinstance(label, list): # pick first label
+                if isinstance(label, list): # for old system
                     label = label[0]
                 class_id = self.class_names.index(label)
                 if shape_type == DrawMode.POLYGON:
@@ -564,7 +577,6 @@ class Dataset(object):
                 with open(label_path, 'w') as f:
                     for bbox in bboxes:
                         f.write(" ".join(map(str, bbox)) + "\n")
-        
 
         # Write to YAML file
         with open(self.path_yaml, 'w', encoding='utf-8') as f:

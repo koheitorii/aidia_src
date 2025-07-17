@@ -178,7 +178,7 @@ class SegmentationModel(object):
     # def stop_training(self):
     #     self.model.stop_training = True
 
-    def evaluate(self, cb_widget):
+    def evaluate(self):
         res = {}
         fig, ax = plt.subplots(1, 1, figsize=(10, 8))
 
@@ -205,9 +205,6 @@ class SegmentationModel(object):
 
         # predict all test data
         for i, image_id in enumerate(self.dataset.test_ids):
-            cb_widget.notifyMessage.emit(f"Evaluating... {i+1} / {self.dataset.num_test}")
-            cb_widget.progressValue.emit(int((i+1) / self.dataset.num_test * 99))
-
             # for DEBUG
             # if i > 50:
             #     break
@@ -360,10 +357,6 @@ class SegmentationModel(object):
             "PR Curve AUC (Average Precision)": ap,
             "img": img,
         }
-
-        cb_widget.notifyMessage.emit("Done")
-        cb_widget.progressValue.emit(100)
-
         return res
 
     def predict_by_id(self, image_id, thresh=0.5):

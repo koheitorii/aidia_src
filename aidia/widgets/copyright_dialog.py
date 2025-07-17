@@ -22,12 +22,10 @@ class CopyrightDialog(QtWidgets.QDialog):
 
         homepage_link = QtWidgets.QLabel('Official Website: <a href="https://trklibrary.com/">https://trklibrary.com/</a>')
         homepage_link.setOpenExternalLinks(True)
-        ultralytics_link = QtWidgets.QLabel('ultralytics: <a href="https://www.ultralytics.com/">https://www.ultralytics.com/</a>')
-        ultralytics_link.setOpenExternalLinks(True)
-        icooon_mono_link = QtWidgets.QLabel('ICOOON MONO: <a href="https://icooon-mono.com/">https://icooon-mono.com/</a>')
-        icooon_mono_link.setOpenExternalLinks(True)
         labelme_link = QtWidgets.QLabel('labelme: <a href=https://github.com/wkentaro/labelme>https://github.com/wkentaro/labelme</a>')
         labelme_link.setOpenExternalLinks(True)
+        ultralytics_link = QtWidgets.QLabel('ultralytics: <a href="https://www.ultralytics.com/">https://www.ultralytics.com/</a>')
+        ultralytics_link.setOpenExternalLinks(True)
 
         app_icon = ImageWidget(self, image=os.path.join(APP_DIR, 'icons', 'icon.png'), resize=(256, 256), alpha=True)
         app_icon.setFixedSize(256, 256)
@@ -50,7 +48,6 @@ You should have received a copy of the GNU General Public License
 along with Aidia. If not, see <http://www.gnu.org/licenses/>.""")
 
         layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(head_text("About"))
         layout.addWidget(app_icon, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(app_title, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QtWidgets.QLabel("Developed by Kohei Torii, Tokushima University, Japan"), alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -63,7 +60,6 @@ along with Aidia. If not, see <http://www.gnu.org/licenses/>.""")
         layout.addWidget(head_text("Thanks to"))
         layout.addWidget(labelme_link)
         layout.addWidget(ultralytics_link)
-        layout.addWidget(icooon_mono_link)
 
         self.setLayout(layout)
 

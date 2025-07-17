@@ -41,7 +41,6 @@ aidia_logger.addHandler(stream_handler)
 from qtpy import QtGui
 EXTS = [".{}".format(fmt.data().decode("ascii").lower()) for fmt in QtGui.QImageReader.supportedImageFormats()]
 EXTS.append(".dcm")
-EXTS.append(".pano")
 del QtGui
 
 # mode definition
@@ -85,15 +84,6 @@ class ModelTypes(object):
 
 # for error handling
 CLEAR, ERROR = 0, 1
-
-# label color diffinition
-from . import qt
-class LabelStyle:
-    """Styles for QLabel."""
-    DEFAULT = "QLabel{ color: black; }" if qt.is_dark_mode() else "QLabel{ color: white; }"
-    ERROR = "QLabel{ color: red; }"
-    DISABLED = "QLabel{ color: gray; }"
-del qt
 
 if os.name == "posix":
     CFONT = "Hiragino Sans"

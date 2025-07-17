@@ -265,10 +265,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.canvas.fileOpenRequest.connect(self.file_open_request)
 
         # AI Button
-        self.button_ai_test = QtWidgets.QPushButton(self)
-        self.button_ai_test.setText(self.tr("Automatic Annotation"))
-        self.button_ai_test.clicked.connect(self.ai_test)
-        self.button_ai_test.setEnabled(False)
+        self.button_auto_annotation = QtWidgets.QPushButton(self)
+        self.button_auto_annotation.setText(self.tr("Automatic Annotation"))
+        self.button_auto_annotation.clicked.connect(self.auto_annotation)
+        self.button_auto_annotation.setEnabled(False)
 
         self.ai_select = QtWidgets.QComboBox(self)
         self.ai_select.setStyleSheet("QComboBox{ text-align: center; }")
@@ -289,7 +289,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.button_ai_train = QtWidgets.QPushButton(self)
             self.button_ai_train.setText("AI")
             self.button_ai_train.setMinimumHeight(50)
-            self.button_ai_train.setStyleSheet("QPushButton{ text-align: center; font-weight: bold; font-size: 24px; }")
+            self.button_ai_train.setStyleSheet("QPushButton{ text-align: center; font-weight: bold; font-size: 24px; background-color: #4CAF50; color: white; } QPushButton:hover{ background-color: #45a049; }")
             self.button_ai_train.clicked.connect(self.ai_train_popup)
             self.button_ai_train.setEnabled(True)
 
@@ -313,7 +313,7 @@ class MainWindow(QtWidgets.QMainWindow):
         ai_layout = QtWidgets.QGridLayout()
         ai_layout.setSizeConstraint(QtWidgets.QLayout.SetMinimumSize)
         # ai_layout.addWidget(self.auto_create_button)
-        ai_layout.addWidget(self.button_ai_test, 0, 0, 1, 4)
+        ai_layout.addWidget(self.button_auto_annotation, 0, 0, 1, 4)
         ai_layout.addWidget(self.ai_select, 1, 0, 1, 3)
         ai_layout.addWidget(self.ai_import, 1, 3, 1, 1)
         if not LITE:
@@ -523,12 +523,10 @@ class MainWindow(QtWidgets.QMainWindow):
             tip=self.tr("Close current file.")
         )
 
-
         # create actions for drawing shapes
         create_polygon_action = create_action(
             text=self.tr("Create Polygons"),
             slot=lambda: self.toggleDrawMode(DrawMode.POLYGON),
-            # shortcut=shortcuts["create_polygon"],
             shortcut="N",
             icon="polygon",
             tip=self.tr("Start drawing polygons."),
@@ -537,25 +535,22 @@ class MainWindow(QtWidgets.QMainWindow):
         create_rectangle_action = create_action(
             self.tr("Create Rectangle"),
             lambda: self.toggleDrawMode(DrawMode.RECTANGLE),
-            # shortcuts["create_rectangle"],
             shortcut="R",
-            icon="rectangle",
+            icon="rect",
             tip=self.tr("Start drawing rectangles."),
             checkable=True,
         )
         create_linestrip_action = create_action(
             self.tr("Create Linestrip"),
             lambda: self.toggleDrawMode(DrawMode.LINESTRIP),
-            # shortcuts["create_linestrip"],
             "S",
-            "line-strip",
+            "linestrip",
             self.tr("Start drawing linestrips."),
             checkable=True,
         )
         create_line_action = create_action(
             self.tr("Create Line"),
             lambda: self.toggleDrawMode(DrawMode.LINE),
-            # shortcuts["create_line"],
             "L",
             "line",
             self.tr("Start drawing a line."),
@@ -564,7 +559,6 @@ class MainWindow(QtWidgets.QMainWindow):
         mode_point_action = create_action(
             self.tr("Create Point"),
             lambda: self.toggleDrawMode(DrawMode.POINT),
-            # shortcuts["create_point"],
             "P",
             "point",
             self.tr("Start drawing a point."),
@@ -573,7 +567,6 @@ class MainWindow(QtWidgets.QMainWindow):
         mode_edit_action = create_action(
             self.tr("Edit Polygons"),
             lambda: self.toggleDrawMode(DrawMode.EDIT),
-            # shortcuts["edit_polygon"],
             ["E", "ESC"],
             QIcon.ThemeIcon.EditCut,
             self.tr("Move and edit the selected polygons."),
@@ -1028,19 +1021,14 @@ class MainWindow(QtWidgets.QMainWindow):
             # open_next_action,
             save_action,
             # delete_file_action,
+            None,
             *mode_actions_group.actions(),
-            # create_polygon_action,
-            # create_rectangle_action,
-            # create_linestrip_action,
-            # create_line_action,
-            # create_point_action,
-            # edit_mode_action,
             # copy_action,
             # delete_action,
             undo_action,
-            # zoom_in_action,
-            # zoom,
-            # zoom_out_action,
+            None,
+            zoom_in_action,
+            zoom_out_action,
             fit_window_action,
         )
 
@@ -2498,7 +2486,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def update_ai_select(self):
         self.ai_select.clear()
         if not os.path.exists(PRETRAINED_DIR):
-            self.button_ai_test.setEnabled(False)
+            self.button_auto_annotation.setEnabled(False)
             self.ai_select.setEnabled(False)
             return
         
@@ -2514,18 +2502,17 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.ai_select.addItem(t)
         
         if self.ai_select.count() < 1:
-            self.button_ai_test.setEnabled(False)
+            self.button_auto_annotation.setEnabled(False)
             self.ai_select.setEnabled(False)
         else:
-            self.button_ai_test.setEnabled(True)
+            self.button_auto_annotation.setEnabled(True)
             self.ai_select.setEnabled(True)
             if self.text_ai_select is not None:
                 idx = self.ai_select.findText(self.text_ai_select)
                 if idx > -1:
                     self.ai_select.setCurrentIndex(idx)
 
-
-    def ai_test(self):
+    def auto_annotation(self):
         """Generate annotations with AI prediction results."""
         if not self.img_path:
             return

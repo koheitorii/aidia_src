@@ -11,7 +11,6 @@ from aidia import qt
 from aidia import utils
 from aidia import aidia_logger
 from aidia import HOME_DIR, CLS, DET, SEG, LOCAL_DATA_DIR_NAME
-from aidia import LabelStyle
 from aidia.ai.config import AIConfig
 from aidia.ai.dataset import Dataset
 from aidia.ai.det import DetectionModel
@@ -416,11 +415,11 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
             self.left_row += h
 
     def _set_error(self, tag:QtWidgets.QLabel):
-        tag.setStyleSheet(LabelStyle.ERROR)
+        # tag.setStyleSheet(LabelStyle.ERROR)
         self.error_flags[tag.text()] = 1
     
     def _set_ok(self, tag:QtWidgets.QLabel):
-        tag.setStyleSheet(LabelStyle.DEFAULT)
+        # tag.setStyleSheet(LabelStyle.DEFAULT)
         self.error_flags[tag.text()] = 0
                 
     def reset_state(self):

@@ -14,3 +14,4 @@ japanize-matplotlib
 scikit-learn
 keras
 onnxruntime==1.17.3
+onnx
