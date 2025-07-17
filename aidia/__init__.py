@@ -68,7 +68,7 @@ S_AREA_LIMIT = "area_limit"
 # model definition
 class ModelTypes(object):
     CLS_MODEL = ["EfficientNetv2-s"]
-    DET_MODEL = ['ultralytics_YOLO11n']
+    DET_MODEL = ['Ultralytics_YOLO11n']
     SEG_MODEL = ['U-Net']
 
     def __init__(self):
@@ -77,7 +77,7 @@ class ModelTypes(object):
     @staticmethod
     def is_ultralytics(model_name: str) -> bool:
         """Check if the model is from Ultralytics."""
-        if model_name.startswith("ultralytics_"):
+        if model_name.startswith("Ultralytics_"):
             return True
         return False
 

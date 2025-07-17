@@ -165,6 +165,14 @@ class AITrainDialog(QtWidgets.QDialog):
         title_augment.setMaximumHeight(30)
         self._augment_layout.addWidget(title_augment)
 
+        self._utility_layout = QtWidgets.QVBoxLayout()
+        self._utility_widget = QtWidgets.QWidget()
+
+        title_utility = qt.head_text(self.tr("Utility"))
+        title_utility.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        title_utility.setMaximumHeight(30)
+        self._utility_layout.addWidget(title_utility)
+
         # directory information
         # self.tag_directory = QtWidgets.QLabel()
         # self.tag_directory.setMaximumHeight(100)
@@ -597,6 +605,9 @@ QProgressBar::chunk {
 
         self._augment_widget.setLayout(self._augment_layout)
         self._layout.addWidget(self._augment_widget, 0, 5, row_count - 1, 1)
+
+        self._utility_widget.setLayout(self._utility_layout)
+        self._layout.addWidget(self._utility_widget, row_count - 1, 5, 1, 1)
         
         self.setLayout(self._layout)
 
@@ -641,8 +652,8 @@ QProgressBar::chunk {
                 self.config.load(config_path)
             except Exception as e:
                 aidia_logger.error(e, exc_info=True)
-        self.config.SUBMODE = is_submode
 
+        self.config.SUBMODE = is_submode
         if is_submode:
             self.label_current_mode.setText(self.tr('Search data from <span style="color: red;"><b>PARENT</b></span> directory'))
         else:
@@ -1262,7 +1273,12 @@ class AITrainThread(QtCore.QThread):
         #         model.build_model(mode="train")
         # else:
         #     model.build_model(mode="train")
-        model.build_model(mode="train")
+        try:
+            model.build_model(mode="train")
+        except Exception as e:
+            self.errorMessage.emit(self.tr("Failed to build model."))
+            aidia_logger.error(e, exc_info=True)
+            return
 
         self.notifyMessage.emit(self.tr("Preparing..."))
 
@@ -1346,6 +1362,8 @@ class AITrainThread(QtCore.QThread):
 
         ### Evaluation ###
         if ModelTypes.is_ultralytics(self.config.MODEL):
+            self.model.convert2onnx()
+            self.notifyMessage.emit(self.tr("Done"))
             return
         
         self.notifyMessage.emit(self.tr("Generate test result images..."))

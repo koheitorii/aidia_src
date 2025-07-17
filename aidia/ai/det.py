@@ -36,7 +36,10 @@ class DetectionModel(object):
         assert mode in ["train", "test"]
 
         if mode == "train":
-            self.model = YOLO("yolo11n.yaml", task="detect")
+            if self.config.MODEL.split('_')[1] == "YOLO11n":
+                self.model = YOLO("yolo11n.pt", task="detect")
+            else:
+                raise ValueError("Unsupported model for training.")
         elif mode == "test":
             self.model = YOLO(weights_path, task="detect")
         else:
@@ -59,7 +62,7 @@ class DetectionModel(object):
             batch=self.config.BATCH_SIZE,
             lr0=self.config.LEARNING_RATE,
             project=self.config.log_dir,
-            name="yolo11",
+            name=self.config.MODEL,
             fliplr=0.5 if self.config.RANDOM_HFLIP else 0.0,
             flipud=0.5 if self.config.RANDOM_VFLIP else 0.0,
             degrees=self.config.RANDOM_ROTATE * 180.0,
@@ -68,6 +71,17 @@ class DetectionModel(object):
             shear=self.config.RANDOM_SHEAR,
             hsv_v=self.config.RANDOM_BRIGHTNESS,
         )
+    
+    def convert2onnx(self):
+        """Convert YOLO model to ONNX format."""
+        # onnx_path = os.path.join(self.config.log_dir, "model.onnx")
+        # if os.path.exists(onnx_path):
+        #     return
+        # self.model.export(format="onnx", path=onnx_path)
+        model = YOLO("yolo11n.pt", task="detect")
+        ret = model.export(format="onnx", path=os.path.join(self.config.log_dir, "model.onnx"))
+        print(ret)
+        # print(self.model.export(format="onnx"))
 
     def evaluate(self, cb_widget=None):
         sum_AP = 0.0

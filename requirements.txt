@@ -11,7 +11,6 @@ PyYAML
 ultralytics
 matplotlib
 japanize-matplotlib
-scikit-learn
 keras
 onnxruntime==1.17.3
-onnx
+onnx==1.16.1

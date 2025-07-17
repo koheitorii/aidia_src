@@ -7,8 +7,6 @@ import keras
 import torch
 from torch.utils.data import Dataset as TorchDataset, DataLoader
 
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-
 import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use("agg")
@@ -191,7 +189,7 @@ class SegmentationModel(object):
         # prepare labels
         num_classes = self.config.num_classes + 1
         labels = self.config.LABELS[:]
-        labels.insert(0, 'no label')
+        labels.insert(0, 'background')  # add background class
 
         eval_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'evaluation')
         roc_pr_dir = utils.get_dirpath_with_mkdir(eval_dir, 'roc_pr_fig')
@@ -238,7 +236,7 @@ class SegmentationModel(object):
                     if np.max(yt_class) == 0 and np.max(_yp_class) == 0: # no ground truth
                         tn, fp, fn, tp = self.config.INPUT_SIZE**2, 0, 0, 0
                     else:
-                        cm = confusion_matrix(yt_class.ravel(), _yp_class.ravel())
+                        cm = metrics.binary_confusion_matrix(yt_class.ravel(), _yp_class.ravel())
                         tn, fp, fn, tp = cm.ravel()
                     _cm = np.array([tp, tn, fp, fn])
                     tptnfpfn_per_class[class_id, i] += _cm
@@ -261,8 +259,8 @@ class SegmentationModel(object):
                 if thresh == 0.5:
                     result_at_05 = [accuracy, precision, recall, specificity, fscore]
 
-                if precision == 0 and recall == 0:
-                    precision = 1
+                # if precision == 0 and recall == 0:
+                #     precision = 1
 
                 tpr.append(recall)
                 fpr.append(fpr[-1])
@@ -289,11 +287,6 @@ class SegmentationModel(object):
             pres.append(0.0)
             recs.append(1.0)
             ap += abs(recs[-1] - recs[-3]) * pres[-3]
-
-            # print(fpr)
-            # print(tpr)
-            # print(pres)
-            # print(recs)
 
             # draw curves
             ax.plot([0.0, 1.0], [0.0, 1.0], color='k', linestyle='--', label='baseline')
@@ -335,10 +328,10 @@ class SegmentationModel(object):
         cm_multi_class = cm_multi_class / (np.sum(cm_multi_class, axis=1) + 1e-12)[:, None]
 
         # figure of confusion matrix
-        cm_disp = ConfusionMatrixDisplay(confusion_matrix=cm_multi_class,
-                                         display_labels=labels)
         ax.set_title('Confusion Matrix', fontsize=20)
-        cm_disp.plot(ax=ax)
+        metrics.confusion_matrix_display(fig, ax, 
+                                         confusion_matrix=cm_multi_class,
+                                         display_labels=labels)
         filename = os.path.join(eval_dir, "confusion_matrix.png")
         fig.savefig(filename)
         img = image.fig2img(fig)

@@ -1,6 +1,8 @@
 import numpy as np
 import torch
 import torch.nn as nn
+import matplotlib.pyplot as plt
+from itertools import product
 
 from aidia import image
 
@@ -72,6 +74,28 @@ def mIoU(c_matrix) -> float:
     miou = np.mean(iou)
     return miou
 
+def binary_confusion_matrix(y_true, y_pred):
+    """Calculates binary confusion matrix.
+
+    Parameters
+    ----------
+    y_true: 1D vector
+        True labels.
+    y_pred: 1D vector
+        Predicted labels.
+
+    Returns
+    -------
+    matrix: 2D array
+        Confusion matrix.
+    """
+    matrix = np.zeros((2, 2))
+
+    for yt, yp in zip(y_true, y_pred):
+        matrix[yt, yp] += 1
+
+    return np.array(matrix, dtype=int)
+
 def multi_confusion_matrix(y_true, y_pred, num_classes):
     matrix = np.zeros((num_classes, num_classes))
 
@@ -79,6 +103,113 @@ def multi_confusion_matrix(y_true, y_pred, num_classes):
         matrix[yt, yp] += 1
 
     return matrix
+
+def _validate_style_kwargs(default_style_kwargs, user_style_kwargs):
+    invalid_to_valid_kw = {
+        "ls": "linestyle",
+        "c": "color",
+        "ec": "edgecolor",
+        "fc": "facecolor",
+        "lw": "linewidth",
+        "mec": "markeredgecolor",
+        "mfcalt": "markerfacecoloralt",
+        "ms": "markersize",
+        "mew": "markeredgewidth",
+        "mfc": "markerfacecolor",
+        "aa": "antialiased",
+        "ds": "drawstyle",
+        "font": "fontproperties",
+        "family": "fontfamily",
+        "name": "fontname",
+        "size": "fontsize",
+        "stretch": "fontstretch",
+        "style": "fontstyle",
+        "variant": "fontvariant",
+        "weight": "fontweight",
+        "ha": "horizontalalignment",
+        "va": "verticalalignment",
+        "ma": "multialignment",
+    }
+    for invalid_key, valid_key in invalid_to_valid_kw.items():
+        if invalid_key in user_style_kwargs and valid_key in user_style_kwargs:
+            raise TypeError(
+                f"Got both {invalid_key} and {valid_key}, which are aliases of one "
+                "another"
+            )
+    valid_style_kwargs = default_style_kwargs.copy()
+
+    for key in user_style_kwargs.keys():
+        if key in invalid_to_valid_kw:
+            valid_style_kwargs[invalid_to_valid_kw[key]] = user_style_kwargs[key]
+        else:
+            valid_style_kwargs[key] = user_style_kwargs[key]
+
+    return valid_style_kwargs
+
+def confusion_matrix_display(
+        fig,
+        ax,
+        confusion_matrix,
+        display_labels=None,
+        include_values=True,
+        cmap="viridis",
+        xticks_rotation="horizontal",
+        values_format=None,
+        colorbar=True,
+        im_kw=None,
+        text_kw=None,
+    ):
+    cm = confusion_matrix
+    n_classes = cm.shape[0]
+
+    default_im_kw = dict(interpolation="nearest", cmap=cmap)
+    im_kw = im_kw or {}
+    im_kw = _validate_style_kwargs(default_im_kw, im_kw)
+    text_kw = text_kw or {}
+
+    im_ = ax.imshow(cm, **im_kw)
+    text_ = None
+    cmap_min, cmap_max = im_.cmap(0), im_.cmap(1.0)
+
+    if include_values:
+        text_ = np.empty_like(cm, dtype=object)
+
+        # print text with appropriate color depending on background
+        thresh = (cm.max() + cm.min()) / 2.0
+
+        for i, j in product(range(n_classes), range(n_classes)):
+            color = cmap_max if cm[i, j] < thresh else cmap_min
+
+            if values_format is None:
+                text_cm = format(cm[i, j], ".2g")
+                if cm.dtype.kind != "f":
+                    text_d = format(cm[i, j], "d")
+                    if len(text_d) < len(text_cm):
+                        text_cm = text_d
+            else:
+                text_cm = format(cm[i, j], values_format)
+
+            default_text_kwargs = dict(ha="center", va="center", color=color)
+            text_kwargs = _validate_style_kwargs(default_text_kwargs, text_kw)
+
+            text_[i, j] = ax.text(j, i, text_cm, **text_kwargs)
+
+    if display_labels is None:
+        display_labels = np.arange(n_classes)
+    if colorbar:
+        fig.colorbar(im_, ax=ax)
+    ax.set(
+        xticks=np.arange(n_classes),
+        yticks=np.arange(n_classes),
+        xticklabels=display_labels,
+        yticklabels=display_labels,
+        ylabel="True label",
+        xlabel="Predicted label",
+    )
+
+    ax.set_ylim((n_classes - 0.5, -0.5))
+    plt.setp(ax.get_xticklabels(), rotation=xticks_rotation)
+    return
 
 def iou(box1, box2):
     """Calculates IoU of box1 and box2.

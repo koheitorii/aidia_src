@@ -94,6 +94,23 @@ class AIConfig(object):
                         setattr(self, key, value)
             except Exception as e:
                 raise ValueError(f"Failed to load config.json: {e}")
+        
+        if self.RANDOM_ROTATE < 0.0 or self.RANDOM_ROTATE > 0.5:
+            self.RANDOM_ROTATE = 0.1
+        if self.RANDOM_SCALE < 0.0 or self.RANDOM_SCALE > 0.5:
+            self.RANDOM_SCALE = 0.1
+        if self.RANDOM_SHIFT < 0.0 or self.RANDOM_SHIFT > 0.5:
+            self.RANDOM_SHIFT = 0.1
+        if self.RANDOM_SHEAR < 0.0 or self.RANDOM_SHEAR > 0.5:
+            self.RANDOM_SHEAR = 0.1
+        if self.RANDOM_BRIGHTNESS < 0.0 or self.RANDOM_BRIGHTNESS > 0.5:
+            self.RANDOM_BRIGHTNESS = 0.1
+        if self.RANDOM_CONTRAST < 0.0 or self.RANDOM_CONTRAST > 0.5:
+            self.RANDOM_CONTRAST = 0.1
+        if self.RANDOM_BLUR < 0.0 or self.RANDOM_BLUR > 0.5:
+            self.RANDOM_BLUR = 0.1
+        if self.RANDOM_NOISE < 0.0 or self.RANDOM_NOISE > 0.5:
+            self.RANDOM_NOISE = 0.1
 
         self.build_params()
 
