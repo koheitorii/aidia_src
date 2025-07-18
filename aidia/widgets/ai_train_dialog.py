@@ -182,13 +182,12 @@ class AITrainDialog(QtWidgets.QDialog):
         title_utility.setMaximumHeight(30)
         self._utility_layout.addWidget(title_utility)
 
-        self.tag_logdir = QtWidgets.QLabel(self.tr("Select Name"))
+        self.tag_logdir = QtWidgets.QLabel(self.tr("Select Experiment Directory"))
         self.tag_logdir.setMaximumHeight(16)
-        self.tag_logdir.setToolTip(self.tr("Select the experiment name."))
+        self.tag_logdir.setToolTip(self.tr("Select the experiment directory."))
         self._utility_layout.addWidget(self.tag_logdir, alignment=Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignLeft)
 
         self.input_logdir = QtWidgets.QComboBox()
-        self.input_logdir.setToolTip(self.tr("Select the log directory."))
         def _validate(idx):
             idx = int(idx)
             if idx < 0:
@@ -204,8 +203,9 @@ class AITrainDialog(QtWidgets.QDialog):
         self.button_open_logdir.clicked.connect(lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.target_logdir)))
         self._utility_layout.addWidget(self.button_open_logdir)
 
-        self.button_pred = QtWidgets.QPushButton(self.tr("Predict Test"))
+        self.button_pred = QtWidgets.QPushButton(self.tr("Predict"))
         self.button_pred.setToolTip(self.tr("Predict images in the directory you selected."))
+        self.button_pred.setAutoDefault(False)
         self.button_pred.clicked.connect(self.predict_unknown)
         self._utility_layout.addWidget(self.button_pred)
 
@@ -226,7 +226,7 @@ class AITrainDialog(QtWidgets.QDialog):
         def _validate(idx):
             idx = int(idx)
             self.config.TASK = TASK_LIST[idx]
-            self.switch_enabled_by_task(self.config.TASK)
+            self.enable_all_by_task(self.config.TASK)
         self.param_task = ParamComponent(
             type="combo",
             tag=self.tr("Task"),
@@ -267,8 +267,8 @@ If Performance Test are selected, the training test using MNIST dataset are perf
             self.config.NAME = text
         self.param_name = ParamComponent(
             type="text",
-            tag=self.tr("Name"),
-            tips=self.tr("""Set the experiment name."""),
+            tag=self.tr("Experiment Directory Name"),
+            tips=self.tr("Set the name of the experiment directory."),
             validate_func=_validate,
         )
         self.add_param_component(self.param_name)
@@ -294,18 +294,20 @@ You can use this function for 5-fold cross-validation."""),
         self.add_param_component(self.param_dataset)
 
         # input size
-        def _validate(text):
-            if text.isdigit() and 32 <= int(text) <= 2048 and int(text) % 32 == 0:
-                self.set_ok(self.param_size)
-                self.config.INPUT_SIZE = int(text)
-            else:
-                self.set_error(self.param_size)
+        def _validate(idx):
+            self.config.INPUT_SIZE = int(self.param_size.input_field.itemText(idx))
         self.param_size = ParamComponent(
-            type="text",
+            type="combo",
             tag=self.tr("Input Size"),
             tips=self.tr("""Set the size of input images on a side.
 If you set 256, input images are resized to (256, 256)."""),
             validate_func=_validate,
+            items=[
+                "128", "160", "192", "224", "256",
+                "320", "384", "448", "512", "576", "640", "704",
+                "768", "832", "896", "960", "1024", "1088",
+                "1152", "1216", "1280"
+            ]
         )
         self.add_param_component(self.param_size)
 
@@ -703,11 +705,14 @@ QProgressBar::chunk {
 
         # basic params
         self.param_task.input_field.setCurrentIndex(TASK_LIST.index(self.config.TASK))
-        self.switch_enabled_by_task(self.config.TASK)
+        self.enable_all_by_task(self.config.TASK)
         self.param_model.input_field.setCurrentText(self.config.MODEL)
         self.param_name.input_field.setText(self.config.NAME)
         self.param_dataset.input_field.setCurrentIndex(int(self.config.DATASET_NUM) - 1)
-        self.param_size.input_field.setText(str(self.config.INPUT_SIZE))
+        if self.config.INPUT_SIZE in [self.param_size.input_field.itemText(i) for i in range(self.param_size.input_field.count())]:
+            self.param_size.input_field.setCurrentText(str(self.config.INPUT_SIZE))
+        else:
+            self.param_size.input_field.setCurrentIndex(0)  # Reset to first item if not found
         self.param_epochs.input_field.setText(str(self.config.EPOCHS))
         self.param_batchsize.input_field.setText(str(self.config.BATCH_SIZE))
         self.param_lr.input_field.setText(str(self.config.LEARNING_RATE))
@@ -739,7 +744,7 @@ QProgressBar::chunk {
     ### Callbacks ###
     def ai_finished(self):
         """Call back function when AI thread finished."""
-        self.switch_enabled_by_task(self.config.TASK)
+        self.enable_all_by_task(self.config.TASK)
 
         # raise error handle
         config_path = os.path.join(self.config.log_dir, CONFIG_JSON)
@@ -799,7 +804,7 @@ QProgressBar::chunk {
         # open prediction result directory
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self._predicted_dir))
 
-    def switch_enabled_by_task(self, task):
+    def enable_all_by_task(self, task):
         """Switch enabled state of parameters by task."""
         if task == CLS:
             raise NotImplementedError
@@ -828,9 +833,12 @@ QProgressBar::chunk {
         # Update augmentation parameter availability
         self.update_augment_availability()
         self.button_train.setEnabled(True)
+
         self.button_label_replace.setEnabled(True)
         self.button_advanced.setEnabled(True)
         # self.button_stop.setEnabled(False)
+
+        self.enable_utility()
 
     def switch_enabled(self, targets: list[ParamComponent], enabled:bool):
         for obj in targets:
@@ -867,6 +875,11 @@ QProgressBar::chunk {
             if obj.state == ERROR:
                 obj.tag.setStyleSheet(LabelStyle.ERROR)
 
+    def enable_utility(self):
+        """Enable utility components."""
+        self.input_logdir.setEnabled(True)
+        self.button_open_logdir.setEnabled(True)
+        self.button_pred.setEnabled(True)
     
     def disable_all(self):
         for obj in self.param_objects.values():
@@ -875,6 +888,11 @@ QProgressBar::chunk {
         self.button_label_replace.setEnabled(False)
         self.button_advanced.setEnabled(False)
         self.button_train.setEnabled(False)
+        
+        # Disable utility components
+        self.input_logdir.setEnabled(False)
+        self.button_open_logdir.setEnabled(False)
+        self.button_pred.setEnabled(False)
 
     def closeEvent(self, event):
         pass
@@ -885,7 +903,7 @@ QProgressBar::chunk {
             # self.button_stop.setEnabled(True)
         else:
             # self.reset_state()
-            self.switch_enabled_by_task(self.config.TASK)
+            self.enable_all_by_task(self.config.TASK)
     
     def label_replace_popup(self):
         """Open label replacement dialog."""
@@ -1577,7 +1595,7 @@ class AIPredThread(QtCore.QThread):
             if img is None:
                 continue
             
-            self.notifyMessage.emit(f"{i} / {n} - {file_path}")
+            self.notifyMessage.emit(f"{i} / {n}: {os.path.basename(file_path)}")
             name = utils.get_basename(file_path)
             
             if self.config.TASK == SEG:
