@@ -168,7 +168,7 @@ class AITrainDialog(QtWidgets.QDialog):
         self._utility_layout = QtWidgets.QVBoxLayout()
         self._utility_widget = QtWidgets.QWidget()
 
-        title_utility = qt.head_text(self.tr("Utility"))
+        title_utility = qt.head_text(self.tr("Utilities"))
         title_utility.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         title_utility.setMaximumHeight(30)
         self._utility_layout.addWidget(title_utility)
@@ -725,6 +725,18 @@ QProgressBar::chunk {
 
         # save figure
         self.fig_loss.savefig(os.path.join(self.config.log_dir, "loss.png"))
+
+        # convet YOLO model to ONNX
+        if ModelTypes.is_ultralytics(self.config.MODEL):
+            from aidia.ai.ai_utils import write_onnx
+            try:
+                model_path = os.path.join(self.config.log_dir, self.config.MODEL, "weights", "best.pt")
+                onnx_path = write_onnx(model_path)
+            except Exception as e:
+                aidia_logger.error(e, exc_info=True)
+                self.text_status.setText(self.tr("Failed to convert to ONNX model."))
+            else:
+                shutil.move(onnx_path, os.path.join(self.config.log_dir, "model.onnx"))
 
         self.aiRunning.emit(False)
 

@@ -15,6 +15,7 @@ from aidia import utils
 
 from ultralytics import YOLO
 
+
 class DetectionModel(object):
     def __init__(self, config: AIConfig) -> None:
         self.config = config
@@ -71,17 +72,6 @@ class DetectionModel(object):
             shear=self.config.RANDOM_SHEAR,
             hsv_v=self.config.RANDOM_BRIGHTNESS,
         )
-    
-    def convert2onnx(self):
-        """Convert YOLO model to ONNX format."""
-        # onnx_path = os.path.join(self.config.log_dir, "model.onnx")
-        # if os.path.exists(onnx_path):
-        #     return
-        # self.model.export(format="onnx", path=onnx_path)
-        model = YOLO("yolo11n.pt", task="detect")
-        ret = model.export(format="onnx", path=os.path.join(self.config.log_dir, "model.onnx"))
-        print(ret)
-        # print(self.model.export(format="onnx"))
 
     def evaluate(self, cb_widget=None):
         sum_AP = 0.0
@@ -264,10 +254,7 @@ class DetectionModel(object):
         return merge
     
     def convert2onnx(self):
-        onnx_path = os.path.join(self.config.log_dir, "model.onnx")
-        if os.path.exists(onnx_path):
-            return
-        # tf2onnx.convert.from_keras(self.model, opset=11, output_path=onnx_path)
+        pass
 
     @staticmethod
     def voc_ap(rec, prec):
