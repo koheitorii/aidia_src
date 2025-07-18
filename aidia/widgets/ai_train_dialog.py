@@ -709,7 +709,7 @@ QProgressBar::chunk {
         self.param_model.input_field.setCurrentText(self.config.MODEL)
         self.param_name.input_field.setText(self.config.NAME)
         self.param_dataset.input_field.setCurrentIndex(int(self.config.DATASET_NUM) - 1)
-        if self.config.INPUT_SIZE in [self.param_size.input_field.itemText(i) for i in range(self.param_size.input_field.count())]:
+        if self.config.INPUT_SIZE in [int(self.param_size.input_field.itemText(i)) for i in range(self.param_size.input_field.count())]:
             self.param_size.input_field.setCurrentText(str(self.config.INPUT_SIZE))
         else:
             self.param_size.input_field.setCurrentIndex(0)  # Reset to first item if not found
