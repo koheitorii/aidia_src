@@ -62,10 +62,12 @@ def read_image(img_path):
         img = None
     return img
 
-def preprocessing(img, is_tensor=False):
+def preprocessing(img, is_tensor=False, channel_first=False):
     img = np.array(img, dtype=np.float32)
     if is_tensor:
         img = np.expand_dims(img, axis=0)
+    if channel_first:
+        img = np.transpose(img, (0, 3, 1, 2))
     return img
 
 def convert_dtype(img: np.ndarray):
@@ -299,9 +301,9 @@ def mask2merge(src_img, pred, class_names, gt=None, thresh=0.5):
     src_img = cv2.cvtColor(src_img, cv2.COLOR_RGB2BGR)
 
     merge = src_img.astype(float)
-    for c in range(pred.shape[2] - 1):
+    for c in range(pred.shape[0] - 1):
         color = LABEL_COLORMAP[c + 2][::-1]
-        m = pred[:, :, c + 1]
+        m = pred[c + 1, :, :]
         indexes = np.where(m >= thresh)
         if indexes[0].size == 0 or indexes[1].size == 0:
             continue
@@ -325,7 +327,7 @@ def mask2merge(src_img, pred, class_names, gt=None, thresh=0.5):
 
     if gt is not None:
         gt_merge = src_img.astype(float)
-        for c in range(pred.shape[2] - 1):
+        for c in range(pred.shape[0] - 1):
             color = LABEL_COLORMAP[c + 2][::-1]
             gt_m = gt[:, :, c + 1]
             indexes = np.where(gt_m >= thresh)

@@ -2,9 +2,13 @@ import os
 import shutil
 import time
 import random
+import glob
+import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
+from onnxruntime import InferenceSession
+
 from qtpy import QtCore, QtWidgets, QtGui
 from qtpy.QtCore import Qt
 
@@ -39,6 +43,7 @@ torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 
 import keras
+keras.backend.set_image_data_format('channels_first')  # Set Keras to use channel-first format
 
 
 class LabelStyle:
@@ -112,6 +117,8 @@ class AITrainDialog(QtWidgets.QDialog):
         self.setMinimumSize(QtCore.QSize(1200, 800))
 
         self.dataset_dir = None
+        self.target_logdir = None
+        self.prev_dir = None
         self.start_time = 0
         self.epoch = []
         self.loss = []
@@ -165,13 +172,48 @@ class AITrainDialog(QtWidgets.QDialog):
         title_augment.setMaximumHeight(30)
         self._augment_layout.addWidget(title_augment)
 
+        # utility layout
         self._utility_layout = QtWidgets.QVBoxLayout()
+        self._utility_layout.setContentsMargins(0, 100, 0, 100)
         self._utility_widget = QtWidgets.QWidget()
 
         title_utility = qt.head_text(self.tr("Utilities"))
         title_utility.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         title_utility.setMaximumHeight(30)
         self._utility_layout.addWidget(title_utility)
+
+        self.tag_logdir = QtWidgets.QLabel(self.tr("Select Name"))
+        self.tag_logdir.setMaximumHeight(16)
+        self.tag_logdir.setToolTip(self.tr("Select the experiment name."))
+        self._utility_layout.addWidget(self.tag_logdir, alignment=Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignLeft)
+
+        self.input_logdir = QtWidgets.QComboBox()
+        self.input_logdir.setToolTip(self.tr("Select the log directory."))
+        def _validate(idx):
+            idx = int(idx)
+            if idx < 0:
+                return
+            name = self.input_logdir.itemText(idx)
+            self.target_logdir = os.path.join(self.dataset_dir, LOCAL_DATA_DIR_NAME, name)
+        self.input_logdir.currentIndexChanged.connect(_validate)
+        self._utility_layout.addWidget(self.input_logdir)
+
+        self.button_open_logdir = QtWidgets.QPushButton(self.tr("Open Log Directory"))
+        self.button_open_logdir.setToolTip(self.tr("Open the selected log directory."))
+        self.button_open_logdir.setAutoDefault(False)
+        self.button_open_logdir.clicked.connect(lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.target_logdir)))
+        self._utility_layout.addWidget(self.button_open_logdir)
+
+        self.button_pred = QtWidgets.QPushButton(self.tr("Predict Test"))
+        self.button_pred.setToolTip(self.tr("Predict images in the directory you selected."))
+        self.button_pred.clicked.connect(self.predict_unknown)
+        self._utility_layout.addWidget(self.button_pred)
+
+        # connect AI prediction thread
+        self.ai_pred = AIPredThread(self)
+        self.ai_pred.notifyMessage.connect(self.update_pred_status)
+        self.ai_pred.progressValue.connect(self.update_pred_progress)
+        self.ai_pred.finished.connect(self.ai_pred_finished)
 
         # directory information
         # self.tag_directory = QtWidgets.QLabel()
@@ -688,6 +730,8 @@ QProgressBar::chunk {
         # Update augmentation parameter availability after loading config
         self.update_augment_availability()
 
+        self.update_logdir_list()
+
         self.exec_()
         if os.path.exists(os.path.join(dataset_dir, LOCAL_DATA_DIR_NAME)):
             self.config.save(config_path)
@@ -739,12 +783,21 @@ QProgressBar::chunk {
                 shutil.move(onnx_path, os.path.join(self.config.log_dir, "model.onnx"))
 
         self.aiRunning.emit(False)
+        
+        self.update_logdir_list()
 
         # open log directory
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.config.log_dir))
 
     # def callback_fit_started(self, value):
     #     self.button_stop.setEnabled(True)
+
+    def ai_pred_finished(self):
+        self.enable_all()
+        self.aiRunning.emit(False)
+
+        # open prediction result directory
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self._predicted_dir))
 
     def switch_enabled_by_task(self, task):
         """Switch enabled state of parameters by task."""
@@ -1146,7 +1199,6 @@ QProgressBar::chunk {
         
     def update_augment_availability(self):
         """Update augmentation parameter availability based on selected model."""
-
         if self.config.TASK == TEST:
             # For MNIST models, disable all augmentations
             self.param_vflip.input_field.setEnabled(False)
@@ -1191,8 +1243,78 @@ QProgressBar::chunk {
             self.param_noise.input_field.setEnabled(True)
             self.param_noise.tag.setStyleSheet(LabelStyle.DEFAULT)
         
+    def update_logdir_list(self):
+        """Update the list of log directories."""
+        self.input_logdir.clear()
+        for glob_dir in glob.glob(os.path.join(self.dataset_dir, LOCAL_DATA_DIR_NAME, "*")):
+            if os.path.isdir(glob_dir) and os.path.exists(os.path.join(glob_dir, "model.onnx")):
+                name = os.path.basename(glob_dir)
+                self.input_logdir.addItem(name)
+
+    def predict_unknown(self):
+        # load config
+        config_path = os.path.join(self.target_logdir, "config.json")
+        if not os.path.exists(config_path):
+            self.text_status.setText(self.tr("Config file was not found."))
+            return
+        
+        config = AIConfig(self.dataset_dir)
+        config.load(config_path)
+
+        if config.TASK not in [SEG, DET]:
+            self.text_status.setText(self.tr("Not implemented function."))
+            return
+        
+        # check onnx model
+        onnx_path = os.path.join(self.target_logdir, "model.onnx")
+        if not os.path.exists(onnx_path):
+            self.text_status.setText(self.tr("The ONNX model was not found."))
+            return
+        
+        # target data directory
+        from aidia import HOME_DIR
+        opendir = HOME_DIR
+        if self.prev_dir and os.path.exists(self.prev_dir):
+            opendir = self.prev_dir
+        target_path = str(QtWidgets.QFileDialog.getExistingDirectory(
+            self,
+            self.tr("Select Test Images Directory"),
+            opendir,
+            QtWidgets.QFileDialog.DontResolveSymlinks))
+        target_path = target_path.replace("/", os.sep)
+        if not target_path:
+            return
+        # self._predicted_dir = os.path.join(target_path, 'AI_results')
+        self._predicted_dir = os.path.join(self.target_logdir, 'predict_images', utils.get_basename(target_path))
+        
+        if not len(os.listdir(target_path)):
+            self.text_status.setText(self.tr("The Directory is empty."))
+            return
+
+        # AI run
+        self.text_status.setText(self.tr("Processing..."))
+
+        self.task = config.TASK
+        self.prev_dir = target_path
+        self.disable_all()
+        self.progress.setValue(0)
+        # self.reset_state()
+
+        self.ai_pred.set_params(config, target_path, onnx_path)
+        self.ai_pred.start()
+        self.aiRunning.emit(True)
+    
+    def update_pred_status(self, value):
+        """Update prediction status.""" 
+        self.text_status.setText(str(value))
+    
+    def update_pred_progress(self, value):
+        self.progress.setValue(value)
+
+
 
 class AITrainThread(QtCore.QThread):
+    """Thread for AI training process."""
 
     # fitStarted = QtCore.Signal(bool)
     epochLogList = QtCore.Signal(dict)
@@ -1378,12 +1500,13 @@ class AITrainThread(QtCore.QThread):
             self.notifyMessage.emit(self.tr("Done"))
             return
         
-        self.notifyMessage.emit(self.tr("Generate test result images..."))
-
+        # set inference model
+        self.notifyMessage.emit(self.tr("Setting inference model..."))
+        model.set_inference_model()
         save_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'evaluation', 'test_images')
 
+        self.notifyMessage.emit(self.tr("Generate test result images..."))
         n = model.dataset.num_test
-        predicts = []
         for i in range(n):
             image_id = model.dataset.test_ids[i]
             img_path = model.dataset.image_info[image_id]["path"]
@@ -1397,35 +1520,12 @@ class AITrainThread(QtCore.QThread):
             else:
                 save_path = os.path.join(save_dir, f"{name}.png")
             
-            # continue if output already exists
-            if os.path.exists(save_path):
-                # update 5 images to the widget
-                if len(predicts) <= 5:
-                    w = self.config.image_size[1]
-                    result_img = image.imread(save_path)
-                    if self.config.TASK in [SEG]:
-                        result_img = result_img[:, w:w*2]
-                    predicts.append(result_img)
-                else:
-                    self.predictList.emit(predicts)
-                    # predicts = []
-                    break
-                continue
-
             try:
                 result_img = model.predict_by_id(image_id)
             except FileNotFoundError as e:
                 self.notifyMessage.emit(self.tr("Error: {} was not found.").format(img_path))
                 return
             image.imwrite(result_img, save_path)
-            # update latest 5 images to the widget
-            if len(predicts) <= 5:
-                w = self.config.image_size[1]
-                if self.config.TASK in [SEG]:
-                    result_img = result_img[:, w:w*2]
-                predicts.append(result_img)
-            else:
-                predicts = []
     
         self.notifyMessage.emit(self.tr("Evaluating..."))
         try:
@@ -1442,3 +1542,99 @@ class AITrainThread(QtCore.QThread):
 
         self.notifyMessage.emit(self.tr("Done"))
 
+
+
+class AIPredThread(QtCore.QThread):
+    """Thread for AI prediction process."""
+    notifyMessage = QtCore.Signal(str)
+    progressValue = QtCore.Signal(int)
+
+    def __init__(self, parent):
+        super().__init__(parent)
+
+    def set_params(self, config:AIConfig, target_path, onnx_path):
+        self.config = config
+        self.target_path = target_path
+        self.onnx_path = onnx_path
+    
+    def run(self):
+        # savedir = os.path.join(self.target_path, "AI_results")
+        # if not os.path.exists(savedir):
+        #     os.mkdir(savedir)
+        savedir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'predict_images', utils.get_basename(self.target_path))
+
+        n = len(os.listdir(self.target_path))
+        model = InferenceSession(self.onnx_path)
+
+        for i, file_path in enumerate(glob.glob(os.path.join(self.target_path, "*"))):
+            if utils.extract_ext(file_path) == ".json":
+                continue
+            try:
+                img = image.read_image(file_path)
+            except Exception as e:
+                continue
+
+            if img is None:
+                continue
+            
+            self.notifyMessage.emit(f"{i} / {n} - {file_path}")
+            name = utils.get_basename(file_path)
+            
+            if self.config.TASK == SEG:
+                img = cv2.resize(img, self.config.image_size)
+                inputs = image.preprocessing(img, is_tensor=True, channel_first=True)
+                input_name = model.get_inputs()[0].name
+                result = model.run([], {input_name: inputs})[0][0]
+                result_img = image.mask2merge(img, result, self.config.LABELS)
+                save_path = os.path.join(savedir, f"{name}.png")
+                image.imwrite(result_img, save_path)
+
+            elif self.config.TASK == DET:
+                inputs = cv2.resize(img, self.config.image_size)
+                inputs = image.preprocessing(inputs, is_tensor=True, channel_first=True)
+                input_name = model.get_inputs()[0].name
+                result = model.run([], {input_name: inputs})
+
+                # post processing
+                if self.config.MODEL.find("YOLO") > -1:
+                    bboxes = self.yolo_postprocessing(img, result)
+                    bbox_dict_pred = []
+                    for bbox_pred in bboxes:
+                        bbox = list(map(float, bbox_pred[:4]))
+                        score = bbox_pred[4]
+                        class_id = int(bbox_pred[5])
+                        class_name = self.config.LABELS[class_id]
+                        score = '%.4f' % score
+                        bbox_dict_pred.append({"class_id": class_id,
+                                                "class_name": class_name,
+                                                "confidence": score,
+                                                "bbox": bbox})
+                    bbox_dict_pred.sort(key=lambda x:float(x['confidence']), reverse=True)
+
+                    result_img = image.det2merge(img, bbox_dict_pred)
+                    save_path = os.path.join(savedir, f"{name}.png")
+                    image.imwrite(result_img, save_path)
+                else:
+                    raise NotImplementedError
+            else:
+                raise NotImplementedError
+            
+            self.progressValue.emit(int(i / n * 100))
+
+        self.progressValue.emit(0)
+        self.notifyMessage.emit(self.tr("Prediction results saved."))
+    
+    def yolo_postprocessing(self, img, result):
+        # is_tiny = True if self.config.MODEL.split("-")[-1] == "tiny" else False
+        # if is_tiny:
+        #     _, pred_mbbox, _, pred_lbbox = result
+        # else:
+        #     _, pred_sbbox, _, pred_mbbox, _, pred_lbbox = result
+    
+        # pred_bbox = np.concatenate([np.reshape(pred_sbbox, (-1, 5 + 3)),
+        #                             np.reshape(pred_mbbox, (-1, 5 + 3)),
+        #                             np.reshape(pred_lbbox, (-1, 5 + 3))], axis=0)
+        # bboxes = postprocess_boxes(pred_bbox, img.shape[:2], self.config.INPUT_SIZE, YOLO_Config().SCORE_THRESHOLD)
+        # bboxes = nms(bboxes, YOLO_Config().IOU_THRESHOLD)
+        # return bboxes
+        return

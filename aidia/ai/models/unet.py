@@ -147,7 +147,7 @@ class Decoder(keras.Model):
     def call(self, z1, z2, z3, z4_dropout, z5_dropout):
         z6_up = self.block6_up(z5_dropout)
         z6 = self.block6_conv1(z6_up)
-        z6 = keras.layers.concatenate([z4_dropout, z6], axis=3)
+        z6 = keras.layers.concatenate([z4_dropout, z6], axis=1)
         z6 = self.block6_conv2(z6)
         z6 = self.block6_conv3(z6)
         z6 = self.block6_bn(z6)
@@ -155,7 +155,7 @@ class Decoder(keras.Model):
 
         z7_up = self.block7_up(z6)
         z7 = self.block7_conv1(z7_up)
-        z7 = keras.layers.concatenate([z3, z7], axis=3)
+        z7 = keras.layers.concatenate([z3, z7], axis=1)
         z7 = self.block7_conv2(z7)
         z7 = self.block7_conv3(z7)
         z7 = self.block7_bn(z7)
@@ -163,7 +163,7 @@ class Decoder(keras.Model):
 
         z8_up = self.block8_up(z7)
         z8 = self.block8_conv1(z8_up)
-        z8 = keras.layers.concatenate([z2, z8], axis=3)
+        z8 = keras.layers.concatenate([z2, z8], axis=1)
         z8 = self.block8_conv2(z8)
         z8 = self.block8_conv3(z8)
         z8 = self.block8_bn(z8)
@@ -171,7 +171,7 @@ class Decoder(keras.Model):
 
         z9_up = self.block9_up(z8)
         z9 = self.block9_conv1(z9_up)
-        z9 = keras.layers.concatenate([z1, z9], axis=3)
+        z9 = keras.layers.concatenate([z1, z9], axis=1)
         z9 = self.block9_conv2(z9)
         z9 = self.block9_conv3(z9)
         z9 = self.block9_bn(z9)

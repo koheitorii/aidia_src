@@ -39,7 +39,7 @@ class SegmentationModel(object):
         assert mode in ["train", "test"]
 
         # input layer
-        inputs = keras.Input(shape=(self.config.INPUT_SIZE, self.config.INPUT_SIZE, 3))
+        inputs = keras.Input(shape=(3, self.config.INPUT_SIZE, self.config.INPUT_SIZE))
 
         # data augmentation
         if self.config.RANDOM_HFLIP:
@@ -97,22 +97,22 @@ class SegmentationModel(object):
         
         # build UNet model
         outputs = UNet(self.config.num_classes)(x)
-        self.model = keras.Model(inputs=inputs, outputs=outputs)
+        model = keras.Model(inputs=inputs, outputs=outputs)
 
         # compile model
         if mode == 'train':
             optim = keras.optimizers.Adam(learning_rate=self.config.LEARNING_RATE)
-            self.model.compile(optimizer=optim, loss=keras.losses.BinaryCrossentropy())
+            model.compile(optimizer=optim, loss=keras.losses.BinaryCrossentropy())
+            self.model = model
+            return model
         
         if mode == "test":
-            if weights_path and os.path.exists(weights_path):
-                self.model.load_weights(weights_path)
-            else:
-                _wlist = os.path.join(self.config.log_dir, "weights", "*.h5")
-                weights_path = sorted(glob.glob(_wlist))[-1]
-                self.model.load_weights(weights_path)
-
-
+            if weights_path is None or not os.path.exists(weights_path):
+                raise ValueError("weights_path must be provided for test mode.")
+            model.load_weights(weights_path)
+            self.model = model
+            return model
+           
     def train(self, custom_callbacks=None):
         """Train the model with the dataset."""
         checkpoint_dir = utils.get_dirpath_with_mkdir(
@@ -210,21 +210,21 @@ class SegmentationModel(object):
             # predict
             img = self.dataset.load_image(image_id)
             mask = self.dataset.load_masks(image_id)
-            inputs = image.preprocessing(img, is_tensor=True)
+            inputs = image.preprocessing(img, is_tensor=True, channel_first=True)
             pred = self.model.predict_on_batch(inputs)[0]
             y_true = np.array(mask)
             y_pred = np.array(pred)
 
             # multiclass confusion matrix
             yt_label = y_true.argmax(axis=2).ravel()
-            yp_label = y_pred.argmax(axis=2).ravel()
+            yp_label = y_pred.argmax(axis=0).ravel()
             cm_multi_class += metrics.multi_confusion_matrix(yt_label, yp_label, num_classes)
 
             # calculate tp tn fp fn per class
             for class_id in range(num_classes):
                 # get result by class
                 yt_class = y_true[..., class_id]
-                yp_class = y_pred[..., class_id]
+                yp_class = y_pred[class_id]
 
                 for i, th in enumerate(THRESHOLDS):
                     # thresholding
@@ -355,23 +355,27 @@ class SegmentationModel(object):
     def predict_by_id(self, image_id, thresh=0.5):
         src_img = self.dataset.load_image(image_id)
         gt_mask_data = self.dataset.load_masks(image_id)
-        img = image.preprocessing(src_img, is_tensor=True)
+        img = image.preprocessing(src_img, is_tensor=True, channel_first=True)
         pred = self.model.predict(img, batch_size=1, verbose=0)[0]
         concat = image.mask2merge(src_img, pred, self.dataset.class_names, gt_mask_data, thresh)
         return concat
     
     def convert2onnx(self):
+        """Convert the Keras model to ONNX format."""
         onnx_path = os.path.join(self.config.log_dir, "model.onnx")
-        if os.path.exists(onnx_path):
-            return True
-        
-        # Convert Keras model to ONNX format
         try:
             self.model.export(onnx_path, format="onnx")
         except Exception as e:
             print(f"Failed to convert model to ONNX: {e}")
             return False
         return True
+
+    def set_inference_model(self, weights_path=None):
+        """Set the model for inference mode."""
+        if weights_path is None:
+            weights_path = os.path.join(self.config.log_dir, "weights", "best.weights.h5")
+        self.model = self.build_model("test", weights_path=weights_path)
+        return self.model
 
 
 class SegDataset(TorchDataset):
@@ -415,10 +419,10 @@ class SegDataset(TorchDataset):
         # img_tensor = img_tensor / 255.0
         
         # Ensure correct dimensions (H, W, C) -> (C, H, W)
-        # if img_tensor.dim() == 3:
-        #     img_tensor = img_tensor.permute(2, 0, 1)
-        # if mask_tensor.dim() == 3:
-        #     mask_tensor = mask_tensor.permute(2, 0, 1)
+        if img_tensor.dim() == 3:
+            img_tensor = img_tensor.permute(2, 0, 1)
+        if mask_tensor.dim() == 3:
+            mask_tensor = mask_tensor.permute(2, 0, 1)
         
         return img_tensor, mask_tensor
     
