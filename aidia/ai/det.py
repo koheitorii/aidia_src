@@ -73,6 +73,21 @@ class DetectionModel(object):
             hsv_v=self.config.RANDOM_BRIGHTNESS,
         )
 
+    def predict(self, images, conf=0.25, iou=0.45):
+        """Predict bounding boxes for a given image."""
+        assert self.model is not None, "Model must be built before prediction."
+
+        results = self.model(image)
+        
+        # run inference
+        results = self.model.predict(source=image, conf=conf, iou=iou)
+        
+        # extract bounding boxes
+        bboxes = []
+        for result in results:
+            for box in result.boxes:
+                bbox = box.xyxy.cpu().numpy().tolist()[0]
+
     def evaluate(self, cb_widget=None):
         sum_AP = 0.0
         nc = self.dataset.num_classes
@@ -221,37 +236,37 @@ class DetectionModel(object):
         utils.save_dict_to_excel(save_dict, os.path.join(eval_dir, "scores.xlsx"))
         return res
     
-    def predict_by_id(self, image_id, thresh=0.5):
-        # load image and annotation
-        org_img = self.dataset.load_image(image_id, is_resize=False)
+    # def predict_by_id(self, image_id, thresh=0.5):
+    #     # load image and annotation
+    #     org_img = self.dataset.load_image(image_id, is_resize=False)
 
-        # TODO: ground truth visualization
-        # anno_gt = self.dataset.get_yolo_bboxes(image_id)
-        # if len(anno_gt) == 0:
-        #     bboxes_gt = []
-        #     classes_gt = []
-        # else:
-        #     bboxes_gt, classes_gt = anno_gt[:, :4], anno_gt[:, 4]
+    #     # TODO: ground truth visualization
+    #     # anno_gt = self.dataset.get_yolo_bboxes(image_id)
+    #     # if len(anno_gt) == 0:
+    #     #     bboxes_gt = []
+    #     #     classes_gt = []
+    #     # else:
+    #     #     bboxes_gt, classes_gt = anno_gt[:, :4], anno_gt[:, 4]
 
-        # prediction
-        pred_bboxes = self.model.predict(org_img)
+    #     # prediction
+    #     pred_bboxes = self.model.predict(org_img)
         
-        bbox_dict_pred = []
-        for bbox_pred in pred_bboxes:
-            # xmin, ymin, xmax, ymax = list(map(str, map(int, bbox[:4])))
-            bbox = list(map(float, bbox_pred[:4]))
-            score = bbox_pred[4]
-            class_id = int(bbox_pred[5])
-            class_name = self.dataset.class_names[class_id]
-            score = '%.4f' % score
-            bbox_dict_pred.append({"class_id": class_id,
-                                    "class_name": class_name,
-                                    "confidence": score,
-                                    "bbox": bbox})
-        bbox_dict_pred.sort(key=lambda x:float(x['confidence']), reverse=True)
+    #     bbox_dict_pred = []
+    #     for bbox_pred in pred_bboxes:
+    #         # xmin, ymin, xmax, ymax = list(map(str, map(int, bbox[:4])))
+    #         bbox = list(map(float, bbox_pred[:4]))
+    #         score = bbox_pred[4]
+    #         class_id = int(bbox_pred[5])
+    #         class_name = self.dataset.class_names[class_id]
+    #         score = '%.4f' % score
+    #         bbox_dict_pred.append({"class_id": class_id,
+    #                                 "class_name": class_name,
+    #                                 "confidence": score,
+    #                                 "bbox": bbox})
+    #     bbox_dict_pred.sort(key=lambda x:float(x['confidence']), reverse=True)
 
-        merge = det2merge(org_img, bbox_dict_pred)
-        return merge
+    #     merge = det2merge(org_img, bbox_dict_pred)
+    #     return merge
     
     def convert2onnx(self):
         pass

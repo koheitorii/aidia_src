@@ -257,40 +257,6 @@ class MFF():
         result_image = clip_uint16(result_image)
         return result_image.astype(np.uint16)
 
-
-def mask2polygon(masks, labels, approx_epsilon=0.003, area_limit=50):
-    """ masks: 0 or 255 pix masks, shape (h, w, c)"""
-    shapes = []
-    for i in range(masks.shape[2] - 1):
-        binary = masks[:, :, i + 1]
-        binary = cv2.dilate(binary, (9, 9))
-        # binary = np.array(np.where(masks[:, :, i + 1], 255, 0), dtype=np.uint8)
-        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        if not len(contours):
-            continue
-        for cnt in contours:
-            # skip figures have small area.
-            area = cv2.contourArea(cnt)
-            if area < area_limit:
-                continue
-            # Detect points of a polygon.
-            approx = cv2.approxPolyDP(
-                curve=cnt,
-                epsilon=approx_epsilon * cv2.arcLength(cnt, True),
-                closed=True)
-            # Skip polygons have less than 3 points.
-            if len(approx) < 3:
-                continue
-            approx = approx.astype(int).reshape((-1, 2)).tolist()
-
-            shape = {}
-            shape["label"] = labels[i - 1]
-            shape["points"] = approx
-            shape["shape_type"] = "polygon"
-            shapes.append(shape)
-    return shapes
-
-
 def mask2merge(src_img, pred, class_names, gt=None, thresh=0.5):
     """Return the RGB image merged AI prediction masks and the original image."""
     fonttype = cv2.FONT_HERSHEY_DUPLEX

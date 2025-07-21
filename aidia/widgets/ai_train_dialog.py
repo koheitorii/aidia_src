@@ -12,7 +12,7 @@ from onnxruntime import InferenceSession
 from qtpy import QtCore, QtWidgets, QtGui
 from qtpy.QtCore import Qt
 
-from aidia import CLS, DET, SEG, TEST, CLEAR, ERROR, TASK_LIST
+from aidia import CLS, DET, SEG, TEST, CLEAR, ERROR, TASK_LIST, HOME_DIR
 from aidia import LOCAL_DATA_DIR_NAME, CONFIG_JSON, DATASET_JSON
 from aidia import ModelTypes
 from aidia import aidia_logger
@@ -29,8 +29,11 @@ from aidia.ai.seg import SegmentationModel
 from aidia.widgets import ImageWidget
 from aidia.widgets.ai_augment_dialog import AIAugmentDialog
 from aidia.widgets.ai_label_replace_dialog import AILabelReplaceDialog
+from aidia.widgets.copy_data_dialog import CopyDataDialog
 
 import torch
+from ultralytics import YOLO
+
 
 # Set random seeds for reproducibility
 seed = AIConfig().SEED
@@ -209,6 +212,12 @@ class AITrainDialog(QtWidgets.QDialog):
         self.button_pred.clicked.connect(self.predict_unknown)
         self._utility_layout.addWidget(self.button_pred)
 
+        # export model button
+        self.button_export_model = QtWidgets.QPushButton(self.tr("Export Model"))
+        self.button_export_model.setToolTip(self.tr("Export the model data."))
+        self.button_export_model.clicked.connect(self.export_model)
+        self._utility_layout.addWidget(self.button_export_model)
+
         # connect AI prediction thread
         self.ai_pred = AIPredThread(self)
         self.ai_pred.notifyMessage.connect(self.update_pred_status)
@@ -353,9 +362,7 @@ If you set 8, 8 samples are trained per step."""),
         self.param_lr = ParamComponent(
             type="text",
             tag=self.tr("Learning Rate"),
-            tips=self.tr("""Set the initial learning rate of Adam.
-The value is 0.001 by default.
-Other parameters of Adam uses the default values of Keras 3."""),
+            tips=self.tr("Set the initial learning rate."),
             validate_func=_validate,
         )
         self.add_param_component(self.param_lr)
@@ -530,34 +537,6 @@ The labels are separated with line breaks."""),
         )
         self.add_augment_param(self.param_shear)
 
-        # blur
-        def _validate_blur(state): # check:2, empty:0
-            if state == 2:
-                self.config.RANDOM_BLUR = 0.1  # sigma
-            else:
-                self.config.RANDOM_BLUR = 0.0
-        self.param_blur = ParamComponent(
-            type="checkbox",
-            tag=self.tr("Blur"),
-            tips=self.tr("Enable random blur."),
-            validate_func=_validate_blur
-        )
-        self.add_augment_param(self.param_blur)
-
-        # noise
-        def _validate_noise(state): # check:2, empty:0
-            if state == 2:
-                self.config.RANDOM_NOISE = 0.1  # stddev
-            else:
-                self.config.RANDOM_NOISE = 0.0
-        self.param_noise = ParamComponent(
-            type="checkbox",
-            tag=self.tr("Noise"),
-            tips=self.tr("Enable random noise."),
-            validate_func=_validate_noise
-        )
-        self.add_augment_param(self.param_noise)
-
         # brightness
         def _validate_brightness(state): # check:2, empty:0
             if state == 2:
@@ -585,6 +564,34 @@ The labels are separated with line breaks."""),
             validate_func=_validate_contrast
         )
         self.add_augment_param(self.param_contrast)
+
+        # blur
+        def _validate_blur(state): # check:2, empty:0
+            if state == 2:
+                self.config.RANDOM_BLUR = 0.1  # sigma
+            else:
+                self.config.RANDOM_BLUR = 0.0
+        self.param_blur = ParamComponent(
+            type="checkbox",
+            tag=self.tr("Blur"),
+            tips=self.tr("Enable random blur."),
+            validate_func=_validate_blur
+        )
+        self.add_augment_param(self.param_blur)
+
+        # noise
+        def _validate_noise(state): # check:2, empty:0
+            if state == 2:
+                self.config.RANDOM_NOISE = 0.1  # stddev
+            else:
+                self.config.RANDOM_NOISE = 0.0
+        self.param_noise = ParamComponent(
+            type="checkbox",
+            tag=self.tr("Noise"),
+            tips=self.tr("Enable random noise."),
+            validate_func=_validate_noise
+        )
+        self.add_augment_param(self.param_noise)
 
         # advanced settings
         button_advanced = QtWidgets.QPushButton(self.tr("Advanced Settings"))
@@ -880,6 +887,7 @@ QProgressBar::chunk {
         self.input_logdir.setEnabled(True)
         self.button_open_logdir.setEnabled(True)
         self.button_pred.setEnabled(True)
+        self.button_export_model.setEnabled(True)
     
     def disable_all(self):
         for obj in self.param_objects.values():
@@ -893,6 +901,7 @@ QProgressBar::chunk {
         self.input_logdir.setEnabled(False)
         self.button_open_logdir.setEnabled(False)
         self.button_pred.setEnabled(False)
+        self.button_export_model.setEnabled(False)
 
     def closeEvent(self, event):
         pass
@@ -1118,7 +1127,8 @@ QProgressBar::chunk {
                 return
             else:
                 shutil.rmtree(self.config.log_dir, ignore_errors=True)
-        
+                os.makedirs(self.config.log_dir, exist_ok=True)
+
         self.disable_all()
         self.reset_state()
 
@@ -1328,6 +1338,29 @@ QProgressBar::chunk {
     
     def update_pred_progress(self, value):
         self.progress.setValue(value)
+
+    def export_model(self):
+        if not os.path.exists(self.target_logdir):
+            self.parent().error_message(self.tr(
+                '''The directory was not found.'''
+            ))
+            return
+
+        opendir = HOME_DIR
+        target_path = str(QtWidgets.QFileDialog.getExistingDirectory(
+            self,
+            self.tr("Select Output Directory"),
+            opendir,
+            QtWidgets.QFileDialog.ShowDirsOnly |
+            QtWidgets.QFileDialog.DontResolveSymlinks))
+        if not target_path:
+            return None
+        target_path = target_path.replace('/', os.sep)
+
+        cd = CopyDataDialog(self, self.target_logdir, target_path, only_model=True)
+        cd.popup()
+
+        self.text_status.setText(self.tr("Export data to {}").format(target_path))
 
 
 
@@ -1576,29 +1609,33 @@ class AIPredThread(QtCore.QThread):
         self.onnx_path = onnx_path
     
     def run(self):
-        # savedir = os.path.join(self.target_path, "AI_results")
-        # if not os.path.exists(savedir):
-        #     os.mkdir(savedir)
         savedir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'predict_images', utils.get_basename(self.target_path))
 
         n = len(os.listdir(self.target_path))
-        model = InferenceSession(self.onnx_path)
+
+        if self.config.TASK == SEG:
+            model = InferenceSession(self.onnx_path)
+        elif self.config.TASK == DET:
+            model = YOLO(self.onnx_path, task='detect')
+        else:
+            self.notifyMessage.emit(self.tr("Not implemented function."))
+            return
 
         for i, file_path in enumerate(glob.glob(os.path.join(self.target_path, "*"))):
             if utils.extract_ext(file_path) == ".json":
                 continue
+
+            self.notifyMessage.emit(f"{i} / {n}: {os.path.basename(file_path)}")
+            name = utils.get_basename(file_path)
+
             try:
                 img = image.read_image(file_path)
             except Exception as e:
                 continue
 
-            if img is None:
-                continue
-            
-            self.notifyMessage.emit(f"{i} / {n}: {os.path.basename(file_path)}")
-            name = utils.get_basename(file_path)
-            
             if self.config.TASK == SEG:
+                if img is None:
+                    continue
                 img = cv2.resize(img, self.config.image_size)
                 inputs = image.preprocessing(img, is_tensor=True, channel_first=True)
                 input_name = model.get_inputs()[0].name
@@ -1608,32 +1645,9 @@ class AIPredThread(QtCore.QThread):
                 image.imwrite(result_img, save_path)
 
             elif self.config.TASK == DET:
-                inputs = cv2.resize(img, self.config.image_size)
-                inputs = image.preprocessing(inputs, is_tensor=True, channel_first=True)
-                input_name = model.get_inputs()[0].name
-                result = model.run([], {input_name: inputs})
+                save_path = os.path.join(savedir, f"{name}.png")
+                model.predict(img, device='cpu')[0].save(save_path)
 
-                # post processing
-                if self.config.MODEL.find("YOLO") > -1:
-                    bboxes = self.yolo_postprocessing(img, result)
-                    bbox_dict_pred = []
-                    for bbox_pred in bboxes:
-                        bbox = list(map(float, bbox_pred[:4]))
-                        score = bbox_pred[4]
-                        class_id = int(bbox_pred[5])
-                        class_name = self.config.LABELS[class_id]
-                        score = '%.4f' % score
-                        bbox_dict_pred.append({"class_id": class_id,
-                                                "class_name": class_name,
-                                                "confidence": score,
-                                                "bbox": bbox})
-                    bbox_dict_pred.sort(key=lambda x:float(x['confidence']), reverse=True)
-
-                    result_img = image.det2merge(img, bbox_dict_pred)
-                    save_path = os.path.join(savedir, f"{name}.png")
-                    image.imwrite(result_img, save_path)
-                else:
-                    raise NotImplementedError
             else:
                 raise NotImplementedError
             
