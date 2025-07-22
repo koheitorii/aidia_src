@@ -53,7 +53,7 @@ def main():
     app.setApplicationName(__appname__)
     # app.setWindowIcon(new_icon('icon'))
     icons_dir = os.path.join(APP_DIR, 'icons')
-    icon_path = os.path.join(icons_dir, 'icon.png')
+    icon_path = os.path.join(icons_dir, 'icon.ico')
     app.setWindowIcon(QtGui.QIcon(icon_path))
     # app.setWindowIcon(QtGui.QIcon.fromTheme(QtGui.QIcon.ThemeIcon.Computer))
     if translator_base is not None and translator is not None:
