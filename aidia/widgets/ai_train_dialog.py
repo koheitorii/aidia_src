@@ -684,16 +684,9 @@ QProgressBar::chunk {
         """Popup train window and set config parameters to input fields."""
         self.dataset_dir = dataset_dir
         self.setWindowTitle(self.tr("AI Training - {}").format(dataset_dir))
-        # if is_submode and len(os.listdir(dataset_dir)) > 1:
-            # dir_list = glob.glob(os.path.join(dataset_dir, "*/"))
-            # self.tag_directory.setText(self.tr("Target Directory:\n{},\n{},\n...").format(dir_list[0], dir_list[1]))
-        # else:
-            # self.tag_directory.setText(self.tr("Target Directory:\n{}").format(dataset_dir))
 
         # create data directory
         data_dirpath = utils.get_dirpath_with_mkdir(dataset_dir, LOCAL_DATA_DIR_NAME)
-        # if not os.path.exists(os.path.join(dataset_dir, AI_DIR_NAME)):
-            # os.mkdir(os.path.join(dataset_dir, AI_DIR_NAME))
 
         # load config parameters
         self.config = AIConfig(dataset_dir)
@@ -797,12 +790,10 @@ QProgressBar::chunk {
         self.aiRunning.emit(False)
         
         self.update_logdir_list()
+        self.switch_utility()
 
         # open log directory
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.config.log_dir))
-
-    # def callback_fit_started(self, value):
-    #     self.button_stop.setEnabled(True)
 
     def ai_pred_finished(self):
         self.enable_all()
@@ -845,7 +836,14 @@ QProgressBar::chunk {
         self.button_advanced.setEnabled(True)
         # self.button_stop.setEnabled(False)
 
-        self.enable_utility()
+        self.switch_utility()
+
+    def switch_utility(self):
+        """Switch enabled state of utility components."""
+        if self.input_logdir.count() == 0:
+            self.disable_utility()
+        else:
+            self.enable_utility()
 
     def switch_enabled(self, targets: list[ParamComponent], enabled:bool):
         for obj in targets:
@@ -876,6 +874,7 @@ QProgressBar::chunk {
             self.param_is_dir_split.input_field.setEnabled(True)
     
     def enable_all(self):
+        """Enable all components."""
         for obj in self.param_objects.values():
             obj.input_field.setEnabled(True)
             obj.tag.setStyleSheet(LabelStyle.DEFAULT)
@@ -889,7 +888,15 @@ QProgressBar::chunk {
         self.button_pred.setEnabled(True)
         self.button_export_model.setEnabled(True)
     
+    def disable_utility(self):
+        """Disable utility components."""
+        self.input_logdir.setEnabled(False)
+        self.button_open_logdir.setEnabled(False)
+        self.button_pred.setEnabled(False)
+        self.button_export_model.setEnabled(False)
+    
     def disable_all(self):
+        """Disable all components."""
         for obj in self.param_objects.values():
             obj.input_field.setEnabled(False)
             obj.tag.setStyleSheet(LabelStyle.DISABLED)
@@ -904,9 +911,11 @@ QProgressBar::chunk {
         self.button_export_model.setEnabled(False)
 
     def closeEvent(self, event):
+        """Handle close event."""
         pass
         
     def showEvent(self, event):
+        """Handle show event."""
         if self.ai.isRunning():
             self.disable_all()
             # self.button_stop.setEnabled(True)
@@ -932,7 +941,6 @@ QProgressBar::chunk {
         else:
             self.text_status.setText(self.tr("Label replacement cancelled."))
   
-
     def add_param_component(self, obj:ParamComponent, right=False, custom_size=None):
         """Add a parameter component to the layout."""
         self.param_objects[obj.tag.text()] = obj
@@ -972,36 +980,11 @@ QProgressBar::chunk {
         obj.state = CLEAR
 
     def update_figure(self):
-        self.ax_loss.clear()
-        self.ax_loss.set_xlabel("Epoch", fontsize=16, color=qt.get_default_color())
-        self.ax_loss.set_ylabel("Loss", fontsize=16, color=qt.get_default_color())
-        self.ax_loss.tick_params(axis='both', labelsize=14, colors=qt.get_default_color())
-        self.ax_loss.spines['top'].set_visible(False)
-        self.ax_loss.spines['right'].set_visible(False)
-        self.ax_loss.spines['left'].set_color(qt.get_default_color())
-        self.ax_loss.spines['bottom'].set_color(qt.get_default_color())
-        self.ax_loss.patch.set_alpha(0.0)
-        self.ax_loss.grid(alpha=0.3, color=qt.get_default_color(), linestyle="--", linewidth=1)
-        if len(self.epoch):
-            if len(self.loss):
-                self.ax_loss.plot(self.epoch, self.loss, color="red", linestyle="solid", label="train")
-            if len(self.val_loss):
-                self.ax_loss.plot(self.epoch, self.val_loss, color="green", linestyle="solid", label="val")
-            self.ax_loss.xaxis.set_major_locator(MaxNLocator(integer=True))
-            mx = min((len(self.epoch) // 10 + 1) * 10, self.config.EPOCHS)
-            self.ax_loss.set_xlim([1, mx])
-            self.ax_loss.legend(fontsize=16, labelcolor=qt.get_default_color(), frameon=False)
-            self.add_fig_loss()
-
-    def add_fig_loss(self):
-        self.image_widget_loss.loadPixmap(fig2img(self.fig_loss, add_alpha=True))
-        return
-
-    def add_fig_pie(self):
-        self.image_widget_pie.loadPixmap(fig2img(self.fig_pie, add_alpha=True))
-        return
+        """Update the figure for loss."""
+        
 
     def update_dataset(self, value):
+        """Update dataset information."""
         dataset_num = value["dataset_num"]
         num_images = value["num_images"]
         num_shapes = value["num_shapes"]
@@ -1053,15 +1036,18 @@ QProgressBar::chunk {
                     wedgeprops={'linewidth': 1, 'edgecolor': qt.get_default_color()},
                     textprops={'color': qt.get_default_color(),
                                'fontsize': 16})
-        self.add_fig_pie()
+        self.image_widget_pie.loadPixmap(fig2img(self.fig_pie, add_alpha=True))
 
     def update_status(self, value):
+        """Update status text."""
         self.text_status.setText(str(value))
 
     def popup_error(self, text):
+        """Popup error message."""
         self.parent().error_message(text)
 
     def update_batch(self, value):
+        """Update batch status."""
         epoch = len(self.epoch) + 1
         batch = value.get("batch")
         loss = value.get("loss")
@@ -1077,6 +1063,7 @@ QProgressBar::chunk {
         self.text_status.setText(text)
     
     def update_logs(self, value):
+        """Update training logs."""
         epoch = value.get("epoch")
         loss = value.get("loss")
         val_loss = value.get("val_loss")
@@ -1090,10 +1077,30 @@ QProgressBar::chunk {
         if val_loss is not None:
             self.val_loss.append(val_loss)
 
-        self.update_figure()
-                
+        # update figure
+        self.ax_loss.clear()
+        self.ax_loss.set_xlabel("Epoch", fontsize=16, color=qt.get_default_color())
+        self.ax_loss.set_ylabel("Loss", fontsize=16, color=qt.get_default_color())
+        self.ax_loss.tick_params(axis='both', labelsize=14, colors=qt.get_default_color())
+        self.ax_loss.spines['top'].set_visible(False)
+        self.ax_loss.spines['right'].set_visible(False)
+        self.ax_loss.spines['left'].set_color(qt.get_default_color())
+        self.ax_loss.spines['bottom'].set_color(qt.get_default_color())
+        self.ax_loss.patch.set_alpha(0.0)
+        self.ax_loss.grid(alpha=0.3, color=qt.get_default_color(), linestyle="--", linewidth=1)
+        if len(self.epoch):
+            if len(self.loss):
+                self.ax_loss.plot(self.epoch, self.loss, color="red", linestyle="solid", label="train")
+            if len(self.val_loss):
+                self.ax_loss.plot(self.epoch, self.val_loss, color="green", linestyle="solid", label="val")
+            self.ax_loss.xaxis.set_major_locator(MaxNLocator(integer=True))
+            mx = min((len(self.epoch) // 10 + 1) * 10, self.config.EPOCHS)
+            self.ax_loss.set_xlim([1, mx])
+            self.ax_loss.legend(fontsize=16, labelcolor=qt.get_default_color(), frameon=False)
+            self.image_widget_loss.loadPixmap(fig2img(self.fig_loss, add_alpha=True))
 
     def check_errors(self):
+        """Check if there are any errors in the parameters."""
         for tag_text, obj in self.param_objects.items():
             if obj.state == ERROR:
                 self.text_status.setText(self.tr("Please check {}.").format(tag_text))
@@ -1101,6 +1108,7 @@ QProgressBar::chunk {
         return True
     
     def may_continue(self, message="Continue?"):
+        """Ask user for confirmation to continue."""
         mb = QtWidgets.QMessageBox
         answer = mb.question(self,
                              self.tr("Confirmation"),
@@ -1278,6 +1286,8 @@ QProgressBar::chunk {
             if os.path.isdir(glob_dir) and os.path.exists(os.path.join(glob_dir, "model.onnx")):
                 name = os.path.basename(glob_dir)
                 self.input_logdir.addItem(name)
+        if self.input_logdir.count() == 0:
+            self.disable_utility()
 
     def predict_unknown(self):
         # load config
