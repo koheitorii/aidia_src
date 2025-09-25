@@ -39,7 +39,10 @@ class SegmentationModel(object):
         assert mode in ["train", "test"]
 
         # input layer
-        inputs = keras.Input(shape=(3, self.config.INPUT_SIZE_Y, self.config.INPUT_SIZE_X))
+        if self.config.KEEP_ASPECT_RATIO:
+            inputs = keras.Input(shape=(3, self.config.max_input_size, self.config.max_input_size))
+        else:
+            inputs = keras.Input(shape=(3, self.config.INPUT_SIZE_Y, self.config.INPUT_SIZE_X))
 
         # data augmentation
         if self.config.RANDOM_HFLIP:

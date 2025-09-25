@@ -333,7 +333,7 @@ class Dataset(object):
             img = cv2.resize(img, self.config.image_size,
                              interpolation=cv2.INTER_LINEAR)
         # padding
-        if  self.config.INPUT_SIZE_X != self.config.INPUT_SIZE_Y and self.config.KEEP_ASPECT_RATIO:
+        if  self.config.is_need_padding():
             img = image.pad_image_to_target_size(img, self.config.max_input_size)
         
         return img
@@ -354,15 +354,17 @@ class Dataset(object):
         """
         image_info = self.image_info[image_id]
         annotations = self.image_info[image_id]["annotations"]
+        img_size_numpy = self.config.image_size[::-1] if not self.config.is_need_padding() else (self.config.max_input_size, self.config.max_input_size)
+         # (height, width)
 
         masks = []
         if self.num_classes > 1:
             h = image_info["height"]
             w = image_info["width"]
-            foreground = np.zeros(shape=self.config.image_size, dtype=np.uint8)
+            foreground = np.zeros(shape=img_size_numpy, dtype=np.uint8)
             mask_per_class = []
             for i in range(self.num_classes + 1):
-                mask_per_class.append(np.zeros(shape=self.config.image_size, dtype=np.uint8))
+                mask_per_class.append(np.zeros(shape=img_size_numpy, dtype=np.uint8))
             for a in annotations:
                 _m = np.zeros(shape=(h, w, 3), dtype=np.uint8)
                 points = a["points"]
@@ -371,6 +373,8 @@ class Dataset(object):
                 _m = cv2.fillPoly(_m, [points], color=(1, 1, 1))
                 _m = cv2.resize(_m, self.config.image_size,
                                 interpolation=cv2.INTER_NEAREST)
+                if self.config.is_need_padding():
+                    _m = image.pad_image_to_target_size(_m, self.config.max_input_size)
                 _m = _m[:, :, 0]
                 foreground += _m  # to create background mask
 
@@ -395,7 +399,7 @@ class Dataset(object):
         else: # 1 class (2 class including background)
             h = image_info["height"]
             w = image_info["width"]
-            foreground = np.zeros(shape=self.config.image_size, dtype=np.uint8)
+            foreground = np.zeros(shape=img_size_numpy, dtype=np.uint8)
             for a in annotations:
                 _m = np.zeros(shape=(h, w, 3), dtype=np.uint8)
                 points = a["points"]
@@ -404,6 +408,8 @@ class Dataset(object):
                 _m = cv2.fillPoly(_m, [points], color=(1, 1, 1))
                 _m = cv2.resize(_m, self.config.image_size,
                                 interpolation=cv2.INTER_NEAREST)
+                if self.config.is_need_padding():
+                    _m = image.pad_image_to_target_size(_m, self.config.max_input_size)
                 _m = _m[:, :, 0]
                 foreground += _m
             foreground = np.where(foreground >= 1, 1, 0).astype(np.uint8)

@@ -64,7 +64,7 @@ class DetectionModel(object):
             lr0=self.config.LEARNING_RATE,
             project=self.config.log_dir,
             name=self.config.MODEL,
-            rect=True,
+            rect=self.config.KEEP_ASPECT_RATIO,
             fliplr=0.5 if self.config.RANDOM_HFLIP else 0.0,
             flipud=0.5 if self.config.RANDOM_VFLIP else 0.0,
             degrees=self.config.RANDOM_ROTATE * 180.0,

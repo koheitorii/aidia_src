@@ -428,39 +428,27 @@ def pad_image_to_target_size(img, target_size):
         """
         h, w = img.shape[:2]
         
-        # Calculate scale to maintain aspect ratio
-        scale_x = target_size / w
-        scale_y = target_size / h
-        scale = min(scale_x, scale_y)
-        
-        # Calculate new dimensions
-        new_w = int(w * scale)
-        new_h = int(h * scale)
-        
-        # Resize image maintaining aspect ratio
-        resized_img = cv2.resize(img, (new_w, new_h))
-        
         # Calculate padding
-        pad_x = (target_size - new_w) // 2
-        pad_y = (target_size - new_h) // 2
+        pad_x = (target_size - w) // 2
+        pad_y = (target_size - h) // 2
         
         # Handle odd padding differences
         pad_left = pad_x
-        pad_right = target_size - new_w - pad_x
+        pad_right = target_size - w - pad_x
         pad_top = pad_y
-        pad_bottom = target_size - new_h - pad_y
+        pad_bottom = target_size - h - pad_y
         
         # Pad with black pixels
         if len(img.shape) == 3:  # Color image
             padded_img = cv2.copyMakeBorder(
-                resized_img, 
+                img, 
                 pad_top, pad_bottom, pad_left, pad_right,
                 cv2.BORDER_CONSTANT, 
                 value=[0, 0, 0]
             )
         else:  # Grayscale image
             padded_img = cv2.copyMakeBorder(
-                resized_img, 
+                img, 
                 pad_top, pad_bottom, pad_left, pad_right,
                 cv2.BORDER_CONSTANT, 
                 value=0
