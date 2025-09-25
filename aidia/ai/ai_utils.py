@@ -17,10 +17,9 @@ class InferenceModel(object):
 
     def run(self, file_path: str, save_path: str = None):
         """Run inference and return the first result."""
-        try:
-            img = image.read_image(file_path)
-        except Exception as e:
-            raise ValueError(f"Failed to read image {file_path}: {e}")
+        img = image.read_image(file_path)
+        if img is None:
+            return None
         img = cv2.resize(img, self.config.image_size)
         if self.config.is_need_padding():
             img = image.pad_image_to_target_size(img, self.config.max_input_size)
@@ -52,11 +51,9 @@ class InferenceModel_Ultralytics(object):
 
     def run(self, file_path: str, save_path: str = None):
         """Run inference and return the first result."""
-        try:
-            img = image.read_image(file_path)
-        except Exception as e:
-            raise ValueError(f"Failed to read image {file_path}: {e}")
         img = image.read_image(file_path)
+        if img is None:
+            return None
         img = cv2.resize(img, self.config.image_size)
         result = self.model.predict(img, device='cpu')[0]
         if save_path is not None:
