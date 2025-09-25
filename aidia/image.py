@@ -257,7 +257,7 @@ class MFF():
         result_image = clip_uint16(result_image)
         return result_image.astype(np.uint16)
 
-def mask2merge(src_img, pred, class_names, gt=None, thresh=0.5):
+def mask2merge(src_img, pred, class_names, gt=None, thresh=0.5, show_labels=True, show_conf=False):
     """Return the RGB image merged AI prediction masks and the original image."""
     fonttype = cv2.FONT_HERSHEY_DUPLEX
     fontsize = 0.5
@@ -282,11 +282,20 @@ def mask2merge(src_img, pred, class_names, gt=None, thresh=0.5):
         merge += mask.astype(float)
 
         # add label text
-        label = class_names[c]
-        y_idx, x_idx = indexes
-        x1 = np.min(x_idx)
-        y1 = np.min(y_idx) - 5
-        cv2.putText(merge, label, (x1, y1), fonttype, fontsize, color, 1, cv2.LINE_AA)
+        if show_labels:
+            label = class_names[c]
+            y_idx, x_idx = indexes
+            x1 = np.min(x_idx)
+            y1 = np.min(y_idx) - 5
+            cv2.putText(merge, label, (x1, y1), fonttype, fontsize, color, 1, cv2.LINE_AA)
+        if show_conf:
+            conf = np.max(m)
+            label = f"{conf:.2f}"
+            y_idx, x_idx = indexes
+            x1 = np.min(x_idx)
+            y1 = np.min(y_idx) + 15
+            cv2.putText(merge, label, (x1, y1), fonttype, fontsize, color, 1, cv2.LINE_AA)
+
     merge[merge > 255] = 255.0
     merge = merge.astype(np.uint8)
     cv2.putText(merge, "AI", (0, 10), fonttype, fontsize, fontcolor, fontweight, cv2.LINE_AA)
@@ -305,12 +314,14 @@ def mask2merge(src_img, pred, class_names, gt=None, thresh=0.5):
                 gt_mask[..., x] = gt_m * float(color[x])
            
             # add label text
-            label = class_names[c]
-            y_idx, x_idx = indexes
-            x1 = np.min(x_idx)
-            y1 = np.min(y_idx) - 5
-            cv2.putText(gt_merge, label, (x1, y1), fonttype, fontsize, color, 1, cv2.LINE_AA)
+            if show_labels:
+                label = class_names[c]
+                y_idx, x_idx = indexes
+                x1 = np.min(x_idx)
+                y1 = np.min(y_idx) - 5
+                cv2.putText(gt_merge, label, (x1, y1), fonttype, fontsize, color, 1, cv2.LINE_AA)
             gt_merge += gt_mask.astype(float)
+
         gt_merge[gt_merge > 255] = 255.0
         gt_merge = gt_merge.astype(np.uint8)
         cv2.putText(gt_merge, "human", (0, 10), fonttype, fontsize, fontcolor, fontweight, cv2.LINE_AA)
@@ -399,3 +410,60 @@ def save_canvas_img(canvas_img: np.ndarray, path: str) -> bool:
     if canvas_img.ndim == 2:
         canvas_img = cv2.cvtColor(canvas_img, cv2.COLOR_GRAY2RGB)
     return imwrite(canvas_img, path)
+
+def pad_image_to_target_size(img, target_size):
+        """Pad image with black pixels to match target size.
+        
+        Parameters
+        ----------
+        img : np.ndarray
+            Input image to be padded.
+        target_size : tuple
+            Target size (width, height) to match.
+            
+        Returns
+        -------
+        np.ndarray
+            Padded image with target size.
+        """
+        h, w = img.shape[:2]
+        
+        # Calculate scale to maintain aspect ratio
+        scale_x = target_size / w
+        scale_y = target_size / h
+        scale = min(scale_x, scale_y)
+        
+        # Calculate new dimensions
+        new_w = int(w * scale)
+        new_h = int(h * scale)
+        
+        # Resize image maintaining aspect ratio
+        resized_img = cv2.resize(img, (new_w, new_h))
+        
+        # Calculate padding
+        pad_x = (target_size - new_w) // 2
+        pad_y = (target_size - new_h) // 2
+        
+        # Handle odd padding differences
+        pad_left = pad_x
+        pad_right = target_size - new_w - pad_x
+        pad_top = pad_y
+        pad_bottom = target_size - new_h - pad_y
+        
+        # Pad with black pixels
+        if len(img.shape) == 3:  # Color image
+            padded_img = cv2.copyMakeBorder(
+                resized_img, 
+                pad_top, pad_bottom, pad_left, pad_right,
+                cv2.BORDER_CONSTANT, 
+                value=[0, 0, 0]
+            )
+        else:  # Grayscale image
+            padded_img = cv2.copyMakeBorder(
+                resized_img, 
+                pad_top, pad_bottom, pad_left, pad_right,
+                cv2.BORDER_CONSTANT, 
+                value=0
+            )
+            
+        return padded_img

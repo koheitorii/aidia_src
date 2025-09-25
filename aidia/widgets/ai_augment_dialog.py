@@ -159,7 +159,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
         self.noise_spinbox.setValue(config.RANDOM_NOISE)
 
         # Disable contrast, blur, and noise for Ultralytics models
-        is_ultralytics = ModelTypes.is_ultralytics(config.MODEL)
+        is_ultralytics = config.is_ultralytics()
         self.contrast_spinbox.setEnabled(not is_ultralytics)
         self.blur_spinbox.setEnabled(not is_ultralytics)
         self.noise_spinbox.setEnabled(not is_ultralytics)
@@ -184,7 +184,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
         self.config.RANDOM_BRIGHTNESS = self.brightness_spinbox.value()
         
         # For Ultralytics models, force contrast, blur, and noise to 0
-        is_ultralytics = ModelTypes.is_ultralytics(self.config.MODEL)
+        is_ultralytics = self.config.is_ultralytics()
         self.config.RANDOM_CONTRAST = 0.0 if is_ultralytics else self.contrast_spinbox.value()
         self.config.RANDOM_BLUR = 0.0 if is_ultralytics else self.blur_spinbox.value()
         self.config.RANDOM_NOISE = 0.0 if is_ultralytics else self.noise_spinbox.value()
@@ -199,7 +199,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
         self.brightness_spinbox.setValue(0.1)
         
         # Check if current model is Ultralytics
-        is_ultralytics = self.config and ModelTypes.is_ultralytics(self.config.MODEL)
+        is_ultralytics = self.config.is_ultralytics()
         
         # Set values and enable/disable based on model type
         contrast_value = 0.0 if is_ultralytics else 0.1

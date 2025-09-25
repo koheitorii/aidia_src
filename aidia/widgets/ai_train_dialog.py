@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 from onnxruntime import InferenceSession
+from ultralytics import YOLO
 
 from qtpy import QtCore, QtWidgets, QtGui
 from qtpy.QtCore import Qt
@@ -26,13 +27,13 @@ from aidia.ai.dataset import Dataset
 from aidia.ai.test import TestModel
 from aidia.ai.det import DetectionModel
 from aidia.ai.seg import SegmentationModel
+from aidia.ai.ai_utils import InferenceModel, InferenceModel_Ultralytics
 from aidia.widgets import ImageWidget
 from aidia.widgets.ai_augment_dialog import AIAugmentDialog
 from aidia.widgets.ai_label_replace_dialog import AILabelReplaceDialog
 from aidia.widgets.copy_data_dialog import CopyDataDialog
 
 import torch
-from ultralytics import YOLO
 
 
 # Set random seeds for reproducibility
@@ -117,7 +118,7 @@ class AITrainDialog(QtWidgets.QDialog):
                             )
         self.setWindowTitle(self.tr("AI Training"))
 
-        self.setMinimumSize(QtCore.QSize(1200, 800))
+        self.setMinimumSize(QtCore.QSize(1200, 900))
 
         self.dataset_dir = None
         self.target_logdir = None
@@ -128,6 +129,10 @@ class AITrainDialog(QtWidgets.QDialog):
         self.val_loss = []
         self.train_steps = 0
         self.val_steps = 0
+
+        # inference display settings
+        self.show_labels = True
+        self.show_conf = False
 
         self.fig_loss, self.ax_loss = plt.subplots(figsize=(12, 6))
         self.fig_loss.patch.set_alpha(0.0)
@@ -177,7 +182,6 @@ class AITrainDialog(QtWidgets.QDialog):
 
         # utility layout
         self._utility_layout = QtWidgets.QVBoxLayout()
-        self._utility_layout.setContentsMargins(0, 100, 0, 100)
         self._utility_widget = QtWidgets.QWidget()
 
         title_utility = qt.head_text(self.tr("Utilities"))
@@ -206,17 +210,68 @@ class AITrainDialog(QtWidgets.QDialog):
         self.button_open_logdir.clicked.connect(lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.target_logdir)))
         self._utility_layout.addWidget(self.button_open_logdir)
 
-        self.button_pred = QtWidgets.QPushButton(self.tr("Predict"))
-        self.button_pred.setToolTip(self.tr("Predict images in the directory you selected."))
+        # Prediction settings group box
+        self.prediction_group = QtWidgets.QGroupBox(self.tr("Prediction"))
+        self.prediction_layout = QtWidgets.QVBoxLayout(self.prediction_group)
+        
+        # Prediction display settings
+        self.checkbox_show_labels = QtWidgets.QCheckBox(self.tr("Show Labels"))
+        self.checkbox_show_labels.setToolTip(self.tr("Show labels in prediction results."))
+        self.checkbox_show_labels.setChecked(True)
+        def _on_show_labels_changed(state):
+            if state == 2:
+                self.show_labels = True
+                self.checkbox_show_conf.setEnabled(True)
+            else:
+                self.show_labels = False
+                self.checkbox_show_conf.setChecked(False)
+                self.checkbox_show_conf.setEnabled(False)
+                self.show_conf = False
+        self.checkbox_show_labels.stateChanged.connect(_on_show_labels_changed)
+        self.prediction_layout.addWidget(self.checkbox_show_labels)
+
+        self.checkbox_show_conf = QtWidgets.QCheckBox(self.tr("Show Confidence"))
+        self.checkbox_show_conf.setToolTip(self.tr("Show confidence scores in prediction results."))
+        self.checkbox_show_conf.setChecked(True)
+        def _on_show_conf_changed(state):
+            if self.show_labels is False:
+                self.checkbox_show_conf.setChecked(False)
+                self.checkbox_show_conf.setEnabled(False)
+                self.show_conf = False
+                return
+            if state == 2:
+                self.show_conf = True
+            else:
+                self.show_conf = False
+        self.checkbox_show_conf.stateChanged.connect(_on_show_conf_changed)
+        self.prediction_layout.addWidget(self.checkbox_show_conf)
+
+        self.button_pred = QtWidgets.QPushButton(self.tr("Select Image"))
+        self.button_pred.setToolTip(self.tr("Predict a single image."))
         self.button_pred.setAutoDefault(False)
-        self.button_pred.clicked.connect(self.predict_unknown)
-        self._utility_layout.addWidget(self.button_pred)
+        self.button_pred.clicked.connect(self.predict_image)
+        self.prediction_layout.addWidget(self.button_pred)
+
+        self.button_pred_dir = QtWidgets.QPushButton(self.tr("Select Directory"))
+        self.button_pred_dir.setToolTip(self.tr("Predict images in the directory you selected."))
+        self.button_pred_dir.setAutoDefault(False)
+        self.button_pred_dir.clicked.connect(self.predict_images_from_directory)
+        self.prediction_layout.addWidget(self.button_pred_dir)
+        
+        # Add prediction group to utility layout
+        self._utility_layout.addWidget(self.prediction_group)
 
         # export model button
         self.button_export_model = QtWidgets.QPushButton(self.tr("Export Model"))
         self.button_export_model.setToolTip(self.tr("Export the model data."))
         self.button_export_model.clicked.connect(self.export_model)
         self._utility_layout.addWidget(self.button_export_model)
+
+        # export model to pretrained button
+        self.button_export_model_to_pretrained = QtWidgets.QPushButton(self.tr("Export Model to Pretrained"))
+        self.button_export_model_to_pretrained.setToolTip(self.tr("Export the model data to pretrained directory."))
+        self.button_export_model_to_pretrained.clicked.connect(self.export_model_to_pretrained)
+        self._utility_layout.addWidget(self.button_export_model_to_pretrained)
 
         # connect AI prediction thread
         self.ai_pred = AIPredThread(self)
@@ -235,7 +290,7 @@ class AITrainDialog(QtWidgets.QDialog):
         def _validate(idx):
             idx = int(idx)
             self.config.TASK = TASK_LIST[idx]
-            self.enable_all_by_task(self.config.TASK)
+            self.enable_params_by_task(self.config.TASK)
         self.param_task = ParamComponent(
             type="combo",
             tag=self.tr("Task"),
@@ -302,14 +357,19 @@ You can use this function for 5-fold cross-validation."""),
         )
         self.add_param_component(self.param_dataset)
 
-        # input size
+        # input size X
         def _validate(idx):
-            self.config.INPUT_SIZE = int(self.param_size.input_field.itemText(idx))
-        self.param_size = ParamComponent(
+            self.config.INPUT_SIZE_X = int(self.param_size_x.input_field.itemText(idx))
+            if self.config.INPUT_SIZE_X == self.config.INPUT_SIZE_Y:
+                self.config.KEEP_ASPECT_RATIO = False
+                self.param_is_keep_aspect.input_field.setChecked(False)
+                self.param_is_keep_aspect.input_field.setEnabled(False)
+            else:
+                self.param_is_keep_aspect.input_field.setEnabled(True)
+        self.param_size_x = ParamComponent(
             type="combo",
-            tag=self.tr("Input Size"),
-            tips=self.tr("""Set the size of input images on a side.
-If you set 256, input images are resized to (256, 256)."""),
+            tag=self.tr("Input Size X"),
+            tips=self.tr("""Set the width of input images."""),
             validate_func=_validate,
             items=[
                 "128", "160", "192", "224", "256",
@@ -318,7 +378,30 @@ If you set 256, input images are resized to (256, 256)."""),
                 "1152", "1216", "1280"
             ]
         )
-        self.add_param_component(self.param_size)
+        self.add_param_component(self.param_size_x)
+
+        # input size Y
+        def _validate(idx):
+            self.config.INPUT_SIZE_Y = int(self.param_size_y.input_field.itemText(idx))
+            if self.config.INPUT_SIZE_X == self.config.INPUT_SIZE_Y:
+                self.config.KEEP_ASPECT_RATIO = False
+                self.param_is_keep_aspect.input_field.setChecked(False)
+                self.param_is_keep_aspect.input_field.setEnabled(False)
+            else:
+                self.param_is_keep_aspect.input_field.setEnabled(True)
+        self.param_size_y = ParamComponent(
+            type="combo",
+            tag=self.tr("Input Size Y"),
+            tips=self.tr("""Set the height of input images."""),
+            validate_func=_validate,
+            items=[
+                "128", "160", "192", "224", "256",
+                "320", "384", "448", "512", "576", "640", "704",
+                "768", "832", "896", "960", "1024", "1088",
+                "1152", "1216", "1280"
+            ]
+        )
+        self.add_param_component(self.param_size_y)
 
         # epochs
         def _validate(text):
@@ -451,6 +534,19 @@ The labels are separated with line breaks."""),
             validate_func=_validate
         )
         self.add_param_component(self.param_is_dir_split, right=True)
+
+        def _validate(state): # check:2, empty:0
+            if state == 2:
+                self.config.KEEP_ASPECT_RATIO = True
+            else:
+                self.config.KEEP_ASPECT_RATIO = False
+        self.param_is_keep_aspect = ParamComponent(
+            type="checkbox",
+            tag=self.tr("Keep Aspect Ratio"),
+            tips=self.tr("Maintain aspect ratio when resizing images."),
+            validate_func=_validate
+        )
+        self.add_param_component(self.param_is_keep_aspect, right=True)
 
         ### add augment params ###
         # vertical flip
@@ -614,13 +710,9 @@ The labels are separated with line breaks."""),
 
         # figure area
         self.image_widget_loss = ImageWidget(self)
+        self.image_widget_loss.setMinimumHeight(800)
         self._layout.addWidget(self.image_widget_loss, row_count, 1, 1, 4)
         row_count += 1
-
-        # status
-        self.text_status = QtWidgets.QLabel()
-        self._layout.addWidget(self.text_status, row_count, 1, 1, 2)
-        # row += 1
 
         # progress bar
         self.progress = QtWidgets.QProgressBar(self)
@@ -633,8 +725,13 @@ QProgressBar::chunk {
     width: 20px; }""")
         self.progress.setMaximum(100)
         self.progress.setValue(0)
-        self._layout.addWidget(self.progress, row_count, 3, 1, 2)
-        # row += 1
+        self._layout.addWidget(self.progress, row_count, 1, 1, 4)
+        row_count += 1
+
+        # status
+        self.text_status = QtWidgets.QLabel()
+        self.text_status.setMaximumHeight(32)
+        self._layout.addWidget(self.text_status, row_count, 1, 1, 4)
 
         # stop button
         # self.button_stop = QtWidgets.QPushButton(self.tr("Terminate"))
@@ -655,10 +752,10 @@ QProgressBar::chunk {
         self._layout.addWidget(self._dataset_widget, 0, 0, row_count + 1, 1)
 
         self._augment_widget.setLayout(self._augment_layout)
-        self._layout.addWidget(self._augment_widget, 0, 5, row_count - 1, 1)
+        self._layout.addWidget(self._augment_widget, 0, 5, row_count - 2, 1)
 
         self._utility_widget.setLayout(self._utility_layout)
-        self._layout.addWidget(self._utility_widget, row_count - 1, 5, 1, 1)
+        self._layout.addWidget(self._utility_widget, row_count - 2, 5, 3, 1)
         
         self.setLayout(self._layout)
 
@@ -705,14 +802,18 @@ QProgressBar::chunk {
 
         # basic params
         self.param_task.input_field.setCurrentIndex(TASK_LIST.index(self.config.TASK))
-        self.enable_all_by_task(self.config.TASK)
+        self.enable_params_by_task(self.config.TASK)
         self.param_model.input_field.setCurrentText(self.config.MODEL)
         self.param_name.input_field.setText(self.config.NAME)
         self.param_dataset.input_field.setCurrentIndex(int(self.config.DATASET_NUM) - 1)
-        if self.config.INPUT_SIZE in [int(self.param_size.input_field.itemText(i)) for i in range(self.param_size.input_field.count())]:
-            self.param_size.input_field.setCurrentText(str(self.config.INPUT_SIZE))
+        if self.config.INPUT_SIZE_X in [int(self.param_size_x.input_field.itemText(i)) for i in range(self.param_size_x.input_field.count())]:
+            self.param_size_x.input_field.setCurrentText(str(self.config.INPUT_SIZE_X))
         else:
-            self.param_size.input_field.setCurrentIndex(0)  # Reset to first item if not found
+            self.param_size_x.input_field.setCurrentIndex(0)  # Reset to first item if not found
+        if self.config.INPUT_SIZE_Y in [int(self.param_size_y.input_field.itemText(i)) for i in range(self.param_size_y.input_field.count())]:
+            self.param_size_y.input_field.setCurrentText(str(self.config.INPUT_SIZE_Y))
+        else:
+            self.param_size_y.input_field.setCurrentIndex(0)
         self.param_epochs.input_field.setText(str(self.config.EPOCHS))
         self.param_batchsize.input_field.setText(str(self.config.BATCH_SIZE))
         self.param_lr.input_field.setText(str(self.config.LEARNING_RATE))
@@ -730,6 +831,16 @@ QProgressBar::chunk {
             self.param_is_dir_split.input_field.setEnabled(False)
         self.param_is_dir_split.input_field.setChecked(self.config.DIR_SPLIT)
 
+        # prediction display settings
+        self.checkbox_show_labels.setChecked(self.config.SHOW_LABELS)
+        if not self.config.SHOW_LABELS:
+            self.checkbox_show_conf.setChecked(False)
+            self.checkbox_show_conf.setEnabled(False)
+            self.show_labels = False
+            self.show_conf = False
+        else:
+            self.checkbox_show_conf.setChecked(self.config.SHOW_CONF)
+
         # augment params
         self.update_augment_checkboxes()
         # Update augmentation parameter availability after loading config
@@ -744,7 +855,7 @@ QProgressBar::chunk {
     ### Callbacks ###
     def ai_finished(self):
         """Call back function when AI thread finished."""
-        self.enable_all_by_task(self.config.TASK)
+        self.enable_params_by_task(self.config.TASK)
 
         # raise error handle
         config_path = os.path.join(self.config.log_dir, CONFIG_JSON)
@@ -776,11 +887,11 @@ QProgressBar::chunk {
         self.fig_loss.savefig(os.path.join(self.config.log_dir, "loss.png"))
 
         # convet YOLO model to ONNX
-        if ModelTypes.is_ultralytics(self.config.MODEL):
-            from aidia.ai.ai_utils import write_onnx
+        if self.config.is_ultralytics():
+            from aidia.ai.ai_utils import write_onnx_u
             try:
                 model_path = os.path.join(self.config.log_dir, self.config.MODEL, "weights", "best.pt")
-                onnx_path = write_onnx(model_path)
+                onnx_path = write_onnx_u(model_path)
             except Exception as e:
                 aidia_logger.error(e, exc_info=True)
                 self.text_status.setText(self.tr("Failed to convert to ONNX model."))
@@ -796,13 +907,13 @@ QProgressBar::chunk {
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.config.log_dir))
 
     def ai_pred_finished(self):
-        self.enable_all()
+        self.enable_params_by_task(self.config.TASK)
         self.aiRunning.emit(False)
 
         # open prediction result directory
-        QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self._predicted_dir))
+        QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self._result_dir))
 
-    def enable_all_by_task(self, task):
+    def enable_params_by_task(self, task):
         """Switch enabled state of parameters by task."""
         if task == CLS:
             raise NotImplementedError
@@ -813,10 +924,13 @@ QProgressBar::chunk {
                 self.param_model.input_field.addItems(ModelTypes.DET_MODEL)
             elif task == SEG:
                 self.param_model.input_field.addItems(ModelTypes.SEG_MODEL)
-            self.enable_all()
+            self._enable_params()
+            if self.config.INPUT_SIZE_X == self.config.INPUT_SIZE_Y:
+                self.param_is_keep_aspect.input_field.setChecked(False)
+                self.param_is_keep_aspect.input_field.setEnabled(False)
         elif task == TEST:
             self.param_model.input_field.clear()
-            self.disable_all()
+            self.disable_params()
             self.switch_enabled([
                 self.param_name,
                 self.param_batchsize,
@@ -873,7 +987,7 @@ QProgressBar::chunk {
             self.param_is_dir_split.tag.setStyleSheet(LabelStyle.DEFAULT)
             self.param_is_dir_split.input_field.setEnabled(True)
     
-    def enable_all(self):
+    def _enable_params(self):
         """Enable all components."""
         for obj in self.param_objects.values():
             obj.input_field.setEnabled(True)
@@ -885,17 +999,30 @@ QProgressBar::chunk {
         """Enable utility components."""
         self.input_logdir.setEnabled(True)
         self.button_open_logdir.setEnabled(True)
+        self.checkbox_show_labels.setEnabled(True)
+        if not self.show_labels:
+            self.checkbox_show_conf.setChecked(False)
+            self.checkbox_show_conf.setEnabled(False)
+            self.show_conf = False
+        else:
+            self.checkbox_show_conf.setEnabled(True)
         self.button_pred.setEnabled(True)
+        self.button_pred_dir.setEnabled(True)
         self.button_export_model.setEnabled(True)
+        self.button_export_model_to_pretrained.setEnabled(True)
     
     def disable_utility(self):
         """Disable utility components."""
         self.input_logdir.setEnabled(False)
         self.button_open_logdir.setEnabled(False)
+        self.checkbox_show_labels.setEnabled(False)
+        self.checkbox_show_conf.setEnabled(False)
         self.button_pred.setEnabled(False)
+        self.button_pred_dir.setEnabled(False)
         self.button_export_model.setEnabled(False)
+        self.button_export_model_to_pretrained.setEnabled(False)
     
-    def disable_all(self):
+    def disable_params(self):
         """Disable all components."""
         for obj in self.param_objects.values():
             obj.input_field.setEnabled(False)
@@ -907,8 +1034,12 @@ QProgressBar::chunk {
         # Disable utility components
         self.input_logdir.setEnabled(False)
         self.button_open_logdir.setEnabled(False)
+        self.checkbox_show_labels.setEnabled(False)
+        self.checkbox_show_conf.setEnabled(False)
         self.button_pred.setEnabled(False)
+        self.button_pred_dir.setEnabled(False)
         self.button_export_model.setEnabled(False)
+        self.button_export_model_to_pretrained.setEnabled(False)
 
     def closeEvent(self, event):
         """Handle close event."""
@@ -917,11 +1048,11 @@ QProgressBar::chunk {
     def showEvent(self, event):
         """Handle show event."""
         if self.ai.isRunning():
-            self.disable_all()
+            self.disable_params()
             # self.button_stop.setEnabled(True)
         else:
             # self.reset_state()
-            self.enable_all_by_task(self.config.TASK)
+            self.enable_params_by_task(self.config.TASK)
     
     def label_replace_popup(self):
         """Open label replacement dialog."""
@@ -1060,6 +1191,31 @@ QProgressBar::chunk {
         if len(self.val_loss):
             text += f"val_loss: {self.val_loss[-1]:>8.4f}"
         
+        # Calculate estimated remaining time based on batch progress
+        if batch is not None and self.train_steps > 0 and self.start_time > 0:
+            elapsed_time = time.time() - self.start_time
+            
+            # Calculate total progress: completed epochs + current epoch progress
+            completed_epochs = epoch - 1
+            current_epoch_progress = batch / self.train_steps
+            total_progress = (completed_epochs + current_epoch_progress) / self.config.EPOCHS
+            
+            if total_progress > 0:
+                estimated_total_time = elapsed_time / total_progress
+                estimated_remaining_time = estimated_total_time - elapsed_time
+                
+                # Format remaining time
+                remaining_h = int(estimated_remaining_time // 3600)
+                remaining_m = int(estimated_remaining_time // 60 % 60)
+                
+                # Add remaining time to status text
+                if remaining_h > 0:
+                    text += f" - ETA: {remaining_h}h {remaining_m}m"
+                elif remaining_m > 0:
+                    text += f" - ETA: {remaining_m}m"
+                else:
+                    text += " - ETA: <1m"
+        
         self.text_status.setText(text)
     
     def update_logs(self, value):
@@ -1072,6 +1228,29 @@ QProgressBar::chunk {
         if epoch is not None:
             self.epoch.append(epoch)
             self.progress.setValue(progress_value)
+            
+            # Calculate estimated remaining time
+            if epoch > 0 and self.start_time > 0:
+                elapsed_time = time.time() - self.start_time
+                avg_time_per_epoch = elapsed_time / epoch
+                remaining_epochs = self.config.EPOCHS - epoch
+                estimated_remaining_time = avg_time_per_epoch * remaining_epochs
+                
+                # Format remaining time
+                remaining_h = int(estimated_remaining_time // 3600)
+                remaining_m = int(estimated_remaining_time // 60 % 60)
+                
+                # Update status with remaining time
+                status_text = f"Epoch: {epoch}/{self.config.EPOCHS} ({progress_value}%)"
+                if remaining_h > 0:
+                    status_text += f" - ETA: {remaining_h}h {remaining_m}m"
+                elif remaining_m > 0:
+                    status_text += f" - ETA: {remaining_m}m"
+                else:
+                    status_text += f" - ETA: <1m"
+                
+                self.text_status.setText(status_text)
+                
         if loss is not None:
             self.loss.append(loss)
         if val_loss is not None:
@@ -1137,7 +1316,7 @@ QProgressBar::chunk {
                 shutil.rmtree(self.config.log_dir, ignore_errors=True)
                 os.makedirs(self.config.log_dir, exist_ok=True)
 
-        self.disable_all()
+        self.disable_params()
         self.reset_state()
 
         config_path = os.path.join(self.dataset_dir, LOCAL_DATA_DIR_NAME, CONFIG_JSON)
@@ -1159,7 +1338,7 @@ QProgressBar::chunk {
     def augment_setting_popup(self):
         """Open data augmentation settings dialog."""
         # Check if Ultralytics model and warn user about limitations
-        is_ultralytics = ModelTypes.is_ultralytics(self.config.MODEL)
+        is_ultralytics = self.config.is_ultralytics()
         
         dialog = AIAugmentDialog(self)
         
@@ -1249,7 +1428,7 @@ QProgressBar::chunk {
             self.param_contrast.input_field.setEnabled(False)
             return
 
-        is_ultralytics = ModelTypes.is_ultralytics(self.config.MODEL)
+        is_ultralytics = self.config.is_ultralytics()
             
         # For Ultralytics models, disable contrast, blur, and noise
         if is_ultralytics:
@@ -1288,8 +1467,69 @@ QProgressBar::chunk {
                 self.input_logdir.addItem(name)
         if self.input_logdir.count() == 0:
             self.disable_utility()
+        
+    def predict_image(self):
+        if not os.path.exists(self.target_logdir):
+            self.parent().error_message(self.tr(
+                '''The directory was not found.'''
+            ))
+            return
 
-    def predict_unknown(self):
+        # load config
+        config_path = os.path.join(self.target_logdir, "config.json")
+        if not os.path.exists(config_path):
+            self.text_status.setText(self.tr("Config file was not found."))
+            return
+        
+        config = AIConfig(self.dataset_dir)
+        config.load(config_path)
+        config.SHOW_LABELS = self.show_labels
+        config.SHOW_CONF = self.show_conf
+
+        if config.TASK not in [SEG, DET]:
+            self.text_status.setText(self.tr("Not implemented function."))
+            return
+        
+        # check onnx model
+        onnx_path = os.path.join(self.target_logdir, "model.onnx")
+        if not os.path.exists(onnx_path):
+            self.text_status.setText(self.tr("The ONNX model was not found."))
+            return
+        
+        # target image file
+        from aidia import HOME_DIR
+        opendir = HOME_DIR
+        if self.prev_dir and os.path.exists(self.prev_dir):
+            opendir = self.prev_dir
+        
+        from aidia import EXTS
+        _exts = [f"*{e}" for e in EXTS]
+        _exts = " ".join(_exts)
+        target_path, _ = QtWidgets.QFileDialog.getOpenFileName(
+            self,
+            self.tr("Select Test Image"),
+            opendir,
+            filter = self.tr("Image files ({});;All files (*)").format(_exts)
+        )
+        target_path = target_path.replace("/", os.sep)
+        if not target_path:
+            return
+        self.prev_dir = os.path.dirname(target_path)
+        self._result_dir = os.path.join(self.target_logdir, 'predict_images')
+        
+        # AI run
+        self.text_status.setText(self.tr("Processing..."))
+
+        self.task = config.TASK
+        self.disable_params()
+        self.progress.setValue(0)
+        # self.reset_state()
+
+        self.ai_pred.set_params(config, target_path, onnx_path)
+        self.ai_pred.start()
+        self.aiRunning.emit(True)
+
+    def predict_images_from_directory(self):
         # load config
         config_path = os.path.join(self.target_logdir, "config.json")
         if not os.path.exists(config_path):
@@ -1323,7 +1563,7 @@ QProgressBar::chunk {
         if not target_path:
             return
         # self._predicted_dir = os.path.join(target_path, 'AI_results')
-        self._predicted_dir = os.path.join(self.target_logdir, 'predict_images', utils.get_basename(target_path))
+        self._result_dir = os.path.join(self.target_logdir, 'predict_images', utils.get_basename(target_path))
         
         if not len(os.listdir(target_path)):
             self.text_status.setText(self.tr("The Directory is empty."))
@@ -1334,7 +1574,7 @@ QProgressBar::chunk {
 
         self.task = config.TASK
         self.prev_dir = target_path
-        self.disable_all()
+        self.disable_params()
         self.progress.setValue(0)
         # self.reset_state()
 
@@ -1372,6 +1612,22 @@ QProgressBar::chunk {
 
         self.text_status.setText(self.tr("Export data to {}").format(target_path))
 
+    def export_model_to_pretrained(self):
+        if not os.path.exists(self.target_logdir):
+            self.parent().error_message(self.tr(
+                '''The directory was not found.'''
+            ))
+            return
+
+        from aidia import PRETRAINED_DIR
+        if not os.path.exists(PRETRAINED_DIR):
+            os.makedirs(PRETRAINED_DIR, exist_ok=True)
+
+        cd = CopyDataDialog(self, self.target_logdir, PRETRAINED_DIR, only_model=True)
+        cd.popup()
+
+        self.text_status.setText(self.tr("Export data to {}").format(PRETRAINED_DIR))
+        self.parent().update_ai_select()
 
 
 class AITrainThread(QtCore.QThread):
@@ -1470,6 +1726,10 @@ class AITrainThread(QtCore.QThread):
         #     model.build_model(mode="train")
         try:
             model.build_model(mode="train")
+        except torch.OutOfMemoryError as e:
+            self.errorMessage.emit(self.tr("Out of memory error.<br>Please reduce the batch size or use a smaller model."))
+            aidia_logger.error(e, exc_info=True)
+            return
         except Exception as e:
             self.errorMessage.emit(self.tr("Failed to build model."))
             aidia_logger.error(e, exc_info=True)
@@ -1482,7 +1742,7 @@ class AITrainThread(QtCore.QThread):
         self.epoch = 0
         self.loss = 0.0
 
-        if ModelTypes.is_ultralytics(self.config.MODEL):
+        if self.config.is_ultralytics():
             # for ultralytics models, use custom callback
             def on_train_batch_end(trainer):
                 """Callback function for training batch end."""
@@ -1556,52 +1816,54 @@ class AITrainThread(QtCore.QThread):
             model.dataset.save(p)
 
         ### Evaluation ###
-        if ModelTypes.is_ultralytics(self.config.MODEL):
+        if self.config.is_ultralytics():
             self.model.convert2onnx()
             self.notifyMessage.emit(self.tr("Done"))
             return
         
-        # set inference model
-        self.notifyMessage.emit(self.tr("Setting inference model..."))
-        model.set_inference_model()
-        save_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'evaluation', 'test_images')
+        else:
+            # set inference model
+            self.notifyMessage.emit(self.tr("Setting inference model..."))
+            model.set_inference_model()
+            save_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'evaluation', 'test_images')
 
-        self.notifyMessage.emit(self.tr("Generate test result images..."))
-        n = model.dataset.num_test
-        for i in range(n):
-            image_id = model.dataset.test_ids[i]
-            img_path = model.dataset.image_info[image_id]["path"]
-            name = os.path.splitext(os.path.basename(img_path))[0]
-            if self.config.SUBMODE:
-                dirname = utils.get_basedir(img_path)
-                subdir_path = os.path.join(save_dir, dirname)
-                if not os.path.exists(subdir_path):
-                    os.mkdir(subdir_path)
-                save_path = os.path.join(save_dir, dirname, f"{name}.png")
-            else:
-                save_path = os.path.join(save_dir, f"{name}.png")
-            
+            self.notifyMessage.emit(self.tr("Generate test result images..."))
+            n = model.dataset.num_test
+            for i in range(n):
+                image_id = model.dataset.test_ids[i]
+                img_path = model.dataset.image_info[image_id]["path"]
+                name = os.path.splitext(os.path.basename(img_path))[0]
+                if self.config.SUBMODE:
+                    dirname = utils.get_basedir(img_path)
+                    subdir_path = os.path.join(save_dir, dirname)
+                    if not os.path.exists(subdir_path):
+                        os.mkdir(subdir_path)
+                    save_path = os.path.join(save_dir, dirname, f"{name}.png")
+                else:
+                    save_path = os.path.join(save_dir, f"{name}.png")
+                
+                try:
+                    result_img = model.predict_by_id(image_id)
+                except FileNotFoundError as e:
+                    self.notifyMessage.emit(self.tr("Error: {} was not found.").format(img_path))
+                    return
+                image.imwrite(result_img, save_path)
+        
+            self.notifyMessage.emit(self.tr("Evaluating..."))
             try:
-                result_img = model.predict_by_id(image_id)
-            except FileNotFoundError as e:
-                self.notifyMessage.emit(self.tr("Error: {} was not found.").format(img_path))
+                model.evaluate()
+            except Exception as e:
+                self.notifyMessage.emit(self.tr("Failed to evaluate."))
+                aidia_logger.error(e, exc_info=True)
                 return
-            image.imwrite(result_img, save_path)
-    
-        self.notifyMessage.emit(self.tr("Evaluating..."))
-        try:
-            model.evaluate()
-        except Exception as e:
-            self.notifyMessage.emit(self.tr("Failed to evaluate."))
-            aidia_logger.error(e, exc_info=True)
-            return
 
-        self.notifyMessage.emit(self.tr("Convert model to ONNX..."))
-        if not model.convert2onnx():
-            self.notifyMessage.emit(self.tr("Failed to convert model to ONNX."))
-            return
+            self.notifyMessage.emit(self.tr("Convert model to ONNX..."))
+            if not model.convert2onnx():
+                self.notifyMessage.emit(self.tr("Failed to convert model to ONNX."))
+                return
 
-        self.notifyMessage.emit(self.tr("Done"))
+            self.notifyMessage.emit(self.tr("Done"))
+            return
 
 
 
@@ -1612,6 +1874,10 @@ class AIPredThread(QtCore.QThread):
 
     def __init__(self, parent):
         super().__init__(parent)
+        self.model = None
+        self.config = None
+        self.target_path = None
+        self.onnx_path = None
 
     def set_params(self, config:AIConfig, target_path, onnx_path):
         self.config = config
@@ -1619,64 +1885,43 @@ class AIPredThread(QtCore.QThread):
         self.onnx_path = onnx_path
     
     def run(self):
-        savedir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'predict_images', utils.get_basename(self.target_path))
 
-        n = len(os.listdir(self.target_path))
-
-        if self.config.TASK == SEG:
-            model = InferenceSession(self.onnx_path)
-        elif self.config.TASK == DET:
-            model = YOLO(self.onnx_path, task='detect')
-        else:
-            self.notifyMessage.emit(self.tr("Not implemented function."))
-            return
-
-        for i, file_path in enumerate(glob.glob(os.path.join(self.target_path, "*"))):
-            if utils.extract_ext(file_path) == ".json":
-                continue
-
-            self.notifyMessage.emit(f"{i} / {n}: {os.path.basename(file_path)}")
-            name = utils.get_basename(file_path)
-
-            try:
-                img = image.read_image(file_path)
-            except Exception as e:
-                continue
-
-            if self.config.TASK == SEG:
-                if img is None:
-                    continue
-                img = cv2.resize(img, self.config.image_size)
-                inputs = image.preprocessing(img, is_tensor=True, channel_first=True)
-                input_name = model.get_inputs()[0].name
-                result = model.run([], {input_name: inputs})[0][0]
-                result_img = image.mask2merge(img, result, self.config.LABELS)
-                save_path = os.path.join(savedir, f"{name}.png")
-                image.imwrite(result_img, save_path)
-
-            elif self.config.TASK == DET:
-                save_path = os.path.join(savedir, f"{name}.png")
-                model.predict(img, device='cpu')[0].save(save_path)
-
+        # single image
+        if os.path.isfile(self.target_path):
+            savedir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'predict_images')
+            name = utils.get_basename(self.target_path)
+            save_path = os.path.join(savedir, f"{name}.png")
+            if self.config.is_ultralytics():
+                self.model = InferenceModel_Ultralytics(self.onnx_path, config=self.config)
             else:
-                raise NotImplementedError
-            
-            self.progressValue.emit(int(i / n * 100))
+                self.model = InferenceModel(self.onnx_path, config=self.config)
+            self.model.run(self.target_path, save_path)
+            self.notifyMessage.emit(self.tr("Prediction results saved."))
+            return
+        
+        # directory
+        else:
+            savedir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'predict_images', utils.get_basename(self.target_path))
+            n = len(os.listdir(self.target_path))
 
-        self.progressValue.emit(0)
-        self.notifyMessage.emit(self.tr("Prediction results saved."))
+            if self.config.is_ultralytics():
+                self.model = InferenceModel_Ultralytics(self.onnx_path, config=self.config)
+            else:
+                self.model = InferenceModel(self.onnx_path, config=self.config)
+
+            # iterate all files
+            for i, file_path in enumerate(glob.glob(os.path.join(self.target_path, "*"))):
+                if utils.extract_ext(file_path) == ".json":
+                    continue
+
+                self.notifyMessage.emit(f"{i} / {n}: {os.path.basename(file_path)}")
+                name = utils.get_basename(file_path)
+                save_path = os.path.join(savedir, f"{name}.png")
+
+                self.model.run(file_path, save_path)
+                
+                self.progressValue.emit(int(i / n * 100))
+
+            self.progressValue.emit(0)
+            self.notifyMessage.emit(self.tr("Prediction results saved."))
     
-    def yolo_postprocessing(self, img, result):
-        # is_tiny = True if self.config.MODEL.split("-")[-1] == "tiny" else False
-        # if is_tiny:
-        #     _, pred_mbbox, _, pred_lbbox = result
-        # else:
-        #     _, pred_sbbox, _, pred_mbbox, _, pred_lbbox = result
-    
-        # pred_bbox = np.concatenate([np.reshape(pred_sbbox, (-1, 5 + 3)),
-        #                             np.reshape(pred_mbbox, (-1, 5 + 3)),
-        #                             np.reshape(pred_lbbox, (-1, 5 + 3))], axis=0)
-        # bboxes = postprocess_boxes(pred_bbox, img.shape[:2], self.config.INPUT_SIZE, YOLO_Config().SCORE_THRESHOLD)
-        # bboxes = nms(bboxes, YOLO_Config().IOU_THRESHOLD)
-        # return bboxes
-        return

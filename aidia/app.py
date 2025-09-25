@@ -281,9 +281,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ai_select.currentTextChanged.connect(_validate)
         self.ai_select.setEnabled(False)
 
-        self.ai_import = QtWidgets.QPushButton(self)
-        self.ai_import.setText(self.tr("Import"))
-        self.ai_import.clicked.connect(self.import_model)
+        # self.ai_import = QtWidgets.QPushButton(self)
+        # self.ai_import.setText(self.tr("Import"))
+        # self.ai_import.clicked.connect(self.import_model)
             
         if not LITE:
             self.button_ai_train = QtWidgets.QPushButton(self)
@@ -314,8 +314,8 @@ class MainWindow(QtWidgets.QMainWindow):
         ai_layout.setSizeConstraint(QtWidgets.QLayout.SetMinimumSize)
         # ai_layout.addWidget(self.auto_create_button)
         ai_layout.addWidget(self.button_auto_annotation, 0, 0, 1, 4)
-        ai_layout.addWidget(self.ai_select, 1, 0, 1, 3)
-        ai_layout.addWidget(self.ai_import, 1, 3, 1, 1)
+        ai_layout.addWidget(self.ai_select, 1, 0, 1, 4)
+        # ai_layout.addWidget(self.ai_import, 1, 3, 1, 1)
         if not LITE:
             ai_layout.addWidget(self.button_ai_train, 2, 0, 1, 4)
             # ai_layout.addWidget(self.button_ai_eval, 2, 2, 1, 2)
@@ -1953,7 +1953,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # get extension filter
         _exts = [f"*{e}" for e in EXTS]
         _exts = " ".join(_exts)
-        filter = self.tr("All files (*);;Image files ({})").format(_exts)
+        filter = self.tr("Image files ({});;All files (*)").format(_exts)
 
         # get file name
         while True:
@@ -2533,7 +2533,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         try:
             shapes = self.ai_test_widget.generate_shapes(
-                self.canvas.img_array,
+                self.img_path,
                 self.model_dir,
                 self.approx_epsilon,
                 self.area_limit)

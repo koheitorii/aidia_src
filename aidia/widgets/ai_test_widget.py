@@ -7,7 +7,9 @@ from onnxruntime import InferenceSession
 from qtpy import QtWidgets
 
 from aidia import CLS, DET, SEG, CONFIG_JSON, DrawMode
+from aidia import image
 from aidia.image import convert_dtype, preprocessing, imread
+from aidia.ai.config import AIConfig
 
 from ultralytics import YOLO
 
@@ -15,44 +17,40 @@ class AITestWidget(QtWidgets.QWidget):
     def __init__(self, parent):
         super().__init__(parent)
      
-    def generate_shapes(self, img, log_dir, epsilon, area_limit):
-        h, w = img.shape[:2]
-        if img.dtype == np.uint16:
-            img = convert_dtype(img)
-        if img.ndim == 2:
-            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    def generate_shapes(self, img_path, log_dir, epsilon, area_limit):
+        """ Generate shapes from an image using a trained model.
+        Args:
+            img_path (str): Path to the input image.
+            log_dir (str): Directory containing the trained model and config.
+            epsilon (float): Approximation epsilon for polygon approximation.
+            area_limit (int): Minimum area for a contour to be considered.
+        Returns:
+            list: List of shapes, each shape is a dictionary with label, points, and shape_type.
+        """
+        img = image.read_image(img_path)
+     
+        src_h, src_w = img.shape[:2]
         
         json_path = os.path.join(log_dir, CONFIG_JSON)
-        if not os.path.exists(json_path):
-            raise FileNotFoundError(f"{json_path} is not found.")
-        try:
-            with open(json_path, encoding="utf-8") as f:
-                dic = json.load(f)
-        except Exception as e:
-            try:    #  not UTF-8 json file handling
-                with open(json_path) as f:
-                    dic = json.load(f)
-            except Exception as e:
-                raise ValueError(f"Failed to load config.json: {e}")
+        config = AIConfig()
+        config.load(json_path)
         
-        img_size = (dic["INPUT_SIZE"], dic["INPUT_SIZE"])
-        task = dic["TASK"]
-        labels = dic["LABELS"]
+        task = config.TASK
+        labels = config.LABELS
 
         onnx_path = os.path.join(log_dir, "model.onnx")
 
-        if task == SEG:
+        if task == SEG and not config.is_ultralytics():
             model = InferenceSession(onnx_path)
-            img = cv2.resize(img, img_size)
+            img = cv2.resize(img, config.image_size)
+            if config.is_need_padding():
+                img = image.pad_image_to_target_size(img, config.max_input_size)
             inputs = preprocessing(img, is_tensor=True, channel_first=True)
             input_name = model.get_inputs()[0].name
-            result = model.run([], {input_name: inputs})[0]
-            masks = np.where(result[0] >= 0.5, 255, 0)
-            masks = masks.astype(np.uint8)
-            masks = cv2.resize(masks, (w, h), cv2.INTER_NEAREST)
-            shapes = self.mask2polygon(masks, labels, epsilon, area_limit)
+            result = model.run([], {input_name: inputs})[0][0]
+            shapes = self.result2polygon(result, labels, (src_w, src_h), epsilon, area_limit)
             return shapes
-        elif task == DET:
+        elif task == DET and config.is_ultralytics():
             model = YOLO(onnx_path, task="detect")
             result = model.predict(img, device='cpu')[0]
             boxes = result.boxes.xyxy.numpy()
@@ -71,22 +69,27 @@ class AITestWidget(QtWidgets.QWidget):
             raise NotImplementedError("Not implemented error.")
 
     @staticmethod
-    def mask2polygon(masks, labels, approx_epsilon=0.003, area_limit=50):
-        """ Convert masks to polygon shapes.
+    def result2polygon(result, labels, img_size, approx_epsilon=0.003, area_limit=50):
+        """ Convert segmentation result to polygon shapes.
         Args:
-            masks (np.ndarray): Binary masks of shape (H, W, N) or (N, H, W).
-            labels (list): List of label names.
+            result (np.ndarray): Segmentation result from the model.
+            labels (list): List of class labels.
+            img_size (tuple): Size of the original image (width, height).
             approx_epsilon (float): Approximation epsilon for polygon approximation.
             area_limit (int): Minimum area for a contour to be considered.
         Returns:
             list: List of shapes, each shape is a dictionary with label, points, and shape_type.
         """
+        masks = np.where(result >= 0.5, 255, 0)
+        masks = masks.astype(np.uint8)
+
         shapes = []
-        for i in range(len(labels) - 1):
+        for i in range(len(labels)):
             # binary = masks[:, :, i + 1]
             binary = masks[i + 1]
+            binary = cv2.resize(binary, img_size)
             binary = cv2.dilate(binary, (9, 9))
-            # binary = np.array(np.where(masks[:, :, i + 1], 255, 0), dtype=np.uint8)
+            # binary = np.array(np.where(masks[i + 1], 255, 0), dtype=np.uint8)
             contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             if not len(contours):
                 continue
@@ -106,7 +109,7 @@ class AITestWidget(QtWidgets.QWidget):
                 approx = approx.astype(int).reshape((-1, 2)).tolist()
 
                 shape = {}
-                shape["label"] = labels[i - 1]
+                shape["label"] = labels[i]
                 shape["points"] = approx
                 shape["shape_type"] = DrawMode.POLYGON
                 shapes.append(shape)

@@ -59,11 +59,12 @@ class DetectionModel(object):
         self.model.train(
             data=self.dataset.path_yaml,
             epochs=self.config.EPOCHS,
-            imgsz=self.config.INPUT_SIZE,
+            imgsz=self.config.max_input_size,
             batch=self.config.BATCH_SIZE,
             lr0=self.config.LEARNING_RATE,
             project=self.config.log_dir,
             name=self.config.MODEL,
+            rect=True,
             fliplr=0.5 if self.config.RANDOM_HFLIP else 0.0,
             flipud=0.5 if self.config.RANDOM_VFLIP else 0.0,
             degrees=self.config.RANDOM_ROTATE * 180.0,
@@ -71,171 +72,19 @@ class DetectionModel(object):
             translate=self.config.RANDOM_SHIFT,
             shear=self.config.RANDOM_SHEAR,
             hsv_v=self.config.RANDOM_BRIGHTNESS,
+            perspective=0.0,
+            mosaic=0.0,
+            erasing=0.0,
+            auto_augment=None,
         )
 
     def predict(self, images, conf=0.25, iou=0.45):
         """Predict bounding boxes for a given image."""
         assert self.model is not None, "Model must be built before prediction."
 
-        results = self.model(image)
-        
         # run inference
-        results = self.model.predict(source=image, conf=conf, iou=iou)
+        results = self.model.predict(source=images, conf=conf, iou=iou)
         
-        # extract bounding boxes
-        bboxes = []
-        for result in results:
-            for box in result.boxes:
-                bbox = box.xyxy.cpu().numpy().tolist()[0]
-
-    def evaluate(self, cb_widget=None):
-        sum_AP = 0.0
-        nc = self.dataset.num_classes
-        _i = 0
-        
-        # test data predictions
-        preds = []
-        for image_id in self.dataset.test_ids:
-            # update progress
-            if cb_widget is not None:
-                cb_widget.notifyMessage.emit(f"{_i+1} / {self.dataset.num_test}")
-                cb_widget.progressValue.emit(int((_i+1) / (self.dataset.num_test * 100)))
-                _i += 1
-            org_img = self.dataset.load_image(image_id, is_resize=False)
-            pred_bboxes = self.model.predict(org_img)
-            preds.append(pred_bboxes)
-
-        # calculate AP each class
-        if cb_widget is not None:
-            cb_widget.notifyMessage.emit(f"Calculating...")
-        for class_id in range(nc):
-            gt_count = 0.0
-            tp_list = []
-            fp_list = []
-            for pred_idx, image_id in enumerate(self.dataset.test_ids):
-                # load image and annotation
-                anno_gt = self.dataset.get_yolo_bboxes(image_id)
-                if len(anno_gt) == 0:
-                    bboxes_gt = []
-                    classes_gt = []
-                else:
-                    bboxes_gt, classes_gt = anno_gt[:, :4], anno_gt[:, 4]
-
-                # ground truths
-                bbox_dict_gt = []
-                for i in range(len(bboxes_gt)):
-                    class_id = classes_gt[i]
-                    class_name = self.dataset.class_names[class_id]
-                    bbox = list(map(float, bboxes_gt[i]))
-                    bbox_dict_gt.append({"class_name": class_name,
-                                        "bbox": bbox,
-                                        "used": False})
-                    gt_count += 1
-
-                # prediction
-                pred_bboxes = preds[pred_idx]
-                
-                bbox_dict_pred = []
-                for bbox_pred in pred_bboxes:
-                    # xmin, ymin, xmax, ymax = list(map(str, map(int, bbox[:4])))
-                    bbox = list(map(float, bbox_pred[:4]))
-                    score = bbox_pred[4]
-                    class_id = int(bbox_pred[5])
-                    class_name = self.dataset.class_names[class_id]
-                    score = '%.4f' % score
-                    bbox_dict_pred.append({"class_id": class_id,
-                                        "class_name": class_name,
-                                        "confidence": score,
-                                        "bbox": bbox})
-                bbox_dict_pred.sort(key=lambda x:float(x['confidence']), reverse=True)
-
-                # count True Positive and False Positive
-                for pred in bbox_dict_pred:
-                    overlap_max = -1
-                    gt_match = -1
-
-                    cls_id = pred["class_id"]
-                    cls_pred = pred["class_name"]
-                    bb_pred = pred["bbox"]
-
-                    for gt in bbox_dict_gt:
-                        cls_gt = gt["class_name"]
-                        if cls_gt != cls_pred:
-                            continue
-                        bb_gt = gt["bbox"]
-                        bi = [max(bb_pred[0], bb_gt[0]),
-                            max(bb_pred[1], bb_gt[1]),
-                            min(bb_pred[2], bb_gt[2]),
-                            min(bb_pred[3], bb_gt[3])]
-                        iw = bi[2] - bi[0] + 1
-                        ih = bi[3] - bi[1] + 1
-                        if iw > 0 and ih > 0:
-                            # compute overlap (IoU) = area of intersection / area of union
-                            area_pred = (bb_pred[2] - bb_pred[0] + 1) * (bb_pred[3] - bb_pred[1] + 1)
-                            area_gt = (bb_gt[2] - bb_gt[0] + 1) * (bb_gt[3] - bb_gt[1] + 1)
-                            ua = area_pred + area_gt - iw * ih
-                            ov = (iw * ih) / ua
-                            if ov > overlap_max:
-                                overlap_max = ov
-                                gt_match = gt
-                
-                    # set minimum overlap (AP50)
-                    iou_threshold = 0.5  # TODO:user configuration param
-                    if overlap_max >= iou_threshold:
-                        if not bool(gt_match["used"]):
-                            gt_match["used"] = True
-                            tp_list.append(1.0)
-                            fp_list.append(0.0)
-                        else:
-                            tp_list.append(0.0)
-                            fp_list.append(1.0)
-                    else:
-                        tp_list.append(0.0)
-                        fp_list.append(1.0)
-            
-            cumsum = 0
-            for idx, val in enumerate(fp_list):
-                fp_list[idx] += cumsum
-                cumsum += val
-
-            cumsum = 0
-            for idx, val in enumerate(tp_list):
-                tp_list[idx] += cumsum
-                cumsum += val
-
-            tp = tp_list[-1]
-            fp = fp_list[-1]
-
-            recall = tp_list[:]
-            for idx, val in enumerate(tp_list):
-                recall[idx] = tp_list[idx] / gt_count
-
-            precision = tp_list[:]
-            for idx, val in enumerate(tp_list):
-                precision[idx] = tp_list[idx] / (fp_list[idx] + tp_list[idx])
-
-            ap, mrec, mprec = self.voc_ap(recall, precision)
-            sum_AP += ap
-
-        pre = tp / (tp + fp)
-        rec = tp / gt_count
-        mAP = sum_AP / nc
-
-        res = {
-            "Precision": pre,
-            "Recall": rec,
-            "mAP50": mAP,
-        }
-
-        # save dict
-        eval_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'evaluation')
-        save_dict = {
-                "Metrics": list(res.keys()),
-                "Values": list(res.values()),
-            }
-        utils.save_dict_to_excel(save_dict, os.path.join(eval_dir, "scores.xlsx"))
-        return res
-    
     # def predict_by_id(self, image_id, thresh=0.5):
     #     # load image and annotation
     #     org_img = self.dataset.load_image(image_id, is_resize=False)

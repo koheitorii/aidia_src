@@ -20,7 +20,7 @@ def main():
         install_requires=open("requirements.txt").read().splitlines(),
         # install_requires=get_install_requires(),
         license="GPLv3",
-        keywords="Image Annotation, Deep Learning, Medical Imageing",
+        keywords="Image Annotation, Deep Learning, Medical Imaging",
         classifiers=[
             "Development Status :: 5 - Production/Stable",
             "Intended Audience :: Developers",

@@ -6,7 +6,7 @@ import cv2
 import yaml
 
 from aidia import CLS, DET, SEG, EXTS, LOCAL_DATA_DIR_NAME
-from aidia import DrawMode
+from aidia import DrawMode, ModelTypes
 from aidia import aidia_logger
 from aidia import dicom
 from aidia import image
@@ -297,7 +297,7 @@ class Dataset(object):
         if self.train_steps == 0 or self.val_steps == 0:
             raise errors.BatchsizeError
         
-    def load_image(self, image_id, is_resize=True):
+    def load_image(self, image_id, is_resize=True) -> np.ndarray:
         """Load image by image_id.
 
         Parameters
@@ -330,7 +330,12 @@ class Dataset(object):
         img = image.read_image(img_path)
 
         if is_resize:
-            img = cv2.resize(img, self.config.image_size)
+            img = cv2.resize(img, self.config.image_size,
+                             interpolation=cv2.INTER_LINEAR)
+        # padding
+        if  self.config.INPUT_SIZE_X != self.config.INPUT_SIZE_Y and self.config.KEEP_ASPECT_RATIO:
+            img = image.pad_image_to_target_size(img, self.config.max_input_size)
+        
         return img
 
     def load_masks(self, image_id: int) -> np.ndarray:

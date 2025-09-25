@@ -39,7 +39,7 @@ class SegmentationModel(object):
         assert mode in ["train", "test"]
 
         # input layer
-        inputs = keras.Input(shape=(3, self.config.INPUT_SIZE, self.config.INPUT_SIZE))
+        inputs = keras.Input(shape=(3, self.config.INPUT_SIZE_Y, self.config.INPUT_SIZE_X))
 
         # data augmentation
         if self.config.RANDOM_HFLIP:
@@ -234,7 +234,7 @@ class SegmentationModel(object):
                     _yp_class = _yp_class.astype(np.uint8)
 
                     if np.max(yt_class) == 0 and np.max(_yp_class) == 0: # no ground truth
-                        tn, fp, fn, tp = self.config.INPUT_SIZE**2, 0, 0, 0
+                        tn, fp, fn, tp = self.config.max_input_size**2, 0, 0, 0
                     else:
                         cm = metrics.binary_confusion_matrix(yt_class.ravel(), _yp_class.ravel())
                         tn, fp, fn, tp = cm.ravel()
@@ -414,9 +414,6 @@ class SegDataset(TorchDataset):
         # Convert to torch tensors
         img_tensor = torch.from_numpy(img.astype(np.float32))
         mask_tensor = torch.from_numpy(masks.astype(np.float32))
-        
-        # Normalize image to [0, 1] range
-        # img_tensor = img_tensor / 255.0
         
         # Ensure correct dimensions (H, W, C) -> (C, H, W)
         if img_tensor.dim() == 3:

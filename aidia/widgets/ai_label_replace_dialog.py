@@ -92,9 +92,9 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
         button_layout = QtWidgets.QHBoxLayout()
         
         # 検証ボタン
-        validate_button = QtWidgets.QPushButton(self.tr("Validate"))
-        validate_button.clicked.connect(self.validate_labels)
-        button_layout.addWidget(validate_button)
+        # validate_button = QtWidgets.QPushButton(self.tr("Validate"))
+        # validate_button.clicked.connect(self.validate_labels)
+        # button_layout.addWidget(validate_button)
         
         # クリアボタン
         clear_button = QtWidgets.QPushButton(self.tr("Clear"))
