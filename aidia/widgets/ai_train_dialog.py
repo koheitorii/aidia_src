@@ -1538,6 +1538,8 @@ QProgressBar::chunk {
         
         config = AIConfig(self.dataset_dir)
         config.load(config_path)
+        config.SHOW_LABELS = self.show_labels
+        config.SHOW_CONF = self.show_conf
 
         if config.TASK not in [SEG, DET]:
             self.text_status.setText(self.tr("Not implemented function."))
