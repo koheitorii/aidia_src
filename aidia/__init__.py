@@ -2,15 +2,22 @@
 import os
 import logging
 
+# For multiprocessing support on Windows
+from multiprocessing import freeze_support
+freeze_support()
+del freeze_support
+
+import sys
+sys.stdout = open(os.devnull, 'w')
+del sys
 
 # Set the Keras backend to PyTorch
 os.environ["KERAS_BACKEND"] = "torch"
 
 
-LITE = False
+__appname__ = "Aidia"
+__version__ = "2.0.2"
 
-__appname__ = "Aidia" if not LITE else "Aidia-lite"
-__version__ = "2.0.1"
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 HOME_DIR = os.path.expanduser("~")

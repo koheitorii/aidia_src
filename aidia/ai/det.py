@@ -38,11 +38,11 @@ class DetectionModel(object):
 
         if mode == "train":
             if self.config.MODEL.split('_')[1] == "YOLO11n":
-                self.model = YOLO("yolo11n.pt", task="detect")
+                self.model = YOLO("yolo11n.pt", task="detect", verbose=False)
             else:
                 raise ValueError("Unsupported model for training.")
         elif mode == "test":
-            self.model = YOLO(weights_path, task="detect")
+            self.model = YOLO(weights_path, task="detect", verbose=False)
         else:
             raise ValueError("Mode must be 'train' or 'test'.")
 
@@ -76,6 +76,7 @@ class DetectionModel(object):
             mosaic=0.0,
             erasing=0.0,
             auto_augment=None,
+            verbose=False,
         )
 
     def predict(self, images, conf=0.25, iou=0.45):

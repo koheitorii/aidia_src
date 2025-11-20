@@ -1,13 +1,13 @@
 
 from setuptools import find_packages
 from setuptools import setup
-from aidia import __version__, LITE
+from aidia import __version__
 
 
 def main():
 
     setup(
-        name="aidia-lite" if LITE else "aidia",
+        name="aidia",
         version=__version__,
         # version=version,
         packages=find_packages(),
@@ -38,7 +38,7 @@ def main():
             "ai/data/mnist.npz"]},
         entry_points={
             "console_scripts": [
-                "aidia-lite=aidia.__main__:main" if LITE else "aidia=aidia.__main__:main",
+                "aidia=aidia.__main__:main",
             ],
         },
     )

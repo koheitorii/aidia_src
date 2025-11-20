@@ -12,7 +12,7 @@ from qtpy import QtCore, QtGui, QtWidgets
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon
 
-from aidia import __appname__, __version__, PRETRAINED_DIR, LABEL_COLORMAP, HOME_DIR, LITE, EXTS, LOCAL_DATA_DIR_NAME
+from aidia import __appname__, __version__, PRETRAINED_DIR, LABEL_COLORMAP, HOME_DIR, EXTS, LOCAL_DATA_DIR_NAME
 from aidia import DrawMode
 from aidia import S_EPSILON, S_AREA_LIMIT
 from aidia import qt
@@ -35,10 +35,9 @@ from aidia.widgets import ToolBar
 from aidia.widgets import ZoomWidget
 from aidia.dicom import DICOM, is_dicom
 
-if not LITE:
-    from aidia.widgets.ai_train_dialog import AITrainDialog
-    from aidia.widgets.ai_eval_dialog import AIEvalDialog
-    from aidia.ai.config import AIConfig
+from aidia.widgets.ai_train_dialog import AITrainDialog
+from aidia.widgets.ai_eval_dialog import AIEvalDialog
+from aidia.ai.config import AIConfig
 from aidia.widgets.ai_test_widget import AITestWidget
 
 
@@ -120,11 +119,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.dicomDialog = DICOMDialog(parent=self) # TODO
         self.labelEditDialog = LabelEditDialog(parent=self)
     
-        if not LITE:
-            self.ai_train_dialog = AITrainDialog(parent=self)
-            self.ai_train_dialog.aiRunning.connect(self.callback_ai_train_running)
-            self.ai_eval_dialog = AIEvalDialog(parent=self)
-            self.ai_eval_dialog.aiRunning.connect(self.callback_ai_eval_running)
+        self.ai_train_dialog = AITrainDialog(parent=self)
+        self.ai_train_dialog.aiRunning.connect(self.callback_ai_train_running)
+        self.ai_eval_dialog = AIEvalDialog(parent=self)
+        self.ai_eval_dialog.aiRunning.connect(self.callback_ai_eval_running)
 
         # initialize AI test widget
         self.ai_test_widget = AITestWidget(self)
@@ -285,28 +283,27 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.ai_import.setText(self.tr("Import"))
         # self.ai_import.clicked.connect(self.import_model)
             
-        if not LITE:
-            self.button_ai_train = QtWidgets.QPushButton(self)
-            self.button_ai_train.setText("AI")
-            self.button_ai_train.setMinimumHeight(50)
-            self.button_ai_train.setStyleSheet("QPushButton{ text-align: center; font-weight: bold; font-size: 24px; background-color: #4CAF50; color: white; } QPushButton:hover{ background-color: #45a049; }")
-            self.button_ai_train.clicked.connect(self.ai_train_popup)
-            self.button_ai_train.setEnabled(True)
+        self.button_ai_train = QtWidgets.QPushButton(self)
+        self.button_ai_train.setText("AI")
+        self.button_ai_train.setMinimumHeight(50)
+        self.button_ai_train.setStyleSheet("QPushButton{ text-align: center; font-weight: bold; font-size: 24px; background-color: #4CAF50; color: white; } QPushButton:hover{ background-color: #45a049; }")
+        self.button_ai_train.clicked.connect(self.ai_train_popup)
+        self.button_ai_train.setEnabled(True)
 
-            # self.button_ai_eval = QtWidgets.QPushButton(self)
-            # self.button_ai_eval.setText(self.tr("AI Evaluation"))
-            # self.button_ai_eval.clicked.connect(self.ai_eval_popup)
-            # self.button_ai_eval.setEnabled(True)
+        # self.button_ai_eval = QtWidgets.QPushButton(self)
+        # self.button_ai_eval.setText(self.tr("AI Evaluation"))
+        # self.button_ai_eval.clicked.connect(self.ai_eval_popup)
+        # self.button_ai_eval.setEnabled(True)
 
-            self.input_is_submode = QtWidgets.QCheckBox(self.tr("from Parent Directory"))
-            self.input_is_submode.setToolTip(self.tr("""Find data from the parent directory."""))
-            self.input_is_submode.setChecked(self.is_submode)
-            def _validate(state):
-                if state == 2:
-                    self.is_submode = True
-                else:
-                    self.is_submode = False
-            self.input_is_submode.stateChanged.connect(_validate)
+        self.input_is_submode = QtWidgets.QCheckBox(self.tr("from Parent Directory"))
+        self.input_is_submode.setToolTip(self.tr("""Find data from the parent directory."""))
+        self.input_is_submode.setChecked(self.is_submode)
+        def _validate(state):
+            if state == 2:
+                self.is_submode = True
+            else:
+                self.is_submode = False
+        self.input_is_submode.stateChanged.connect(_validate)
 
         self.ai_dock = QtWidgets.QDockWidget(self.tr("AI"), self)
         self.ai_dock.setObjectName("AI")
@@ -316,12 +313,11 @@ class MainWindow(QtWidgets.QMainWindow):
         ai_layout.addWidget(self.button_auto_annotation, 0, 0, 1, 4)
         ai_layout.addWidget(self.ai_select, 1, 0, 1, 4)
         # ai_layout.addWidget(self.ai_import, 1, 3, 1, 1)
-        if not LITE:
-            ai_layout.addWidget(self.button_ai_train, 2, 0, 1, 4)
-            # ai_layout.addWidget(self.button_ai_eval, 2, 2, 1, 2)
-            ai_layout.addWidget(self.input_is_submode, 3, 0, 1, 4, alignment=Qt.AlignmentFlag.AlignCenter)
-            # ai_layout.addWidget(self.input_is_submode, 3, 0, 1, 1, Qt.AlignRight)
-            # ai_layout.addWidget(self.tag_is_submode, 3, 1, 1, 3, Qt.AlignLeft)
+        ai_layout.addWidget(self.button_ai_train, 2, 0, 1, 4)
+        # ai_layout.addWidget(self.button_ai_eval, 2, 2, 1, 2)
+        ai_layout.addWidget(self.input_is_submode, 3, 0, 1, 4, alignment=Qt.AlignmentFlag.AlignCenter)
+        # ai_layout.addWidget(self.input_is_submode, 3, 0, 1, 1, Qt.AlignRight)
+        # ai_layout.addWidget(self.tag_is_submode, 3, 1, 1, 3, Qt.AlignLeft)
         ai_widget = QtWidgets.QWidget()
         ai_widget.setLayout(ai_layout)
         self.ai_dock.setWidget(ai_widget)
@@ -1075,7 +1071,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menuBar().setNativeMenuBar(False)
 
         # popup gpu info
-        if not LITE and not AIConfig.is_gpu_available():
+        if not AIConfig.is_gpu_available():
             self.info_message(self.tr('''No GPU is available.<br>Please keep in mind that many times takes in training AI.'''))
 
     def init_dir(self):
@@ -1122,7 +1118,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """Handle the close event of the application."""
         if not self.may_continue_unsaved():
             event.ignore()
-        if not LITE and not self.may_continue_ai_running():
+        if not self.may_continue_ai_running():
             event.ignore()
 
         self.settings.setValue("filename", self.img_path if self.img_path else "")
@@ -1762,7 +1758,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setClean()
         self.canvas.setEnabled(True)
 
-        # enable canvas widget
         self.actions.resetBrightnessContrast.setEnabled(True)
 
         # enable timer
@@ -1787,9 +1782,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.reset_cursor()
 
         # init AI functions
-        if not LITE:
-            self.ai_train_dialog.reset_state()
-            self.ai_eval_dialog.reset_state()
+        self.ai_train_dialog.reset_state()
+        self.ai_eval_dialog.reset_state()
 
         return True
 
@@ -2339,23 +2333,37 @@ class MainWindow(QtWidgets.QMainWindow):
     def scan_all_imgs(self, dirpath=None):
         number_sort = True
         img_paths = []
+        dicom_paths = []
         target_dir = dirpath if dirpath is not None else self.work_dir
         for fp in glob(os.path.join(target_dir, '*')):
-            if is_dicom(fp) or utils.extract_ext(fp) in EXTS:
+            if is_dicom(fp):
+                dicom_paths.append(fp)
+            elif utils.extract_ext(fp) in EXTS:
                 img_paths.append(fp)
                 key = re.sub(r"\D", "", os.path.basename(fp))
                 if key == "":
                     number_sort = False
-            # if fname.lower().endswith(tuple(extensions)):
-            #     img_paths.append(fp)
-                # key = re.search(r'\d+', os.path.basename(fp))
-                # if key is None:
-                    # number_sort = False
+        
+        # Sort DICOM images by SliceNumber (InstanceNumber)
+        if dicom_paths:
+            dicom_sort_list = []
+            for fp in dicom_paths:
+                try:
+                    dicom_obj = DICOM(fp)
+                    slice_num = dicom_obj.slice_number if dicom_obj.data is not None else 0
+                    dicom_sort_list.append((fp, slice_num))
+                except Exception:
+                    dicom_sort_list.append((fp, 0))
+            dicom_sort_list.sort(key=lambda x: x[1])
+            dicom_paths = [fp for fp, _ in dicom_sort_list]
+        
+        # Sort non-DICOM images
         img_paths.sort(key=lambda x: x.lower())
         if number_sort:
-            # img_paths.sort(key=lambda s: int(re.search(r'\d+', os.path.basename(s)).group()))
             img_paths.sort(key=lambda s: int(re.sub(r"\D", "", os.path.basename(s))))
-        return img_paths
+        
+        # Combine DICOM and non-DICOM images
+        return dicom_paths + img_paths
 
 
     def update_note(self):

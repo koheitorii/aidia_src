@@ -1,6 +1,5 @@
 import subprocess
 import os
-import sys
 import glob
 
 def find_python_files():
@@ -13,7 +12,7 @@ def find_python_files():
         python_files.extend(glob.glob(pattern, recursive=True))
     
     # __pycache__や.envなどの不要なディレクトリを除外
-    excluded_dirs = ['__pycache__', '.env', '.env_lite', 'build', 'dist']
+    excluded_dirs = ['__pycache__', 'env', 'build', 'dist', 'Output']
     filtered_files = []
     
     for file in python_files:
@@ -21,6 +20,7 @@ def find_python_files():
             filtered_files.append(file)
     
     return filtered_files
+
 
 def update_translations():
     """pylupdate6を使用して翻訳ファイルを更新"""
@@ -68,43 +68,8 @@ def update_translations():
     
     return True
 
-def compile_translations():
-    """lrelease6を使用して翻訳ファイルをコンパイル"""
-    translate_dir = os.path.join('aidia', 'translate')
-    ts_file = os.path.join(translate_dir, 'ja_JP.ts')
-    qm_file = os.path.join(translate_dir, 'ja_JP.qm')
-    
-    if not os.path.exists(ts_file):
-        print(f"Translation source file not found: {ts_file}")
-        return False
-    
-    cmd = ['lrelease6', ts_file, '-qm', qm_file]
-    
-    print(f"Running: {' '.join(cmd)}")
-    
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8')
-        
-        if result.returncode == 0:
-            print(f"Successfully compiled translation file: {qm_file}")
-            if result.stdout:
-                print("Output:", result.stdout)
-        else:
-            print(f"Error compiling translation file: {result.stderr}")
-            return False
-            
-    except FileNotFoundError:
-        print("Error: lrelease6 not found. Make sure PyQt6 development tools are installed.")
-        return False
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-        return False
-    
-    return True
-
 
 def main():
-    # compile_translations()
     update_translations()
 
 

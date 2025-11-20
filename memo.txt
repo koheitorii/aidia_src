@@ -16,16 +16,5 @@ pip install .
 https://github.com/thurask/Qt-Linguist/releases
 
 
-# update translate.pro
-
-pylupdate5 translate.pro
-
-
-# conda CUDA env install
-
-conda install cudatoolkit=11.2
-conda install cudnn=8.1.0.77
-
-
 # pytorch install
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+pip install torch==2.7.1 torchvision==0.22.1 --index-url https://download.pytorch.org/whl/cu128

@@ -67,4 +67,4 @@ def write_onnx_u(filepath: str):
     if not os.path.exists(filepath):
         raise FileNotFoundError(f"Model file {filepath} does not exist.")
     model = YOLO(filepath)
-    return model.export(format="onnx", device='cpu')
+    return model.export(format="onnx", device='cpu', simplify=False)

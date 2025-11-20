@@ -561,7 +561,7 @@ class Dataset(object):
 
         for i in self.train_ids:
             img = self.load_image(i, is_resize=True)
-            cv2.imwrite(os.path.join(path_train_images, f"{i:06d}.png"), img)
+            image.imwrite(img, os.path.join(path_train_images, f"{i:06d}.png"))
             bboxes = self.get_ultra_bboxes(i)
             if bboxes.size > 0:
                 label_path = os.path.join(path_train_labels, f"{i:06d}.txt")
@@ -571,7 +571,7 @@ class Dataset(object):
 
         for i in self.val_ids:
             img = self.load_image(i, is_resize=True)
-            cv2.imwrite(os.path.join(path_val_images, f"{i:06d}.png"), img)
+            image.imwrite(img, os.path.join(path_val_images, f"{i:06d}.png"))
             bboxes = self.get_ultra_bboxes(i)
             if bboxes.size > 0:
                 label_path = os.path.join(path_val_labels, f"{i:06d}.txt")
@@ -581,7 +581,7 @@ class Dataset(object):
 
         for i in self.test_ids:
             img = self.load_image(i, is_resize=True)
-            cv2.imwrite(os.path.join(path_test_images, f"{i:06d}.png"), img)
+            image.imwrite(img, os.path.join(path_test_images, f"{i:06d}.png"))
             bboxes = self.get_ultra_bboxes(i)
             if bboxes.size > 0:
                 label_path = os.path.join(path_test_labels, f"{i:06d}.txt")

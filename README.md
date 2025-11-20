@@ -19,11 +19,12 @@ Pre-built packages (Windows) of Aidia and documents are available at [TRK_Librar
 - Adjustment of brightness and contrast by mouse dragging like a DICOM viewer.
 
 ## Launch App
-You need install Python 3.12 and run below:
+You need install Python>3.9 and run below:
 ```bash
-python3 -m venv .env
-source .env/bin/activate
+python3 -m venv env
+source env/bin/activate
 pip install -r requirements.txt
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu130
 python -m aidia
 ```
 

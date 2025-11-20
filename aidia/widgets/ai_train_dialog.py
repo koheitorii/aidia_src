@@ -124,6 +124,8 @@ class AITrainDialog(QtWidgets.QDialog):
         self.target_logdir = None
         self.prev_dir = None
         self.start_time = 0
+        self.start_epoch_time = 0
+        self.end_epoch_time = 0
         self.epoch = []
         self.loss = []
         self.val_loss = []
@@ -903,6 +905,9 @@ QProgressBar::chunk {
         self.update_logdir_list()
         self.switch_utility()
 
+        self.start_epoch_time = 0
+        self.end_epoch_time = 0
+
         # open log directory
         QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.config.log_dir))
 
@@ -1185,36 +1190,31 @@ QProgressBar::chunk {
 
         text = f"epoch: {epoch:>4}/{self.config.EPOCHS} "
         if batch is not None:
+            if batch > self.train_steps:
+                batch = self.train_steps
             text += f"batch: {batch:>6} / {self.train_steps} "
         if loss is not None:
             text += f"loss: {loss:>8.4f} "
         if len(self.val_loss):
             text += f"val_loss: {self.val_loss[-1]:>8.4f}"
-        
+
         # Calculate estimated remaining time based on batch progress
-        if batch is not None and self.train_steps > 0 and self.start_time > 0:
-            elapsed_time = time.time() - self.start_time
+        if self.start_epoch_time != 0 and self.end_epoch_time != 0:
+            batch_time = (self.end_epoch_time - self.start_epoch_time) / self.train_steps
+            remaining_time = batch_time * (self.config.EPOCHS - epoch + 1) * self.train_steps + batch_time * (self.train_steps - batch)
             
-            # Calculate total progress: completed epochs + current epoch progress
-            completed_epochs = epoch - 1
-            current_epoch_progress = batch / self.train_steps
-            total_progress = (completed_epochs + current_epoch_progress) / self.config.EPOCHS
+            # Format remaining time
+            remaining_h = int(remaining_time // 3600)
+            remaining_m = int(remaining_time // 60 % 60)
+            remaining_s = int(remaining_time % 60)
             
-            if total_progress > 0:
-                estimated_total_time = elapsed_time / total_progress
-                estimated_remaining_time = estimated_total_time - elapsed_time
-                
-                # Format remaining time
-                remaining_h = int(estimated_remaining_time // 3600)
-                remaining_m = int(estimated_remaining_time // 60 % 60)
-                
-                # Add remaining time to status text
-                if remaining_h > 0:
-                    text += f" - ETA: {remaining_h}h {remaining_m}m"
-                elif remaining_m > 0:
-                    text += f" - ETA: {remaining_m}m"
-                else:
-                    text += " - ETA: <1m"
+            # Add remaining time to status text
+            if remaining_s > 0:
+                text += f" - ETA: {remaining_h}h {remaining_m}m {remaining_s}s"
+            elif remaining_h > 0:
+                text += f" - ETA: {remaining_h}h {remaining_m}m"
+            elif remaining_m > 0:
+                text += f" - ETA: {remaining_m}m"
         
         self.text_status.setText(text)
     
@@ -1228,33 +1228,16 @@ QProgressBar::chunk {
         if epoch is not None:
             self.epoch.append(epoch)
             self.progress.setValue(progress_value)
-            
-            # Calculate estimated remaining time
-            if epoch > 0 and self.start_time > 0:
-                elapsed_time = time.time() - self.start_time
-                avg_time_per_epoch = elapsed_time / epoch
-                remaining_epochs = self.config.EPOCHS - epoch
-                estimated_remaining_time = avg_time_per_epoch * remaining_epochs
-                
-                # Format remaining time
-                remaining_h = int(estimated_remaining_time // 3600)
-                remaining_m = int(estimated_remaining_time // 60 % 60)
-                
-                # Update status with remaining time
-                status_text = f"Epoch: {epoch}/{self.config.EPOCHS} ({progress_value}%)"
-                if remaining_h > 0:
-                    status_text += f" - ETA: {remaining_h}h {remaining_m}m"
-                elif remaining_m > 0:
-                    status_text += f" - ETA: {remaining_m}m"
-                else:
-                    status_text += f" - ETA: <1m"
-                
-                self.text_status.setText(status_text)
-                
+
         if loss is not None:
             self.loss.append(loss)
         if val_loss is not None:
             self.val_loss.append(val_loss)
+
+        if self.start_epoch_time == 0:
+            self.start_epoch_time = time.time()
+        elif self.end_epoch_time == 0:
+            self.end_epoch_time = time.time()
 
         # update figure
         self.ax_loss.clear()

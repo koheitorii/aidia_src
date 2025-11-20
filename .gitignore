@@ -4,8 +4,7 @@ build/
 .vscode/
 Output/
 signtool/
-.env/
-.env_lite/
+env/
 
 pyinstaller*
 .DS_Store

@@ -1,9 +1,0 @@
-numpy==1.26.4
-opencv-python-headless
-PyQt6==6.9.1
-QtPy
-openpyxl
-pydicom
-python-gdcm
-pyinstaller-versionfile
-PyYAML
