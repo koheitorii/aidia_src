@@ -901,6 +901,10 @@ QProgressBar::chunk {
                 shutil.move(onnx_path, os.path.join(self.config.log_dir, "model.onnx"))
 
         self.aiRunning.emit(False)
+
+        # clear cuda cache
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
         
         self.update_logdir_list()
         self.switch_utility()
