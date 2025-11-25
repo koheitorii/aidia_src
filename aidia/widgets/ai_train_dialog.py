@@ -35,7 +35,6 @@ from aidia.widgets.copy_data_dialog import CopyDataDialog
 
 import torch
 
-
 # Set random seeds for reproducibility
 seed = AIConfig().SEED
 random.seed(seed)
@@ -46,8 +45,11 @@ torch.manual_seed(seed)
 torch.backends.cudnn.benchmark = False
 torch.backends.cudnn.deterministic = True
 
-import keras
-keras.backend.set_image_data_format('channels_first')  # Set Keras to use channel-first format
+
+def clear_session():
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
 
 
 class LabelStyle:
@@ -359,19 +361,13 @@ You can use this function for 5-fold cross-validation."""),
         )
         self.add_param_component(self.param_dataset)
 
-        # input size X
+        # input size
         def _validate(idx):
-            self.config.INPUT_SIZE_X = int(self.param_size_x.input_field.itemText(idx))
-            if self.config.INPUT_SIZE_X == self.config.INPUT_SIZE_Y:
-                self.config.KEEP_ASPECT_RATIO = False
-                self.param_is_keep_aspect.input_field.setChecked(False)
-                self.param_is_keep_aspect.input_field.setEnabled(False)
-            else:
-                self.param_is_keep_aspect.input_field.setEnabled(True)
-        self.param_size_x = ParamComponent(
+            self.config.INPUT_SIZE = int(self.param_input_size.input_field.itemText(idx))
+        self.param_input_size = ParamComponent(
             type="combo",
-            tag=self.tr("Input Size X"),
-            tips=self.tr("""Set the width of input images."""),
+            tag=self.tr("Input Size"),
+            tips=self.tr("""Set the width and height of input images."""),
             validate_func=_validate,
             items=[
                 "128", "160", "192", "224", "256",
@@ -380,30 +376,7 @@ You can use this function for 5-fold cross-validation."""),
                 "1152", "1216", "1280"
             ]
         )
-        self.add_param_component(self.param_size_x)
-
-        # input size Y
-        def _validate(idx):
-            self.config.INPUT_SIZE_Y = int(self.param_size_y.input_field.itemText(idx))
-            if self.config.INPUT_SIZE_X == self.config.INPUT_SIZE_Y:
-                self.config.KEEP_ASPECT_RATIO = False
-                self.param_is_keep_aspect.input_field.setChecked(False)
-                self.param_is_keep_aspect.input_field.setEnabled(False)
-            else:
-                self.param_is_keep_aspect.input_field.setEnabled(True)
-        self.param_size_y = ParamComponent(
-            type="combo",
-            tag=self.tr("Input Size Y"),
-            tips=self.tr("""Set the height of input images."""),
-            validate_func=_validate,
-            items=[
-                "128", "160", "192", "224", "256",
-                "320", "384", "448", "512", "576", "640", "704",
-                "768", "832", "896", "960", "1024", "1088",
-                "1152", "1216", "1280"
-            ]
-        )
-        self.add_param_component(self.param_size_y)
+        self.add_param_component(self.param_input_size)
 
         # epochs
         def _validate(text):
@@ -536,19 +509,6 @@ The labels are separated with line breaks."""),
             validate_func=_validate
         )
         self.add_param_component(self.param_is_dir_split, right=True)
-
-        def _validate(state): # check:2, empty:0
-            if state == 2:
-                self.config.KEEP_ASPECT_RATIO = True
-            else:
-                self.config.KEEP_ASPECT_RATIO = False
-        self.param_is_keep_aspect = ParamComponent(
-            type="checkbox",
-            tag=self.tr("Keep Aspect Ratio"),
-            tips=self.tr("Maintain aspect ratio when resizing images."),
-            validate_func=_validate
-        )
-        self.add_param_component(self.param_is_keep_aspect, right=True)
 
         ### add augment params ###
         # vertical flip
@@ -808,14 +768,10 @@ QProgressBar::chunk {
         self.param_model.input_field.setCurrentText(self.config.MODEL)
         self.param_name.input_field.setText(self.config.NAME)
         self.param_dataset.input_field.setCurrentIndex(int(self.config.DATASET_NUM) - 1)
-        if self.config.INPUT_SIZE_X in [int(self.param_size_x.input_field.itemText(i)) for i in range(self.param_size_x.input_field.count())]:
-            self.param_size_x.input_field.setCurrentText(str(self.config.INPUT_SIZE_X))
+        if self.config.INPUT_SIZE in [int(self.param_input_size.input_field.itemText(i)) for i in range(self.param_input_size.input_field.count())]:
+            self.param_input_size.input_field.setCurrentText(str(self.config.INPUT_SIZE))
         else:
-            self.param_size_x.input_field.setCurrentIndex(0)  # Reset to first item if not found
-        if self.config.INPUT_SIZE_Y in [int(self.param_size_y.input_field.itemText(i)) for i in range(self.param_size_y.input_field.count())]:
-            self.param_size_y.input_field.setCurrentText(str(self.config.INPUT_SIZE_Y))
-        else:
-            self.param_size_y.input_field.setCurrentIndex(0)
+            self.param_input_size.input_field.setCurrentIndex(0)  # Reset to first item if not found
         self.param_epochs.input_field.setText(str(self.config.EPOCHS))
         self.param_batchsize.input_field.setText(str(self.config.BATCH_SIZE))
         self.param_lr.input_field.setText(str(self.config.LEARNING_RATE))
@@ -859,6 +815,9 @@ QProgressBar::chunk {
         """Call back function when AI thread finished."""
         self.enable_params_by_task(self.config.TASK)
 
+        # clear cuda cache
+        clear_session()
+        
         # raise error handle
         config_path = os.path.join(self.config.log_dir, CONFIG_JSON)
         dataset_path = os.path.join(self.config.log_dir, DATASET_JSON)
@@ -901,10 +860,6 @@ QProgressBar::chunk {
                 shutil.move(onnx_path, os.path.join(self.config.log_dir, "model.onnx"))
 
         self.aiRunning.emit(False)
-
-        # clear cuda cache
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
         
         self.update_logdir_list()
         self.switch_utility()
@@ -934,9 +889,6 @@ QProgressBar::chunk {
             elif task == SEG:
                 self.param_model.input_field.addItems(ModelTypes.SEG_MODEL)
             self._enable_params()
-            if self.config.INPUT_SIZE_X == self.config.INPUT_SIZE_Y:
-                self.param_is_keep_aspect.input_field.setChecked(False)
-                self.param_is_keep_aspect.input_field.setEnabled(False)
         elif task == TEST:
             self.param_model.input_field.clear()
             self.disable_params()
@@ -1262,6 +1214,9 @@ QProgressBar::chunk {
             self.ax_loss.xaxis.set_major_locator(MaxNLocator(integer=True))
             mx = min((len(self.epoch) // 10 + 1) * 10, self.config.EPOCHS)
             self.ax_loss.set_xlim([1, mx])
+            if len(self.loss) > 1 and len(self.val_loss) > 1:
+                max_loss = max(self.loss[1:] + self.val_loss[1:])
+                self.ax_loss.set_ylim([0, max_loss * 1.1])
             self.ax_loss.legend(fontsize=16, labelcolor=qt.get_default_color(), frameon=False)
             self.image_widget_loss.loadPixmap(fig2img(self.fig_loss, add_alpha=True))
 
@@ -1632,17 +1587,15 @@ class AITrainThread(QtCore.QThread):
     def __init__(self, parent):
         super().__init__(parent)
         self.config = None
-        self.model = None
         # self.stop_training = False
 
     def set_config(self, config: AIConfig):
         self.config = config
 
-    # def quit(self):
-    #     super().quit()
-    #     self.model.stop_training()
-    #     self.notifyMessage.emit(self.tr("Interrupt training."))
-    #     return
+    def quit(self):
+        super().quit()
+        clear_session()
+        return
 
     def run(self):
         if self.config is None:
@@ -1659,7 +1612,6 @@ class AITrainThread(QtCore.QThread):
         else:
             self.errorMessage.emit(self.tr("Model error. Terminated."))
             return
-        self.model = model
         
         self.notifyMessage.emit(self.tr("Data loading..."))
         try:
@@ -1767,27 +1719,31 @@ class AITrainThread(QtCore.QThread):
             callbacks = [on_train_batch_end, on_val_end]
 
         else:
-            class GetProgress(keras.callbacks.Callback):
-                """Custom keras callback to get progress values while AI training."""
-                def __init__(self, widget: AITrainThread):
-                    super().__init__()
-
-                    self.widget = widget
-
-                def on_train_batch_end(self, batch, logs=None):
-                    if logs is not None:
-                        logs["batch"] = batch + 1
-                        self.widget.batchLogList.emit(logs)
-
-                def on_epoch_end(self, epoch, logs=None):
-                    if logs is not None:
-                        if np.isnan(logs.get("loss")) or np.isnan(logs.get("val_loss")):
-                            raise errors.LossGetNaNError
-                        logs["epoch"] = epoch + 1
-                        self.widget.epochLogList.emit(logs)
-
-            progress_callback = GetProgress(self)
-            callbacks = [progress_callback]
+            # set custom callback for other models
+            def on_train_batch_end(loss):
+                """Callback function for training batch end."""
+                logs = {
+                    "batch": self.batch + 1,
+                    "loss": loss,
+                }
+                self.loss = loss
+                self.batch += 1
+                self.batchLogList.emit(logs)
+            
+            def on_val_end(val_loss):
+                """Callback function for validation batch end."""
+                if np.isnan(val_loss):
+                    raise errors.LossGetNaNError
+                logs = {
+                    "epoch": self.epoch + 1,
+                    "loss": self.loss,
+                    "val_loss": val_loss,
+                }
+                self.epoch += 1
+                self.batch = 0
+                self.epochLogList.emit(logs)
+       
+            callbacks = [on_train_batch_end, on_val_end]
             
         try:
             # self.fitStarted.emit(True)
@@ -1806,10 +1762,11 @@ class AITrainThread(QtCore.QThread):
 
         ### Evaluation ###
         if self.config.is_ultralytics():
-            self.model.convert2onnx()
             self.notifyMessage.emit(self.tr("Done"))
             return
-        
+        elif self.config.TASK == TEST:
+            self.notifyMessage.emit(self.tr("Done"))
+            return
         else:
             # set inference model
             self.notifyMessage.emit(self.tr("Setting inference model..."))
@@ -1835,6 +1792,7 @@ class AITrainThread(QtCore.QThread):
                     result_img = model.predict_by_id(image_id)
                 except FileNotFoundError as e:
                     self.notifyMessage.emit(self.tr("Error: {} was not found.").format(img_path))
+                    aidia_logger.error(e, exc_info=True)
                     return
                 image.imwrite(result_img, save_path)
         
@@ -1863,7 +1821,6 @@ class AIPredThread(QtCore.QThread):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.model = None
         self.config = None
         self.target_path = None
         self.onnx_path = None
@@ -1872,19 +1829,24 @@ class AIPredThread(QtCore.QThread):
         self.config = config
         self.target_path = target_path
         self.onnx_path = onnx_path
+
+    def quit(self):
+        super().quit()
+        clear_session()
+        return 
     
     def run(self):
-
+        model = None
         # single image
         if os.path.isfile(self.target_path):
             savedir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'predict_images')
             name = utils.get_basename(self.target_path)
             save_path = os.path.join(savedir, f"{name}.png")
             if self.config.is_ultralytics():
-                self.model = InferenceModel_Ultralytics(self.onnx_path, config=self.config)
+                model = InferenceModel_Ultralytics(self.onnx_path, config=self.config)
             else:
-                self.model = InferenceModel(self.onnx_path, config=self.config)
-            self.model.run(self.target_path, save_path)
+                model = InferenceModel(self.onnx_path, config=self.config)
+            model.run(self.target_path, save_path)
             self.notifyMessage.emit(self.tr("Prediction results saved."))
             return
         
@@ -1894,9 +1856,9 @@ class AIPredThread(QtCore.QThread):
             n = len(os.listdir(self.target_path))
 
             if self.config.is_ultralytics():
-                self.model = InferenceModel_Ultralytics(self.onnx_path, config=self.config)
+                model = InferenceModel_Ultralytics(self.onnx_path, config=self.config)
             else:
-                self.model = InferenceModel(self.onnx_path, config=self.config)
+                model = InferenceModel(self.onnx_path, config=self.config)
 
             # iterate all files
             for i, file_path in enumerate(glob.glob(os.path.join(self.target_path, "*"))):
@@ -1907,10 +1869,11 @@ class AIPredThread(QtCore.QThread):
                 name = utils.get_basename(file_path)
                 save_path = os.path.join(savedir, f"{name}.png")
 
-                self.model.run(file_path, save_path)
+                model.run(file_path, save_path)
                 
                 self.progressValue.emit(int(i / n * 100))
 
             self.progressValue.emit(0)
             self.notifyMessage.emit(self.tr("Prediction results saved."))
+            return
     

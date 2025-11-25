@@ -62,12 +62,40 @@ def read_image(img_path):
         img = None
     return img
 
-def preprocessing(img, is_tensor=False, channel_first=False):
+def preprocessing(img, is_tensor=False, channel_first=False, is_norm=False):
     img = np.array(img, dtype=np.float32)
     if is_tensor:
         img = np.expand_dims(img, axis=0)
     if channel_first:
         img = np.transpose(img, (0, 3, 1, 2))
+    if is_norm:
+        img = img / 255.0
+    return img
+
+def fit_to_size(img, target_size):
+    """Resize image to fit within target size while maintaining aspect ratio.
+    
+    Parameters
+    ----------
+    img : np.ndarray
+        Input image to be resized.
+    target_size : int
+        Target size as (height, width).
+        
+    Returns
+    -------
+    np.ndarray
+        Resized image.
+    """
+    h, w = img.shape[:2]
+
+    if h == target_size and w == target_size:
+        return img
+    
+    scale_factor = min(target_size / h, target_size / w)
+    new_w = int(w * scale_factor)
+    new_h = int(h * scale_factor)
+    img = cv2.resize(img, (new_w, new_h))
     return img
 
 def convert_dtype(img: np.ndarray):
@@ -411,15 +439,15 @@ def save_canvas_img(canvas_img: np.ndarray, path: str) -> bool:
         canvas_img = cv2.cvtColor(canvas_img, cv2.COLOR_GRAY2RGB)
     return imwrite(canvas_img, path)
 
-def pad_image_to_target_size(img, target_size):
+def pad_image_to_target_size(img, target_size, fill_value=127):
         """Pad image with black pixels to match target size.
         
         Parameters
         ----------
         img : np.ndarray
             Input image to be padded.
-        target_size : tuple
-            Target size (width, height) to match.
+        target_size : int
+            Target size as (height, width).
             
         Returns
         -------
@@ -427,16 +455,22 @@ def pad_image_to_target_size(img, target_size):
             Padded image with target size.
         """
         h, w = img.shape[:2]
+
+        if h == target_size and w == target_size:
+            return img
+        
+        img = fit_to_size(img, target_size)
+        new_h, new_w = img.shape[:2]
         
         # Calculate padding
-        pad_x = (target_size - w) // 2
-        pad_y = (target_size - h) // 2
+        pad_x = (target_size - new_w) // 2
+        pad_y = (target_size - new_h) // 2
         
         # Handle odd padding differences
         pad_left = pad_x
-        pad_right = target_size - w - pad_x
+        pad_right = target_size - new_w - pad_x
         pad_top = pad_y
-        pad_bottom = target_size - h - pad_y
+        pad_bottom = target_size - new_h - pad_y
         
         # Pad with black pixels
         if len(img.shape) == 3:  # Color image
@@ -444,14 +478,14 @@ def pad_image_to_target_size(img, target_size):
                 img, 
                 pad_top, pad_bottom, pad_left, pad_right,
                 cv2.BORDER_CONSTANT, 
-                value=[0, 0, 0]
+                value=[fill_value, fill_value, fill_value]
             )
         else:  # Grayscale image
             padded_img = cv2.copyMakeBorder(
                 img, 
                 pad_top, pad_bottom, pad_left, pad_right,
                 cv2.BORDER_CONSTANT, 
-                value=0
+                value=fill_value
             )
             
         return padded_img

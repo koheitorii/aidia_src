@@ -42,10 +42,8 @@ class AITestWidget(QtWidgets.QWidget):
 
         if task == SEG and not config.is_ultralytics():
             model = InferenceSession(onnx_path)
-            img = cv2.resize(img, config.image_size)
-            if config.is_need_padding():
-                img = image.pad_image_to_target_size(img, config.max_input_size)
-            inputs = preprocessing(img, is_tensor=True, channel_first=True)
+            img = image.pad_image_to_target_size(img, config.INPUT_SIZE)
+            inputs = preprocessing(img, is_tensor=True, channel_first=True, is_norm=True)
             input_name = model.get_inputs()[0].name
             result = model.run([], {input_name: inputs})[0][0]
             shapes = self.result2polygon(result, labels, (src_w, src_h), epsilon, area_limit)

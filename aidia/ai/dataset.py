@@ -330,15 +330,11 @@ class Dataset(object):
         img = image.read_image(img_path)
 
         if is_resize:
-            img = cv2.resize(img, self.config.image_size,
-                             interpolation=cv2.INTER_LINEAR)
-        # padding
-        if  self.config.is_need_padding():
-            img = image.pad_image_to_target_size(img, self.config.max_input_size)
+            img = image.pad_image_to_target_size(img, self.config.INPUT_SIZE)
         
         return img
 
-    def load_masks(self, image_id: int) -> np.ndarray:
+    def load_masks(self, image_id: int, is_resize=True) -> np.ndarray:
         """Load masks by image_id.
 
         Parameters
@@ -354,27 +350,32 @@ class Dataset(object):
         """
         image_info = self.image_info[image_id]
         annotations = self.image_info[image_id]["annotations"]
-        img_size_numpy = self.config.image_size[::-1] if not self.config.is_need_padding() else (self.config.max_input_size, self.config.max_input_size)
+        img_size_numpy = self.config.image_size[::-1]
          # (height, width)
 
         masks = []
         if self.num_classes > 1:
             h = image_info["height"]
             w = image_info["width"]
-            foreground = np.zeros(shape=img_size_numpy, dtype=np.uint8)
+            if is_resize:
+                foreground = np.zeros(shape=img_size_numpy, dtype=np.uint8)
+            else:
+                foreground = np.zeros(shape=(h, w), dtype=np.uint8)
             mask_per_class = []
             for i in range(self.num_classes + 1):
-                mask_per_class.append(np.zeros(shape=img_size_numpy, dtype=np.uint8))
+                if is_resize:
+                    mask_per_class.append(np.zeros(shape=img_size_numpy, dtype=np.uint8))
+                else:
+                    mask_per_class.append(np.zeros(shape=(h, w), dtype=np.uint8))
             for a in annotations:
                 _m = np.zeros(shape=(h, w, 3), dtype=np.uint8)
                 points = a["points"]
                 points = [[int(p[0]), int(p[1])] for p in points] # points to int
                 points = np.array(points, np.int32)
                 _m = cv2.fillPoly(_m, [points], color=(1, 1, 1))
-                _m = cv2.resize(_m, self.config.image_size,
-                                interpolation=cv2.INTER_NEAREST)
-                if self.config.is_need_padding():
-                    _m = image.pad_image_to_target_size(_m, self.config.max_input_size)
+                
+                if is_resize:
+                    _m = image.pad_image_to_target_size(_m, self.config.INPUT_SIZE, fill_value=0)
                 _m = _m[:, :, 0]
                 foreground += _m  # to create background mask
 
@@ -406,10 +407,7 @@ class Dataset(object):
                 points = [[int(p[0]), int(p[1])] for p in points] # points to int
                 points = np.array(points, np.int32)
                 _m = cv2.fillPoly(_m, [points], color=(1, 1, 1))
-                _m = cv2.resize(_m, self.config.image_size,
-                                interpolation=cv2.INTER_NEAREST)
-                if self.config.is_need_padding():
-                    _m = image.pad_image_to_target_size(_m, self.config.max_input_size)
+                _m = image.pad_image_to_target_size(_m, self.config.INPUT_SIZE, fill_value=0)
                 _m = _m[:, :, 0]
                 foreground += _m
             foreground = np.where(foreground >= 1, 1, 0).astype(np.uint8)
@@ -560,7 +558,8 @@ class Dataset(object):
         }
 
         for i in self.train_ids:
-            img = self.load_image(i, is_resize=True)
+            img = self.load_image(i, is_resize=False)
+            img = image.fit_to_size(img, self.config.INPUT_SIZE)
             image.imwrite(img, os.path.join(path_train_images, f"{i:06d}.png"))
             bboxes = self.get_ultra_bboxes(i)
             if bboxes.size > 0:
@@ -570,7 +569,8 @@ class Dataset(object):
                         f.write(" ".join(map(str, bbox)) + "\n")
 
         for i in self.val_ids:
-            img = self.load_image(i, is_resize=True)
+            img = self.load_image(i, is_resize=False)
+            img = image.fit_to_size(img, self.config.INPUT_SIZE)
             image.imwrite(img, os.path.join(path_val_images, f"{i:06d}.png"))
             bboxes = self.get_ultra_bboxes(i)
             if bboxes.size > 0:
@@ -580,7 +580,8 @@ class Dataset(object):
                         f.write(" ".join(map(str, bbox)) + "\n")
 
         for i in self.test_ids:
-            img = self.load_image(i, is_resize=True)
+            img = self.load_image(i, is_resize=False)
+            img = image.fit_to_size(img, self.config.INPUT_SIZE)
             image.imwrite(img, os.path.join(path_test_images, f"{i:06d}.png"))
             bboxes = self.get_ultra_bboxes(i)
             if bboxes.size > 0:

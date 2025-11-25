@@ -29,8 +29,7 @@ class AIConfig(object):
         self.EARLY_STOPPING = False
 
         # training setting
-        self.INPUT_SIZE_X = 256
-        self.INPUT_SIZE_Y = 256
+        self.INPUT_SIZE = 256
         self.BATCH_SIZE = 8
         self.TRAIN_STEP = None
         self.VAL_STEP = None
@@ -63,9 +62,6 @@ class AIConfig(object):
         self.SHOW_LABELS = True
         self.SHOW_CONF = True
 
-        # keep aspect ratio when resizing
-        self.KEEP_ASPECT_RATIO = False
-
         self.build_params()
             
     def build_params(self):
@@ -77,9 +73,8 @@ class AIConfig(object):
         self.total_batchsize = self.BATCH_SIZE
         if self.dataset_dir is not None:
             self.log_dir = os.path.join(self.dataset_dir, LOCAL_DATA_DIR_NAME, self.NAME)
-        self.image_size = (self.INPUT_SIZE_X, self.INPUT_SIZE_Y)
+        self.image_size = (self.INPUT_SIZE, self.INPUT_SIZE)
         self.num_classes = len(self.LABELS)
-        self.max_input_size = max(self.INPUT_SIZE_X, self.INPUT_SIZE_Y)
 
     def load(self, json_path):
         if not os.path.exists(json_path):
@@ -146,11 +141,5 @@ class AIConfig(object):
     def is_ultralytics(self) -> bool:
         """Check if the model is from Ultralytics."""
         if self.MODEL.startswith("Ultralytics_"):
-            return True
-        return False
-
-    def is_need_padding(self) -> bool:
-        """Check if padding is needed when resizing."""
-        if self.KEEP_ASPECT_RATIO and self.INPUT_SIZE_X != self.INPUT_SIZE_Y:
             return True
         return False

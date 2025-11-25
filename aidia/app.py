@@ -4,7 +4,6 @@ import functools
 import re
 import os
 import shutil
-import webbrowser
 import collections
 from glob import glob
 
@@ -12,8 +11,7 @@ from qtpy import QtCore, QtGui, QtWidgets
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon
 
-from aidia import __appname__, __version__, PRETRAINED_DIR, LABEL_COLORMAP, HOME_DIR, EXTS, LOCAL_DATA_DIR_NAME
-from aidia import DrawMode
+from aidia import __appname__, __version__, PRETRAINED_DIR, LABEL_COLORMAP, HOME_DIR, EXTS
 from aidia import S_EPSILON, S_AREA_LIMIT
 from aidia import qt
 from aidia import utils
@@ -40,8 +38,6 @@ from aidia.widgets.ai_eval_dialog import AIEvalDialog
 from aidia.ai.config import AIConfig
 from aidia.widgets.ai_test_widget import AITestWidget
 
-
-WEB_URL = "https://kottonhome.sakura.ne.jp/"
 
 NO_DATA, EDIT = 0, 1
 

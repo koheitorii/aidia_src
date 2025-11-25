@@ -11,9 +11,6 @@ import sys
 sys.stdout = open(os.devnull, 'w')
 del sys
 
-# Set the Keras backend to PyTorch
-os.environ["KERAS_BACKEND"] = "torch"
-
 
 __appname__ = "Aidia"
 __version__ = "2.0.2"

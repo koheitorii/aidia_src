@@ -9,7 +9,6 @@ opencv-python-headless==4.10.0.84
 pydicom
 python-gdcm
 ultralytics
-keras
 onnx==1.16.1
 onnxruntime==1.17.1
 openpyxl

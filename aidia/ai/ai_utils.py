@@ -20,9 +20,7 @@ class InferenceModel(object):
         img = image.read_image(file_path)
         if img is None:
             return None
-        img = cv2.resize(img, self.config.image_size)
-        if self.config.is_need_padding():
-            img = image.pad_image_to_target_size(img, self.config.max_input_size)
+        img = image.pad_image_to_target_size(img, self.config.INPUT_SIZE)
         inputs = image.preprocessing(img, is_tensor=True, channel_first=True)
         result = self.session.run([], {self.input_name: inputs})[0][0]
         if save_path is not None:

@@ -1,11 +1,15 @@
 import os
 import numpy as np
-import glob
-
-import keras
+import random
 
 import torch
-from torch.utils.data import Dataset as TorchDataset, DataLoader
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import Dataset as TorchDataset
+from torch.utils.data import DataLoader
+import torchvision.transforms.v2 as T
+from torchvision import tv_tensors
+import torchvision.transforms.functional as TF
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -38,131 +42,123 @@ class SegmentationModel(object):
     def build_model(self, mode, weights_path=None):
         assert mode in ["train", "test"]
 
-        # input layer
-        if self.config.KEEP_ASPECT_RATIO:
-            inputs = keras.Input(shape=(3, self.config.max_input_size, self.config.max_input_size))
-        else:
-            inputs = keras.Input(shape=(3, self.config.INPUT_SIZE_Y, self.config.INPUT_SIZE_X))
+        # Build UNet model
+        model = UNet(self.config.num_classes)
 
-        # data augmentation
-        if self.config.RANDOM_HFLIP:
-            x = keras.layers.RandomFlip("horizontal", seed=self.config.SEED)(inputs)
-        if self.config.RANDOM_VFLIP:
-            x = keras.layers.RandomFlip("vertical", seed=self.config.SEED)(x)
-        if self.config.RANDOM_ROTATE:
-            x = keras.layers.RandomRotation(
-                factor=self.config.RANDOM_ROTATE,
-                seed=self.config.SEED
-            )(x)
-        if self.config.RANDOM_SCALE:
-            x = keras.layers.RandomZoom(
-                height_factor=self.config.RANDOM_SCALE,
-                width_factor=self.config.RANDOM_SCALE,
-                seed=self.config.SEED
-            )(x)
-        if self.config.RANDOM_SHIFT:
-            x = keras.layers.RandomTranslation(
-                height_factor=self.config.RANDOM_SHIFT,
-                width_factor=self.config.RANDOM_SHIFT,
-                seed=self.config.SEED
-            )(x)
-        if self.config.RANDOM_SHEAR:
-            x = keras.layers.RandomShear(
-                x_factor=self.config.RANDOM_SHEAR,
-                y_factor=self.config.RANDOM_SHEAR,
-                seed=self.config.SEED
-            )(x)
-        if self.config.RANDOM_BRIGHTNESS:
-            x = keras.layers.RandomBrightness(
-                factor=self.config.RANDOM_BRIGHTNESS,
-                seed=self.config.SEED
-            )(x)
-        if self.config.RANDOM_CONTRAST:
-            x = keras.layers.RandomContrast(
-                factor=self.config.RANDOM_CONTRAST,
-                seed=self.config.SEED
-            )(x)
-        if self.config.RANDOM_BLUR:
-            x = keras.layers.RandomGaussianBlur(
-                factor=self.config.RANDOM_BLUR,
-                seed=self.config.SEED
-            )(x)
-
-        # rescaling
-        x = keras.layers.Rescaling(1.0 / 255.0)(inputs)
-
-        # add noise
-        if self.config.RANDOM_NOISE:
-            x = keras.layers.GaussianNoise(
-                stddev=self.config.RANDOM_NOISE,
-                seed=self.config.SEED
-            )(x)
+        # Set device
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        model = model.to(self.device)
         
-        # build UNet model
-        outputs = UNet(self.config.num_classes)(x)
-        model = keras.Model(inputs=inputs, outputs=outputs)
-
-        # compile model
         if mode == 'train':
-            optim = keras.optimizers.Adam(learning_rate=self.config.LEARNING_RATE)
-            model.compile(optimizer=optim, loss=keras.losses.BinaryCrossentropy())
+            # Setup optimizer and loss
+            self.optimizer = optim.Adam(model.parameters(), lr=self.config.LEARNING_RATE)
+            self.criterion = nn.BCELoss()
             self.model = model
             return model
         
         if mode == "test":
             if weights_path is None or not os.path.exists(weights_path):
                 raise ValueError("weights_path must be provided for test mode.")
-            model.load_weights(weights_path)
+            checkpoint = torch.load(weights_path, map_location=self.device)
+            model.load_state_dict(checkpoint)
+            model.eval()
             self.model = model
             return model
            
     def train(self, custom_callbacks=None):
         """Train the model with the dataset."""
-        checkpoint_dir = utils.get_dirpath_with_mkdir(
-            self.config.log_dir, "weights"
-        )
-
-        callbacks = [
-            keras.callbacks.ModelCheckpoint(
-                    os.path.join(checkpoint_dir, "best.weights.h5"),
-                    save_weights_only=True,
-                    save_best_only=True,
-                )
-        ]
-                
-        if custom_callbacks:
-            for c in custom_callbacks:
-                callbacks.append(c)
+        checkpoint_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, "weights")
 
         train_dataloader, val_dataloader = self.get_pytorch_dataloaders()
+
+        if custom_callbacks is not None:
+            on_train_batch_end = custom_callbacks[0]
+            on_val_end = custom_callbacks[1]
+
+        best_val_loss = float('inf')
         
-        self.model.fit(
-            train_dataloader,
-            steps_per_epoch=self.dataset.train_steps,
-            epochs=self.config.EPOCHS,
-            verbose=0,
-            validation_data=val_dataloader,
-            validation_steps=self.dataset.val_steps,
-            callbacks=callbacks
-        )
+        for epoch in range(self.config.EPOCHS):
+            # Training phase
+            self.model.train()
+            train_loss = 0.0
+            batch_num = 1
+            tmp_imgs = []
+            
+            for batch_idx, (images, masks) in enumerate(train_dataloader):
+                images = images.to(self.device)
+                masks = masks.to(self.device)
+                
+                if epoch == 0 and batch_idx < 10:
+                    tmp_imgs.append(images.cpu().numpy()[0].transpose(1,2,0)*255)
+                
+                # Forward pass
+                self.optimizer.zero_grad()
+                outputs = self.model(images)
+                loss = self.criterion(outputs, masks)
+                
+                # Backward pass
+                loss.backward()
+                self.optimizer.step()
+                
+                train_loss += loss.item()
+            
+                avg_train_loss = train_loss / batch_num
+                batch_num += 1
 
-        # save last model
-        checkpoint_path = os.path.join(checkpoint_dir, "last.weights.h5")
-        self.model.save_weights(checkpoint_path)
+                on_train_batch_end(avg_train_loss)
 
+            if epoch == 0:
+                tmp_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, "train_images")
+                for i, _img in enumerate(tmp_imgs):
+                    image.imwrite(
+                        np.array(_img, dtype=np.uint8),
+                        os.path.join(tmp_dir, f"train_input_{i}.png"))
+            
+            # Validation phase
+            self.model.eval()
+            val_loss = 0.0
+            
+            with torch.no_grad():
+                for images, masks in val_dataloader:
+                    images = images.to(self.device)
+                    masks = masks.to(self.device)
+                    
+                    outputs = self.model(images)
+                    loss = self.criterion(outputs, masks)
+                    val_loss += loss.item()
+            
+            avg_val_loss = val_loss / len(val_dataloader)
+            
+            on_val_end(avg_val_loss)
+            
+            # Save best model
+            if avg_val_loss < best_val_loss:
+                best_val_loss = avg_val_loss
+                best_path = os.path.join(checkpoint_dir, "best.pt")
+                torch.save(self.model.state_dict(), best_path)
+        
+        # Save last model
+        last_path = os.path.join(checkpoint_dir, "last.pt")
+        torch.save(self.model.state_dict(), last_path)
+    
     
     def get_pytorch_dataloaders(self):
         """Get PyTorch DataLoaders for training and validation."""
         train_dataset = SegDataset(self.dataset, self.config, mode="train")
         val_dataset = SegDataset(self.dataset, self.config, mode="val")
+
+        g = torch.Generator()
+        g.manual_seed(self.config.SEED)
         
         train_loader = DataLoader(
             train_dataset,
             batch_size=self.config.total_batchsize,
             shuffle=True,
-            num_workers=0,
+            num_workers=4,
             pin_memory=torch.cuda.is_available(),
-            drop_last=True
+            drop_last=True,
+            generator=g,
+            persistent_workers=True,
         )
         
         val_loader = DataLoader(
@@ -171,7 +167,9 @@ class SegmentationModel(object):
             shuffle=False,
             num_workers=0,
             pin_memory=torch.cuda.is_available(),
-            drop_last=False
+            drop_last=False,
+            generator=g,
+            persistent_workers=False,
         )
         
         return train_loader, val_loader
@@ -213,8 +211,17 @@ class SegmentationModel(object):
             # predict
             img = self.dataset.load_image(image_id)
             mask = self.dataset.load_masks(image_id)
-            inputs = image.preprocessing(img, is_tensor=True, channel_first=True)
-            pred = self.model.predict_on_batch(inputs)[0]
+            inputs = image.preprocessing(img, is_tensor=True, channel_first=True, is_norm=True)
+            
+            # Convert to tensor and move to device
+            inputs_tensor = torch.from_numpy(inputs).float().to(self.device)
+            
+            # Predict
+            self.model.eval()
+            with torch.no_grad():
+                pred = self.model(inputs_tensor)
+            pred = pred.cpu().numpy()[0]
+            
             y_true = np.array(mask)
             y_pred = np.array(pred)
 
@@ -237,7 +244,7 @@ class SegmentationModel(object):
                     _yp_class = _yp_class.astype(np.uint8)
 
                     if np.max(yt_class) == 0 and np.max(_yp_class) == 0: # no ground truth
-                        tn, fp, fn, tp = self.config.max_input_size**2, 0, 0, 0
+                        tn, fp, fn, tp = self.config.INPUT_SIZE**2, 0, 0, 0
                     else:
                         cm = metrics.binary_confusion_matrix(yt_class.ravel(), _yp_class.ravel())
                         tn, fp, fn, tp = cm.ravel()
@@ -358,16 +365,38 @@ class SegmentationModel(object):
     def predict_by_id(self, image_id, thresh=0.5):
         src_img = self.dataset.load_image(image_id)
         gt_mask_data = self.dataset.load_masks(image_id)
-        img = image.preprocessing(src_img, is_tensor=True, channel_first=True)
-        pred = self.model.predict(img, batch_size=1, verbose=0)[0]
+        img = image.preprocessing(src_img, is_tensor=True, channel_first=True, is_norm=True)
+        
+        # Convert to tensor and move to device
+        img_tensor = torch.from_numpy(img).float().to(self.device)
+        
+        # Predict
+        self.model.eval()
+        with torch.no_grad():
+            pred = self.model(img_tensor)
+        pred = pred.cpu().numpy()[0]
+        
         concat = image.mask2merge(src_img, pred, self.dataset.class_names, gt_mask_data, thresh)
         return concat
     
     def convert2onnx(self):
-        """Convert the Keras model to ONNX format."""
+        """Convert the PyTorch model to ONNX format."""
         onnx_path = os.path.join(self.config.log_dir, "model.onnx")
         try:
-            self.model.export(onnx_path, format="onnx")
+            self.model.eval()
+            dummy_input = torch.randn(1, 3, self.config.INPUT_SIZE, 
+                                     self.config.INPUT_SIZE).to(self.device)
+            torch.onnx.export(
+                self.model,
+                dummy_input,
+                onnx_path,
+                export_params=True,
+                opset_version=11,
+                do_constant_folding=True,
+                input_names=['input'],
+                output_names=['output'],
+                dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
+            )
         except Exception as e:
             print(f"Failed to convert model to ONNX: {e}")
             return False
@@ -376,9 +405,11 @@ class SegmentationModel(object):
     def set_inference_model(self, weights_path=None):
         """Set the model for inference mode."""
         if weights_path is None:
-            weights_path = os.path.join(self.config.log_dir, "weights", "best.weights.h5")
+            weights_path = os.path.join(self.config.log_dir, "weights", "best.pt")
         self.model = self.build_model("test", weights_path=weights_path)
         return self.model
+
+
 
 
 class SegDataset(TorchDataset):
@@ -399,9 +430,34 @@ class SegDataset(TorchDataset):
         else:  # test
             self.image_ids = self.dataset.test_ids
             
-        # Shuffle training data
         if mode == "train":
+            # Shuffle training data
             np.random.shuffle(self.image_ids)
+
+            # augmentations
+            self.transforms = T.Compose([
+                T.RandomHorizontalFlip(p=0.5) if self.config.RANDOM_HFLIP else T.Identity(),
+                T.RandomVerticalFlip(p=0.5) if self.config.RANDOM_VFLIP else T.Identity(),
+                T.RandomAffine(
+                    degrees=self.config.RANDOM_ROTATE * 180 if self.config.RANDOM_ROTATE > 0.0 else 0.0,
+                    translate=(self.config.RANDOM_SHIFT, self.config.RANDOM_SHIFT) if self.config.RANDOM_SHIFT > 0.0 else (0.0, 0.0),
+                    scale=(1 - self.config.RANDOM_SCALE, 1 + self.config.RANDOM_SCALE) if self.config.RANDOM_SCALE > 0.0 else (1.0, 1.0),
+                    shear=self.config.RANDOM_SHEAR * 40 if self.config.RANDOM_SHEAR > 0.0 else 0.0,
+                    fill=0.5,
+                    ),
+                T.ColorJitter(
+                    brightness=self.config.RANDOM_BRIGHTNESS if self.config.RANDOM_BRIGHTNESS > 0.0 else 0.0,
+                    contrast=self.config.RANDOM_CONTRAST if self.config.RANDOM_CONTRAST > 0.0 else 0.0,
+                    saturation=0,
+                    hue=0,
+                    ),
+                T.GaussianBlur(
+                    kernel_size=3,
+                    sigma=(0.1, self.config.RANDOM_BLUR * 20.0),) if self.config.RANDOM_BLUR > 0.0 else T.Identity(),
+                T.GaussianNoise(
+                    mean=0.0,
+                    sigma=random.uniform(0.0, self.config.RANDOM_NOISE * 0.1),) if self.config.RANDOM_NOISE > 0.0 else T.Identity(),
+            ])
         
     
     def __len__(self):
@@ -413,17 +469,25 @@ class SegDataset(TorchDataset):
         # Load image and mask
         img = self.dataset.load_image(image_id)
         masks = self.dataset.load_masks(image_id)
-        
+
         # Convert to torch tensors
         img_tensor = torch.from_numpy(img.astype(np.float32))
         mask_tensor = torch.from_numpy(masks.astype(np.float32))
-        
+
         # Ensure correct dimensions (H, W, C) -> (C, H, W)
         if img_tensor.dim() == 3:
             img_tensor = img_tensor.permute(2, 0, 1)
         if mask_tensor.dim() == 3:
             mask_tensor = mask_tensor.permute(2, 0, 1)
+
+        img_tensor /= 255.0  # Normalize to [0, 1]
         
+        if self.mode == "train":
+            mask_tensor = tv_tensors.Mask(mask_tensor)
+            img_tensor, mask_tensor = self.transforms(img_tensor, mask_tensor)
+            if img_tensor is None or mask_tensor is None:
+                raise ValueError("Transformations resulted in None tensor.")
+            
         return img_tensor, mask_tensor
     
     def on_epoch_end(self):

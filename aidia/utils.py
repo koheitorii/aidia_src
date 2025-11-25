@@ -2,7 +2,6 @@ import os
 import base64
 import unicodedata
 import openpyxl
-import shutil
 
 
 def is_full_width(text):

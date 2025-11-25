@@ -1,17 +1,8 @@
-import os
-import keras
-import numpy as np
-import glob
-import random
-import torch
 
 from aidia import ModelTypes
 from aidia.ai.dataset import Dataset
 from aidia.ai.config import AIConfig
 from aidia.image import det2merge
-# from aidia.ai.models.yolov4.yolov4 import YOLO
-# from aidia.ai.models.yolov4.yolov4_generator import YOLODataGenerator
-from aidia import utils
 
 from ultralytics import YOLO
 
@@ -59,24 +50,29 @@ class DetectionModel(object):
         self.model.train(
             data=self.dataset.path_yaml,
             epochs=self.config.EPOCHS,
-            imgsz=self.config.max_input_size,
+            imgsz=self.config.INPUT_SIZE,
             batch=self.config.BATCH_SIZE,
+            optimizer='Adam',
             lr0=self.config.LEARNING_RATE,
             project=self.config.log_dir,
             name=self.config.MODEL,
-            rect=self.config.KEEP_ASPECT_RATIO,
             fliplr=0.5 if self.config.RANDOM_HFLIP else 0.0,
             flipud=0.5 if self.config.RANDOM_VFLIP else 0.0,
-            degrees=self.config.RANDOM_ROTATE * 180.0,
-            scale=self.config.RANDOM_SCALE,
-            translate=self.config.RANDOM_SHIFT,
-            shear=self.config.RANDOM_SHEAR,
-            hsv_v=self.config.RANDOM_BRIGHTNESS,
+            degrees=self.config.RANDOM_ROTATE * 180.0 if self.config.RANDOM_ROTATE > 0.0 else 0.0,
+            scale=self.config.RANDOM_SCALE if self.config.RANDOM_SCALE > 0.0 else 0.0,
+            translate=self.config.RANDOM_SHIFT if self.config.RANDOM_SHIFT > 0.0 else 0.0,
+            shear=self.config.RANDOM_SHEAR * 40.0 if self.config.RANDOM_SHEAR > 0.0 else 0.0,
+            hsv_v=self.config.RANDOM_BRIGHTNESS if self.config.RANDOM_BRIGHTNESS > 0.0 else 0.0,
+            hsv_s=0.0,
+            hsv_h=0.0,
             perspective=0.0,
             mosaic=0.0,
+            mixup=0.0,
             erasing=0.0,
             auto_augment=None,
             verbose=False,
+            seed=self.config.SEED,
+            workers=4,
         )
 
     def predict(self, images, conf=0.25, iou=0.45):
