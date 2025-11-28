@@ -1,4 +1,4 @@
-'''Copyright (C) 2023 Kohei Torii'''
+'''Copyright (C) 2025 Kohei Torii'''
 
 import functools
 import re
@@ -11,7 +11,7 @@ from qtpy import QtCore, QtGui, QtWidgets
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QIcon
 
-from aidia import __appname__, __version__, PRETRAINED_DIR, LABEL_COLORMAP, HOME_DIR, EXTS
+from aidia import __appname__, __version__, PRETRAINED_DIR, LABEL_COLORMAP, HOME_DIR, EXTS, DrawMode
 from aidia import S_EPSILON, S_AREA_LIMIT
 from aidia import qt
 from aidia import utils

@@ -9,7 +9,6 @@ from torch.utils.data import Dataset as TorchDataset
 from torch.utils.data import DataLoader
 import torchvision.transforms.v2 as T
 from torchvision import tv_tensors
-import torchvision.transforms.functional as TF
 
 import matplotlib
 import matplotlib.pyplot as plt
