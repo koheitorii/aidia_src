@@ -542,7 +542,8 @@ The labels are separated with line breaks."""),
         # rotation
         def _validate_rotate(state): # check:2, empty:0
             if state == 2:
-                self.config.RANDOM_ROTATE = 0.1  # degrees
+                if self.config.RANDOM_ROTATE == 0.0:
+                    self.config.RANDOM_ROTATE = 0.1  # degrees
             else:
                 self.config.RANDOM_ROTATE = 0
         self.param_rotate = ParamComponent(
@@ -556,7 +557,8 @@ The labels are separated with line breaks."""),
         # scale
         def _validate_scale(state): # check:2, empty:0
             if state == 2:
-                self.config.RANDOM_SCALE = 0.1  # scale factor
+                if self.config.RANDOM_SCALE == 0.0:
+                    self.config.RANDOM_SCALE = 0.1  # scale factor
             else:
                 self.config.RANDOM_SCALE = 0.0
         self.param_scale = ParamComponent(
@@ -570,7 +572,8 @@ The labels are separated with line breaks."""),
         # shift
         def _validate_shift(state): # check:2, empty:0
             if state == 2:
-                self.config.RANDOM_SHIFT = 0.1  # pixels
+                if self.config.RANDOM_SHIFT == 0.0:
+                    self.config.RANDOM_SHIFT = 0.1  # pixels
             else:
                 self.config.RANDOM_SHIFT = 0.0
         self.param_shift = ParamComponent(
@@ -584,7 +587,8 @@ The labels are separated with line breaks."""),
         # shear
         def _validate_shear(state): # check:2, empty:0
             if state == 2:
-                self.config.RANDOM_SHEAR = 0.1  # degrees
+                if self.config.RANDOM_SHEAR == 0.0:
+                    self.config.RANDOM_SHEAR = 0.1  # degrees
             else:
                 self.config.RANDOM_SHEAR = 0.0
         self.param_shear = ParamComponent(
@@ -598,7 +602,8 @@ The labels are separated with line breaks."""),
         # brightness
         def _validate_brightness(state): # check:2, empty:0
             if state == 2:
-                self.config.RANDOM_BRIGHTNESS = 0.1  # brightness range
+                if self.config.RANDOM_BRIGHTNESS == 0.0:
+                    self.config.RANDOM_BRIGHTNESS = 0.1  # brightness range
             else:
                 self.config.RANDOM_BRIGHTNESS = 0.0
         self.param_brightness = ParamComponent(
@@ -612,7 +617,8 @@ The labels are separated with line breaks."""),
         # contrast
         def _validate_contrast(state): # check:2, empty:0
             if state == 2:
-                self.config.RANDOM_CONTRAST = 0.1
+                if self.config.RANDOM_CONTRAST == 0.0:
+                    self.config.RANDOM_CONTRAST = 0.1
             else:
                 self.config.RANDOM_CONTRAST = 0.0
         self.param_contrast = ParamComponent(
@@ -626,7 +632,8 @@ The labels are separated with line breaks."""),
         # blur
         def _validate_blur(state): # check:2, empty:0
             if state == 2:
-                self.config.RANDOM_BLUR = 0.1  # sigma
+                if self.config.RANDOM_BLUR == 0.0:
+                    self.config.RANDOM_BLUR = 0.1  # sigma
             else:
                 self.config.RANDOM_BLUR = 0.0
         self.param_blur = ParamComponent(
@@ -640,7 +647,8 @@ The labels are separated with line breaks."""),
         # noise
         def _validate_noise(state): # check:2, empty:0
             if state == 2:
-                self.config.RANDOM_NOISE = 0.1  # stddev
+                if self.config.RANDOM_NOISE == 0.0:
+                    self.config.RANDOM_NOISE = 0.1  # stddev
             else:
                 self.config.RANDOM_NOISE = 0.0
         self.param_noise = ParamComponent(
@@ -758,9 +766,9 @@ QProgressBar::chunk {
 
         self.config.SUBMODE = is_submode
         if is_submode:
-            self.label_current_mode.setText(self.tr('Search data from <span style="color: red;"><b>PARENT</b></span> directory'))
+            self.label_current_mode.setText(self.tr('Search data under <span style="color: red;"><b>PARENT</b></span> directory'))
         else:
-            self.label_current_mode.setText(self.tr('Search data from <span style="color: green;"><b>CURRENT</b></span> directory'))
+            self.label_current_mode.setText(self.tr('Search data of <span style="color: green;"><b>CURRENT</b></span> directory'))
 
         # basic params
         self.param_task.input_field.setCurrentIndex(TASK_LIST.index(self.config.TASK))

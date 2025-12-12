@@ -6,7 +6,7 @@ from qtpy import QtGui
 
 
 __appname__ = "Aidia"
-__version__ = "2.0.2"
+__version__ = "2.0.3"
 
 
 # suppress debug message

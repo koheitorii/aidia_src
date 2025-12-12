@@ -80,7 +80,7 @@ class SegmentationModel(object):
             # Training phase
             self.model.train()
             train_loss = 0.0
-            batch_num = 1
+            batch_num = 0
             tmp_imgs = []
             
             for batch_idx, (images, masks) in enumerate(train_dataloader):
@@ -100,10 +100,9 @@ class SegmentationModel(object):
                 self.optimizer.step()
                 
                 train_loss += loss.item()
+                batch_num += 1
             
                 avg_train_loss = train_loss / batch_num
-                batch_num += 1
-
                 on_train_batch_end(avg_train_loss)
 
             if epoch == 0:
@@ -115,6 +114,7 @@ class SegmentationModel(object):
             
             # Validation phase
             self.model.eval()
+            val_batch_num = 0
             val_loss = 0.0
             
             with torch.no_grad():
@@ -125,9 +125,9 @@ class SegmentationModel(object):
                     outputs = self.model(images)
                     loss = self.criterion(outputs, masks)
                     val_loss += loss.item()
+                    val_batch_num += 1
             
-            avg_val_loss = val_loss / len(val_dataloader)
-            
+            avg_val_loss = val_loss / val_batch_num
             on_val_end(avg_val_loss)
             
             # Save best model

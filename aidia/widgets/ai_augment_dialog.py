@@ -83,7 +83,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
         # Rotation parameter
         self.rotation_spinbox = QtWidgets.QDoubleSpinBox()
         self.rotation_spinbox.setRange(0.0, 0.5)
-        self.rotation_spinbox.setSingleStep(0.1)
+        self.rotation_spinbox.setSingleStep(0.01)
         self.rotation_spinbox.setDecimals(2)
         self.rotation_spinbox.setToolTip(self.tr("Random rotation factor"))
         self.param_layout.addRow(self.tr("Rotation Factor:"), self.rotation_spinbox)
@@ -91,7 +91,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
         # Scale parameter
         self.scale_spinbox = QtWidgets.QDoubleSpinBox()
         self.scale_spinbox.setRange(0.0, 0.5)
-        self.scale_spinbox.setSingleStep(0.1)
+        self.scale_spinbox.setSingleStep(0.01)
         self.scale_spinbox.setDecimals(2)
         self.scale_spinbox.setToolTip(self.tr("Random scale variation factor"))
         self.param_layout.addRow(self.tr("Scale Factor:"), self.scale_spinbox)
@@ -99,7 +99,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
         # Shift parameter
         self.shift_spinbox = QtWidgets.QDoubleSpinBox()
         self.shift_spinbox.setRange(0.0, 0.5)
-        self.shift_spinbox.setSingleStep(0.1)
+        self.shift_spinbox.setSingleStep(0.01)
         self.shift_spinbox.setDecimals(2)
         self.shift_spinbox.setToolTip(self.tr("Random translation factor"))
         self.param_layout.addRow(self.tr("Shift Factor:"), self.shift_spinbox)
@@ -107,7 +107,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
         # Shear parameter
         self.shear_spinbox = QtWidgets.QDoubleSpinBox()
         self.shear_spinbox.setRange(0.0, 0.5)
-        self.shear_spinbox.setSingleStep(0.1)
+        self.shear_spinbox.setSingleStep(0.01)
         self.shear_spinbox.setDecimals(2)
         self.shear_spinbox.setToolTip(self.tr("Random shear factor"))
         self.param_layout.addRow(self.tr("Shear Factor:"), self.shear_spinbox)
@@ -115,7 +115,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
         # Brightness parameter
         self.brightness_spinbox = QtWidgets.QDoubleSpinBox()
         self.brightness_spinbox.setRange(0.0, 0.5)
-        self.brightness_spinbox.setSingleStep(0.1)
+        self.brightness_spinbox.setSingleStep(0.01)
         self.brightness_spinbox.setDecimals(2)
         self.brightness_spinbox.setToolTip(self.tr("Random brightness adjustment factor"))
         self.param_layout.addRow(self.tr("Brightness Factor:"), self.brightness_spinbox)
@@ -123,7 +123,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
         # Contrast parameter
         self.contrast_spinbox = QtWidgets.QDoubleSpinBox()
         self.contrast_spinbox.setRange(0.0, 0.5)
-        self.contrast_spinbox.setSingleStep(0.1)
+        self.contrast_spinbox.setSingleStep(0.01)
         self.contrast_spinbox.setDecimals(2)
         self.contrast_spinbox.setToolTip(self.tr("Random contrast adjustment factor"))
         self.param_layout.addRow(self.tr("Contrast Factor:"), self.contrast_spinbox)
@@ -131,7 +131,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
         # Blur parameter
         self.blur_spinbox = QtWidgets.QDoubleSpinBox()
         self.blur_spinbox.setRange(0.0, 0.5)
-        self.blur_spinbox.setSingleStep(0.1)
+        self.blur_spinbox.setSingleStep(0.01)
         self.blur_spinbox.setDecimals(2)
         self.blur_spinbox.setToolTip(self.tr("Random blur factor"))
         self.param_layout.addRow(self.tr("Blur Factor:"), self.blur_spinbox)
@@ -139,7 +139,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
         # Noise parameter
         self.noise_spinbox = QtWidgets.QDoubleSpinBox()
         self.noise_spinbox.setRange(0.0, 0.5)
-        self.noise_spinbox.setSingleStep(0.1)
+        self.noise_spinbox.setSingleStep(0.01)
         self.noise_spinbox.setDecimals(2)
         self.noise_spinbox.setToolTip(self.tr("Random noise factor"))
         self.param_layout.addRow(self.tr("Noise Factor:"), self.noise_spinbox)
