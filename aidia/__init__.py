@@ -1,4 +1,7 @@
-# coding: utf-8
+# Copyright (C) 2025 Kohei Torii.
+# Copyright (C) 2016 Kentaro Wada.
+# Copyright (C) 2011 Michael Pitidis, Hussein Abdulwahid.
+
 import os
 import logging
 import sys

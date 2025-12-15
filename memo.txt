@@ -1,8 +1,6 @@
 # build pyinstaller to avoid Windows security interrupting
 
 git clone https://github.com/pyinstaller/pyinstaller.git
-<version 5.13.2>
-<version 6.9.0>
 
 cd pyinstaller/bootloader
 python ./waf distclean all
@@ -14,7 +12,3 @@ pip install .
 # download Qt Linguist binary
 
 https://github.com/thurask/Qt-Linguist/releases
-
-
-# pytorch install
-pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cu126
