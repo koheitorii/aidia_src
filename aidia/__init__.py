@@ -9,7 +9,7 @@ from qtpy import QtGui
 
 
 __appname__ = "Aidia"
-__version__ = "2.0.3"
+__version__ = "2.0.4"
 
 
 # suppress debug message
