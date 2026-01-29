@@ -852,12 +852,12 @@ new_label3</source>
         <translation>結果画像を {} に保存しました</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1882"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1855"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1882"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1855"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1882"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1855"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1885"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1858"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1885"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1858"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1885"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1858"/>
         <source>Prediction results saved.</source>
         <translation>予測結果が保存されました。</translation>
     </message>
@@ -876,171 +876,171 @@ new_label3</source>
 <context>
     <name>AITrainDialog</name>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="126"/>
-        <location filename="../widgets/ai_train_dialog.py" line="126"/>
-        <location filename="../widgets/ai_train_dialog.py" line="126"/>
+        <location filename="../widgets/ai_train_dialog.py" line="121"/>
+        <location filename="../widgets/ai_train_dialog.py" line="121"/>
+        <location filename="../widgets/ai_train_dialog.py" line="121"/>
         <source>AI Training</source>
         <translation>AI学習</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="162"/>
-        <location filename="../widgets/ai_train_dialog.py" line="162"/>
-        <location filename="../widgets/ai_train_dialog.py" line="162"/>
+        <location filename="../widgets/ai_train_dialog.py" line="157"/>
+        <location filename="../widgets/ai_train_dialog.py" line="157"/>
+        <location filename="../widgets/ai_train_dialog.py" line="157"/>
         <source>Training Settings</source>
         <translation>学習設定</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="179"/>
-        <location filename="../widgets/ai_train_dialog.py" line="179"/>
-        <location filename="../widgets/ai_train_dialog.py" line="179"/>
+        <location filename="../widgets/ai_train_dialog.py" line="174"/>
+        <location filename="../widgets/ai_train_dialog.py" line="174"/>
+        <location filename="../widgets/ai_train_dialog.py" line="174"/>
         <source>Dataset Information</source>
         <translation>データセット情報</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="187"/>
-        <location filename="../widgets/ai_train_dialog.py" line="187"/>
-        <location filename="../widgets/ai_train_dialog.py" line="187"/>
+        <location filename="../widgets/ai_train_dialog.py" line="182"/>
+        <location filename="../widgets/ai_train_dialog.py" line="182"/>
+        <location filename="../widgets/ai_train_dialog.py" line="182"/>
         <source>Data Augmentation</source>
         <translation>データ拡張</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="196"/>
-        <location filename="../widgets/ai_train_dialog.py" line="196"/>
-        <location filename="../widgets/ai_train_dialog.py" line="196"/>
+        <location filename="../widgets/ai_train_dialog.py" line="191"/>
+        <location filename="../widgets/ai_train_dialog.py" line="191"/>
+        <location filename="../widgets/ai_train_dialog.py" line="191"/>
         <source>Utilities</source>
         <translation>ユーティリティ</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="201"/>
-        <location filename="../widgets/ai_train_dialog.py" line="201"/>
-        <location filename="../widgets/ai_train_dialog.py" line="201"/>
+        <location filename="../widgets/ai_train_dialog.py" line="196"/>
+        <location filename="../widgets/ai_train_dialog.py" line="196"/>
+        <location filename="../widgets/ai_train_dialog.py" line="196"/>
         <source>Select Experiment Directory</source>
         <translation>実験フォルダを選択する</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="203"/>
-        <location filename="../widgets/ai_train_dialog.py" line="203"/>
-        <location filename="../widgets/ai_train_dialog.py" line="203"/>
+        <location filename="../widgets/ai_train_dialog.py" line="198"/>
+        <location filename="../widgets/ai_train_dialog.py" line="198"/>
+        <location filename="../widgets/ai_train_dialog.py" line="198"/>
         <source>Select the experiment directory.</source>
         <translation>実験フォルダを選択します。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="216"/>
-        <location filename="../widgets/ai_train_dialog.py" line="216"/>
-        <location filename="../widgets/ai_train_dialog.py" line="216"/>
+        <location filename="../widgets/ai_train_dialog.py" line="211"/>
+        <location filename="../widgets/ai_train_dialog.py" line="211"/>
+        <location filename="../widgets/ai_train_dialog.py" line="211"/>
         <source>Open Log Directory</source>
         <translation>実験フォルダを開く</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="217"/>
-        <location filename="../widgets/ai_train_dialog.py" line="217"/>
-        <location filename="../widgets/ai_train_dialog.py" line="217"/>
+        <location filename="../widgets/ai_train_dialog.py" line="212"/>
+        <location filename="../widgets/ai_train_dialog.py" line="212"/>
+        <location filename="../widgets/ai_train_dialog.py" line="212"/>
         <source>Open the selected log directory.</source>
         <translation>選択した実験フォルダを開きます。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="223"/>
-        <location filename="../widgets/ai_train_dialog.py" line="223"/>
-        <location filename="../widgets/ai_train_dialog.py" line="223"/>
+        <location filename="../widgets/ai_train_dialog.py" line="218"/>
+        <location filename="../widgets/ai_train_dialog.py" line="218"/>
+        <location filename="../widgets/ai_train_dialog.py" line="218"/>
         <source>Prediction</source>
         <translation>予測</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="227"/>
-        <location filename="../widgets/ai_train_dialog.py" line="227"/>
-        <location filename="../widgets/ai_train_dialog.py" line="227"/>
+        <location filename="../widgets/ai_train_dialog.py" line="222"/>
+        <location filename="../widgets/ai_train_dialog.py" line="222"/>
+        <location filename="../widgets/ai_train_dialog.py" line="222"/>
         <source>Show Labels</source>
         <translation>ラベルの表示</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="228"/>
-        <location filename="../widgets/ai_train_dialog.py" line="228"/>
-        <location filename="../widgets/ai_train_dialog.py" line="228"/>
+        <location filename="../widgets/ai_train_dialog.py" line="223"/>
+        <location filename="../widgets/ai_train_dialog.py" line="223"/>
+        <location filename="../widgets/ai_train_dialog.py" line="223"/>
         <source>Show labels in prediction results.</source>
         <translation>予測結果画像にラベルを表示します。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="242"/>
-        <location filename="../widgets/ai_train_dialog.py" line="242"/>
-        <location filename="../widgets/ai_train_dialog.py" line="242"/>
+        <location filename="../widgets/ai_train_dialog.py" line="237"/>
+        <location filename="../widgets/ai_train_dialog.py" line="237"/>
+        <location filename="../widgets/ai_train_dialog.py" line="237"/>
         <source>Show Confidence</source>
         <translation>確信度の表示</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="243"/>
-        <location filename="../widgets/ai_train_dialog.py" line="243"/>
-        <location filename="../widgets/ai_train_dialog.py" line="243"/>
+        <location filename="../widgets/ai_train_dialog.py" line="238"/>
+        <location filename="../widgets/ai_train_dialog.py" line="238"/>
+        <location filename="../widgets/ai_train_dialog.py" line="238"/>
         <source>Show confidence scores in prediction results.</source>
         <translation>予測結果画像に確信度を表示します。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="258"/>
-        <location filename="../widgets/ai_train_dialog.py" line="258"/>
-        <location filename="../widgets/ai_train_dialog.py" line="258"/>
+        <location filename="../widgets/ai_train_dialog.py" line="253"/>
+        <location filename="../widgets/ai_train_dialog.py" line="253"/>
+        <location filename="../widgets/ai_train_dialog.py" line="253"/>
         <source>Select Image</source>
         <translation>画像を選択する</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="259"/>
-        <location filename="../widgets/ai_train_dialog.py" line="259"/>
-        <location filename="../widgets/ai_train_dialog.py" line="259"/>
+        <location filename="../widgets/ai_train_dialog.py" line="254"/>
+        <location filename="../widgets/ai_train_dialog.py" line="254"/>
+        <location filename="../widgets/ai_train_dialog.py" line="254"/>
         <source>Predict a single image.</source>
         <translation>単一の画像に対して予測を行います。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="264"/>
-        <location filename="../widgets/ai_train_dialog.py" line="264"/>
-        <location filename="../widgets/ai_train_dialog.py" line="264"/>
+        <location filename="../widgets/ai_train_dialog.py" line="259"/>
+        <location filename="../widgets/ai_train_dialog.py" line="259"/>
+        <location filename="../widgets/ai_train_dialog.py" line="259"/>
         <source>Select Directory</source>
         <translation>フォルダを選択する</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="265"/>
-        <location filename="../widgets/ai_train_dialog.py" line="265"/>
-        <location filename="../widgets/ai_train_dialog.py" line="265"/>
+        <location filename="../widgets/ai_train_dialog.py" line="260"/>
+        <location filename="../widgets/ai_train_dialog.py" line="260"/>
+        <location filename="../widgets/ai_train_dialog.py" line="260"/>
         <source>Predict images in the directory you selected.</source>
         <translation>選択したフォルダ内の画像に対して予測を行います。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="274"/>
-        <location filename="../widgets/ai_train_dialog.py" line="274"/>
-        <location filename="../widgets/ai_train_dialog.py" line="274"/>
+        <location filename="../widgets/ai_train_dialog.py" line="269"/>
+        <location filename="../widgets/ai_train_dialog.py" line="269"/>
+        <location filename="../widgets/ai_train_dialog.py" line="269"/>
         <source>Export Model</source>
         <translation>モデルのエクスポート</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="275"/>
-        <location filename="../widgets/ai_train_dialog.py" line="275"/>
-        <location filename="../widgets/ai_train_dialog.py" line="275"/>
+        <location filename="../widgets/ai_train_dialog.py" line="270"/>
+        <location filename="../widgets/ai_train_dialog.py" line="270"/>
+        <location filename="../widgets/ai_train_dialog.py" line="270"/>
         <source>Export the model data.</source>
         <translation>モデルデータをエクスポートします。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="280"/>
-        <location filename="../widgets/ai_train_dialog.py" line="280"/>
-        <location filename="../widgets/ai_train_dialog.py" line="280"/>
+        <location filename="../widgets/ai_train_dialog.py" line="275"/>
+        <location filename="../widgets/ai_train_dialog.py" line="275"/>
+        <location filename="../widgets/ai_train_dialog.py" line="275"/>
         <source>Export Model to Pretrained</source>
         <translation>学習済みモデルに追加する</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="281"/>
-        <location filename="../widgets/ai_train_dialog.py" line="281"/>
-        <location filename="../widgets/ai_train_dialog.py" line="281"/>
+        <location filename="../widgets/ai_train_dialog.py" line="276"/>
+        <location filename="../widgets/ai_train_dialog.py" line="276"/>
+        <location filename="../widgets/ai_train_dialog.py" line="276"/>
         <source>Export the model data to pretrained directory.</source>
         <translation>このモデルを学習済みモデルに追加します。
 学習済みモデルに追加することで自動アノテーションが利用可能になります。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="305"/>
-        <location filename="../widgets/ai_train_dialog.py" line="305"/>
-        <location filename="../widgets/ai_train_dialog.py" line="305"/>
+        <location filename="../widgets/ai_train_dialog.py" line="300"/>
+        <location filename="../widgets/ai_train_dialog.py" line="300"/>
+        <location filename="../widgets/ai_train_dialog.py" line="300"/>
         <source>Task</source>
         <translation>タスク</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="306"/>
-        <location filename="../widgets/ai_train_dialog.py" line="306"/>
-        <location filename="../widgets/ai_train_dialog.py" line="306"/>
+        <location filename="../widgets/ai_train_dialog.py" line="301"/>
+        <location filename="../widgets/ai_train_dialog.py" line="301"/>
+        <location filename="../widgets/ai_train_dialog.py" line="301"/>
         <source>Select the task.
 Detection uses YOLO and Segmentation uses U-Net.
 If Performance Test are selected, the training test using MNIST dataset are performed and you can check the calculation performance.</source>
@@ -1049,65 +1049,65 @@ If Performance Test are selected, the training test using MNIST dataset are perf
 パフォーマンステストを選択した場合は、MNISTデータセットを使用した学習テストが実行され、計算性能を確認できます。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="311"/>
-        <location filename="../widgets/ai_train_dialog.py" line="311"/>
-        <location filename="../widgets/ai_train_dialog.py" line="311"/>
+        <location filename="../widgets/ai_train_dialog.py" line="306"/>
+        <location filename="../widgets/ai_train_dialog.py" line="306"/>
+        <location filename="../widgets/ai_train_dialog.py" line="306"/>
         <source>Detection</source>
         <translation>物体検出</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="312"/>
-        <location filename="../widgets/ai_train_dialog.py" line="312"/>
-        <location filename="../widgets/ai_train_dialog.py" line="312"/>
+        <location filename="../widgets/ai_train_dialog.py" line="307"/>
+        <location filename="../widgets/ai_train_dialog.py" line="307"/>
+        <location filename="../widgets/ai_train_dialog.py" line="307"/>
         <source>Segmentation</source>
         <translation>領域予測（セグメンテーション）</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="313"/>
-        <location filename="../widgets/ai_train_dialog.py" line="313"/>
-        <location filename="../widgets/ai_train_dialog.py" line="313"/>
+        <location filename="../widgets/ai_train_dialog.py" line="308"/>
+        <location filename="../widgets/ai_train_dialog.py" line="308"/>
+        <location filename="../widgets/ai_train_dialog.py" line="308"/>
         <source>Performance Test</source>
         <translation>パフォーマンステスト</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="331"/>
-        <location filename="../widgets/ai_train_dialog.py" line="331"/>
-        <location filename="../widgets/ai_train_dialog.py" line="331"/>
+        <location filename="../widgets/ai_train_dialog.py" line="326"/>
+        <location filename="../widgets/ai_train_dialog.py" line="326"/>
+        <location filename="../widgets/ai_train_dialog.py" line="326"/>
         <source>Model</source>
         <translation>モデル</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="332"/>
-        <location filename="../widgets/ai_train_dialog.py" line="332"/>
-        <location filename="../widgets/ai_train_dialog.py" line="332"/>
+        <location filename="../widgets/ai_train_dialog.py" line="327"/>
+        <location filename="../widgets/ai_train_dialog.py" line="327"/>
+        <location filename="../widgets/ai_train_dialog.py" line="327"/>
         <source>Select the model architecture.</source>
         <translation>モデルアーキテクチャを選択してください。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="343"/>
-        <location filename="../widgets/ai_train_dialog.py" line="343"/>
-        <location filename="../widgets/ai_train_dialog.py" line="343"/>
+        <location filename="../widgets/ai_train_dialog.py" line="338"/>
+        <location filename="../widgets/ai_train_dialog.py" line="338"/>
+        <location filename="../widgets/ai_train_dialog.py" line="338"/>
         <source>Experiment Directory Name</source>
         <translation>実験フォルダ名</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="344"/>
-        <location filename="../widgets/ai_train_dialog.py" line="344"/>
-        <location filename="../widgets/ai_train_dialog.py" line="344"/>
+        <location filename="../widgets/ai_train_dialog.py" line="339"/>
+        <location filename="../widgets/ai_train_dialog.py" line="339"/>
+        <location filename="../widgets/ai_train_dialog.py" line="339"/>
         <source>Set the name of the experiment directory.</source>
         <translation>実験フォルダの名前を設定します。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="354"/>
-        <location filename="../widgets/ai_train_dialog.py" line="354"/>
-        <location filename="../widgets/ai_train_dialog.py" line="354"/>
+        <location filename="../widgets/ai_train_dialog.py" line="349"/>
+        <location filename="../widgets/ai_train_dialog.py" line="349"/>
+        <location filename="../widgets/ai_train_dialog.py" line="349"/>
         <source>Dataset</source>
         <translation>データセット</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="355"/>
-        <location filename="../widgets/ai_train_dialog.py" line="355"/>
-        <location filename="../widgets/ai_train_dialog.py" line="355"/>
+        <location filename="../widgets/ai_train_dialog.py" line="350"/>
+        <location filename="../widgets/ai_train_dialog.py" line="350"/>
+        <location filename="../widgets/ai_train_dialog.py" line="350"/>
         <source>Select the dataset pattern.
 Aidia splits the data into a 4:1 ratio (train:test) depend on the selected pattern.
 You can use this function for 5-fold cross-validation.</source>
@@ -1116,225 +1116,225 @@ Aidiaは選択したパターンに応じてデータを４：１の比率（学
 この機能は5-fold交差検証に利用できます。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="360"/>
-        <location filename="../widgets/ai_train_dialog.py" line="360"/>
-        <location filename="../widgets/ai_train_dialog.py" line="360"/>
+        <location filename="../widgets/ai_train_dialog.py" line="355"/>
+        <location filename="../widgets/ai_train_dialog.py" line="355"/>
+        <location filename="../widgets/ai_train_dialog.py" line="355"/>
         <source>Pattern 1</source>
         <translation>パターン1</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="361"/>
-        <location filename="../widgets/ai_train_dialog.py" line="361"/>
-        <location filename="../widgets/ai_train_dialog.py" line="361"/>
+        <location filename="../widgets/ai_train_dialog.py" line="356"/>
+        <location filename="../widgets/ai_train_dialog.py" line="356"/>
+        <location filename="../widgets/ai_train_dialog.py" line="356"/>
         <source>Pattern 2</source>
         <translation>パターン2</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="362"/>
-        <location filename="../widgets/ai_train_dialog.py" line="362"/>
-        <location filename="../widgets/ai_train_dialog.py" line="362"/>
+        <location filename="../widgets/ai_train_dialog.py" line="357"/>
+        <location filename="../widgets/ai_train_dialog.py" line="357"/>
+        <location filename="../widgets/ai_train_dialog.py" line="357"/>
         <source>Pattern 3</source>
         <translation>パターン3</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="363"/>
-        <location filename="../widgets/ai_train_dialog.py" line="363"/>
-        <location filename="../widgets/ai_train_dialog.py" line="363"/>
+        <location filename="../widgets/ai_train_dialog.py" line="358"/>
+        <location filename="../widgets/ai_train_dialog.py" line="358"/>
+        <location filename="../widgets/ai_train_dialog.py" line="358"/>
         <source>Pattern 4</source>
         <translation>パターン4</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="364"/>
-        <location filename="../widgets/ai_train_dialog.py" line="364"/>
-        <location filename="../widgets/ai_train_dialog.py" line="364"/>
+        <location filename="../widgets/ai_train_dialog.py" line="359"/>
+        <location filename="../widgets/ai_train_dialog.py" line="359"/>
+        <location filename="../widgets/ai_train_dialog.py" line="359"/>
         <source>Pattern 5</source>
         <translation>パターン5</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="374"/>
-        <location filename="../widgets/ai_train_dialog.py" line="374"/>
-        <location filename="../widgets/ai_train_dialog.py" line="374"/>
+        <location filename="../widgets/ai_train_dialog.py" line="369"/>
+        <location filename="../widgets/ai_train_dialog.py" line="369"/>
+        <location filename="../widgets/ai_train_dialog.py" line="369"/>
         <source>Input Size</source>
         <translation>入力サイズ</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="375"/>
-        <location filename="../widgets/ai_train_dialog.py" line="375"/>
-        <location filename="../widgets/ai_train_dialog.py" line="375"/>
+        <location filename="../widgets/ai_train_dialog.py" line="370"/>
+        <location filename="../widgets/ai_train_dialog.py" line="370"/>
+        <location filename="../widgets/ai_train_dialog.py" line="370"/>
         <source>Set the width and height of input images.</source>
         <translation>入力画像の幅と高さを設定します。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="395"/>
-        <location filename="../widgets/ai_train_dialog.py" line="395"/>
-        <location filename="../widgets/ai_train_dialog.py" line="395"/>
+        <location filename="../widgets/ai_train_dialog.py" line="390"/>
+        <location filename="../widgets/ai_train_dialog.py" line="390"/>
+        <location filename="../widgets/ai_train_dialog.py" line="390"/>
         <source>Epochs</source>
         <translation>学習回数</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="396"/>
-        <location filename="../widgets/ai_train_dialog.py" line="396"/>
-        <location filename="../widgets/ai_train_dialog.py" line="396"/>
+        <location filename="../widgets/ai_train_dialog.py" line="391"/>
+        <location filename="../widgets/ai_train_dialog.py" line="391"/>
+        <location filename="../widgets/ai_train_dialog.py" line="391"/>
         <source>Set the epochs.
 If you set 100, all data are trained 100 times.</source>
         <translation>学習回数を設定します。
 100に設定すると、すべてのデータを100回学習します。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="411"/>
-        <location filename="../widgets/ai_train_dialog.py" line="411"/>
-        <location filename="../widgets/ai_train_dialog.py" line="411"/>
+        <location filename="../widgets/ai_train_dialog.py" line="406"/>
+        <location filename="../widgets/ai_train_dialog.py" line="406"/>
+        <location filename="../widgets/ai_train_dialog.py" line="406"/>
         <source>Batch Size</source>
         <translation>バッチサイズ</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="412"/>
-        <location filename="../widgets/ai_train_dialog.py" line="412"/>
-        <location filename="../widgets/ai_train_dialog.py" line="412"/>
+        <location filename="../widgets/ai_train_dialog.py" line="407"/>
+        <location filename="../widgets/ai_train_dialog.py" line="407"/>
+        <location filename="../widgets/ai_train_dialog.py" line="407"/>
         <source>Set the batch size.
 If you set 8, 8 samples are trained per step.</source>
         <translation>バッチサイズを設定します。
 8に設定すると、ステップごとに8つのサンプルを用いて学習します。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="427"/>
-        <location filename="../widgets/ai_train_dialog.py" line="427"/>
-        <location filename="../widgets/ai_train_dialog.py" line="427"/>
+        <location filename="../widgets/ai_train_dialog.py" line="422"/>
+        <location filename="../widgets/ai_train_dialog.py" line="422"/>
+        <location filename="../widgets/ai_train_dialog.py" line="422"/>
         <source>Learning Rate</source>
         <translation>学習率</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="428"/>
-        <location filename="../widgets/ai_train_dialog.py" line="428"/>
-        <location filename="../widgets/ai_train_dialog.py" line="428"/>
+        <location filename="../widgets/ai_train_dialog.py" line="423"/>
+        <location filename="../widgets/ai_train_dialog.py" line="423"/>
+        <location filename="../widgets/ai_train_dialog.py" line="423"/>
         <source>Set the initial learning rate.</source>
         <translation>初期学習率を設定します。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="450"/>
-        <location filename="../widgets/ai_train_dialog.py" line="450"/>
-        <location filename="../widgets/ai_train_dialog.py" line="450"/>
+        <location filename="../widgets/ai_train_dialog.py" line="445"/>
+        <location filename="../widgets/ai_train_dialog.py" line="445"/>
+        <location filename="../widgets/ai_train_dialog.py" line="445"/>
         <source>Label Definition</source>
         <translation>ラベル定義</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="451"/>
-        <location filename="../widgets/ai_train_dialog.py" line="451"/>
-        <location filename="../widgets/ai_train_dialog.py" line="451"/>
+        <location filename="../widgets/ai_train_dialog.py" line="446"/>
+        <location filename="../widgets/ai_train_dialog.py" line="446"/>
+        <location filename="../widgets/ai_train_dialog.py" line="446"/>
         <source>Set target labels.
 The labels are separated with line breaks.</source>
         <translation>学習対象とするラベルを設定します。
 ラベルは改行で区切ってください。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="496"/>
-        <location filename="../widgets/ai_train_dialog.py" line="496"/>
-        <location filename="../widgets/ai_train_dialog.py" line="496"/>
+        <location filename="../widgets/ai_train_dialog.py" line="491"/>
+        <location filename="../widgets/ai_train_dialog.py" line="491"/>
+        <location filename="../widgets/ai_train_dialog.py" line="491"/>
         <source>Label Replacement</source>
         <translation>ラベル置換</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="497"/>
-        <location filename="../widgets/ai_train_dialog.py" line="497"/>
-        <location filename="../widgets/ai_train_dialog.py" line="497"/>
+        <location filename="../widgets/ai_train_dialog.py" line="492"/>
+        <location filename="../widgets/ai_train_dialog.py" line="492"/>
+        <location filename="../widgets/ai_train_dialog.py" line="492"/>
         <source>Open label replacement dialog.</source>
         <translation>ラベル置換設定を開きます。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="512"/>
-        <location filename="../widgets/ai_train_dialog.py" line="512"/>
-        <location filename="../widgets/ai_train_dialog.py" line="512"/>
+        <location filename="../widgets/ai_train_dialog.py" line="507"/>
+        <location filename="../widgets/ai_train_dialog.py" line="507"/>
+        <location filename="../widgets/ai_train_dialog.py" line="507"/>
         <source>Separate Data by Directory</source>
         <translation>フォルダ単位でデータを分割する</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="513"/>
-        <location filename="../widgets/ai_train_dialog.py" line="513"/>
-        <location filename="../widgets/ai_train_dialog.py" line="513"/>
+        <location filename="../widgets/ai_train_dialog.py" line="508"/>
+        <location filename="../widgets/ai_train_dialog.py" line="508"/>
+        <location filename="../widgets/ai_train_dialog.py" line="508"/>
         <source>Separate data by directories when training.</source>
         <translation>データをフォルダ単位で分割します。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="527"/>
-        <location filename="../widgets/ai_train_dialog.py" line="527"/>
-        <location filename="../widgets/ai_train_dialog.py" line="527"/>
+        <location filename="../widgets/ai_train_dialog.py" line="522"/>
+        <location filename="../widgets/ai_train_dialog.py" line="522"/>
+        <location filename="../widgets/ai_train_dialog.py" line="522"/>
         <source>Vertical Flip</source>
         <translation>垂直方向反転</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="528"/>
-        <location filename="../widgets/ai_train_dialog.py" line="528"/>
-        <location filename="../widgets/ai_train_dialog.py" line="528"/>
+        <location filename="../widgets/ai_train_dialog.py" line="523"/>
+        <location filename="../widgets/ai_train_dialog.py" line="523"/>
+        <location filename="../widgets/ai_train_dialog.py" line="523"/>
         <source>Enable random vertical flip.</source>
         <translation>ランダムな垂直反転を有効にします。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="541"/>
-        <location filename="../widgets/ai_train_dialog.py" line="541"/>
-        <location filename="../widgets/ai_train_dialog.py" line="541"/>
+        <location filename="../widgets/ai_train_dialog.py" line="536"/>
+        <location filename="../widgets/ai_train_dialog.py" line="536"/>
+        <location filename="../widgets/ai_train_dialog.py" line="536"/>
         <source>Horizontal Flip</source>
         <translation>水平方向反転</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="542"/>
-        <location filename="../widgets/ai_train_dialog.py" line="542"/>
-        <location filename="../widgets/ai_train_dialog.py" line="542"/>
+        <location filename="../widgets/ai_train_dialog.py" line="537"/>
+        <location filename="../widgets/ai_train_dialog.py" line="537"/>
+        <location filename="../widgets/ai_train_dialog.py" line="537"/>
         <source>Enable random horizontal flip.</source>
         <translation>ランダムな水平反転を有効にします。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="555"/>
-        <location filename="../widgets/ai_train_dialog.py" line="555"/>
-        <location filename="../widgets/ai_train_dialog.py" line="555"/>
+        <location filename="../widgets/ai_train_dialog.py" line="551"/>
+        <location filename="../widgets/ai_train_dialog.py" line="551"/>
+        <location filename="../widgets/ai_train_dialog.py" line="551"/>
         <source>Rotation</source>
         <translation>回転</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="556"/>
-        <location filename="../widgets/ai_train_dialog.py" line="556"/>
-        <location filename="../widgets/ai_train_dialog.py" line="556"/>
+        <location filename="../widgets/ai_train_dialog.py" line="552"/>
+        <location filename="../widgets/ai_train_dialog.py" line="552"/>
+        <location filename="../widgets/ai_train_dialog.py" line="552"/>
         <source>Enable random rotation.</source>
         <translation>ランダムな回転を有効にします。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="569"/>
-        <location filename="../widgets/ai_train_dialog.py" line="569"/>
-        <location filename="../widgets/ai_train_dialog.py" line="569"/>
+        <location filename="../widgets/ai_train_dialog.py" line="566"/>
+        <location filename="../widgets/ai_train_dialog.py" line="566"/>
+        <location filename="../widgets/ai_train_dialog.py" line="566"/>
         <source>Scale</source>
         <translation>拡大縮小</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="570"/>
-        <location filename="../widgets/ai_train_dialog.py" line="570"/>
-        <location filename="../widgets/ai_train_dialog.py" line="570"/>
+        <location filename="../widgets/ai_train_dialog.py" line="567"/>
+        <location filename="../widgets/ai_train_dialog.py" line="567"/>
+        <location filename="../widgets/ai_train_dialog.py" line="567"/>
         <source>Enable random scale variation.</source>
         <translation>ランダムスケールの変化を有効にします。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="583"/>
-        <location filename="../widgets/ai_train_dialog.py" line="583"/>
-        <location filename="../widgets/ai_train_dialog.py" line="583"/>
+        <location filename="../widgets/ai_train_dialog.py" line="581"/>
+        <location filename="../widgets/ai_train_dialog.py" line="581"/>
+        <location filename="../widgets/ai_train_dialog.py" line="581"/>
         <source>Shift</source>
         <translation>移動</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="584"/>
-        <location filename="../widgets/ai_train_dialog.py" line="584"/>
-        <location filename="../widgets/ai_train_dialog.py" line="584"/>
+        <location filename="../widgets/ai_train_dialog.py" line="582"/>
+        <location filename="../widgets/ai_train_dialog.py" line="582"/>
+        <location filename="../widgets/ai_train_dialog.py" line="582"/>
         <source>Enable random shift.</source>
         <translation>ランダム平行移動を有効にします。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="597"/>
-        <location filename="../widgets/ai_train_dialog.py" line="597"/>
-        <location filename="../widgets/ai_train_dialog.py" line="597"/>
+        <location filename="../widgets/ai_train_dialog.py" line="596"/>
+        <location filename="../widgets/ai_train_dialog.py" line="596"/>
+        <location filename="../widgets/ai_train_dialog.py" line="596"/>
         <source>Shear</source>
         <translation>せん断</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="598"/>
-        <location filename="../widgets/ai_train_dialog.py" line="598"/>
-        <location filename="../widgets/ai_train_dialog.py" line="598"/>
+        <location filename="../widgets/ai_train_dialog.py" line="597"/>
+        <location filename="../widgets/ai_train_dialog.py" line="597"/>
+        <location filename="../widgets/ai_train_dialog.py" line="597"/>
         <source>Enable random shear.</source>
         <translation>ランダムせん断を有効にします。</translation>
     </message>
@@ -1353,370 +1353,378 @@ The labels are separated with line breaks.</source>
         <translation>ランダムな明るさ調整を有効にします。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="625"/>
-        <location filename="../widgets/ai_train_dialog.py" line="625"/>
-        <location filename="../widgets/ai_train_dialog.py" line="625"/>
+        <location filename="../widgets/ai_train_dialog.py" line="626"/>
+        <location filename="../widgets/ai_train_dialog.py" line="626"/>
+        <location filename="../widgets/ai_train_dialog.py" line="626"/>
         <source>Contrast</source>
         <translation>コントラスト</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="626"/>
-        <location filename="../widgets/ai_train_dialog.py" line="626"/>
-        <location filename="../widgets/ai_train_dialog.py" line="626"/>
+        <location filename="../widgets/ai_train_dialog.py" line="627"/>
+        <location filename="../widgets/ai_train_dialog.py" line="627"/>
+        <location filename="../widgets/ai_train_dialog.py" line="627"/>
         <source>Enable random contrast variation.</source>
         <translation>ランダムなコントラストの変化を有効にします。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="639"/>
-        <location filename="../widgets/ai_train_dialog.py" line="639"/>
-        <location filename="../widgets/ai_train_dialog.py" line="639"/>
+        <location filename="../widgets/ai_train_dialog.py" line="641"/>
+        <location filename="../widgets/ai_train_dialog.py" line="641"/>
+        <location filename="../widgets/ai_train_dialog.py" line="641"/>
         <source>Blur</source>
         <translation>ぼかし</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="640"/>
-        <location filename="../widgets/ai_train_dialog.py" line="640"/>
-        <location filename="../widgets/ai_train_dialog.py" line="640"/>
+        <location filename="../widgets/ai_train_dialog.py" line="642"/>
+        <location filename="../widgets/ai_train_dialog.py" line="642"/>
+        <location filename="../widgets/ai_train_dialog.py" line="642"/>
         <source>Enable random blur.</source>
         <translation>ランダムなぼかしを有効にします。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="653"/>
-        <location filename="../widgets/ai_train_dialog.py" line="653"/>
-        <location filename="../widgets/ai_train_dialog.py" line="653"/>
+        <location filename="../widgets/ai_train_dialog.py" line="656"/>
+        <location filename="../widgets/ai_train_dialog.py" line="656"/>
+        <location filename="../widgets/ai_train_dialog.py" line="656"/>
         <source>Noise</source>
         <translation>ノイズ</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="654"/>
-        <location filename="../widgets/ai_train_dialog.py" line="654"/>
-        <location filename="../widgets/ai_train_dialog.py" line="654"/>
+        <location filename="../widgets/ai_train_dialog.py" line="657"/>
+        <location filename="../widgets/ai_train_dialog.py" line="657"/>
+        <location filename="../widgets/ai_train_dialog.py" line="657"/>
         <source>Enable random noise.</source>
         <translation>ランダムノイズを有効にします。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="660"/>
-        <location filename="../widgets/ai_train_dialog.py" line="660"/>
-        <location filename="../widgets/ai_train_dialog.py" line="660"/>
+        <location filename="../widgets/ai_train_dialog.py" line="663"/>
+        <location filename="../widgets/ai_train_dialog.py" line="663"/>
+        <location filename="../widgets/ai_train_dialog.py" line="663"/>
         <source>Advanced Settings</source>
         <translation>詳細設定</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="661"/>
-        <location filename="../widgets/ai_train_dialog.py" line="661"/>
-        <location filename="../widgets/ai_train_dialog.py" line="661"/>
+        <location filename="../widgets/ai_train_dialog.py" line="664"/>
+        <location filename="../widgets/ai_train_dialog.py" line="664"/>
+        <location filename="../widgets/ai_train_dialog.py" line="664"/>
         <source>Open advanced data augmentation settings.</source>
         <translation>データ拡張の詳細設定を開きます。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="671"/>
-        <location filename="../widgets/ai_train_dialog.py" line="671"/>
-        <location filename="../widgets/ai_train_dialog.py" line="671"/>
+        <location filename="../widgets/ai_train_dialog.py" line="674"/>
+        <location filename="../widgets/ai_train_dialog.py" line="674"/>
+        <location filename="../widgets/ai_train_dialog.py" line="674"/>
         <source>Train</source>
         <translation>学習</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="741"/>
-        <location filename="../widgets/ai_train_dialog.py" line="741"/>
-        <location filename="../widgets/ai_train_dialog.py" line="741"/>
+        <location filename="../widgets/ai_train_dialog.py" line="744"/>
+        <location filename="../widgets/ai_train_dialog.py" line="744"/>
+        <location filename="../widgets/ai_train_dialog.py" line="744"/>
         <source>Ready</source>
         <translation>準備完了</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="750"/>
-        <location filename="../widgets/ai_train_dialog.py" line="750"/>
-        <location filename="../widgets/ai_train_dialog.py" line="750"/>
+        <location filename="../widgets/ai_train_dialog.py" line="753"/>
+        <location filename="../widgets/ai_train_dialog.py" line="753"/>
+        <location filename="../widgets/ai_train_dialog.py" line="753"/>
         <source>AI Training - {}</source>
         <translation>AI学習 - {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="766"/>
-        <location filename="../widgets/ai_train_dialog.py" line="766"/>
-        <location filename="../widgets/ai_train_dialog.py" line="766"/>
-        <source>Search data from &lt;span style=&quot;color: red;&quot;&gt;&lt;b&gt;PARENT&lt;/b&gt;&lt;/span&gt; directory</source>
+        <location filename="../widgets/ai_train_dialog.py" line="769"/>
+        <location filename="../widgets/ai_train_dialog.py" line="769"/>
+        <location filename="../widgets/ai_train_dialog.py" line="769"/>
+        <source>Search data under &lt;span style=&quot;color: red;&quot;&gt;&lt;b&gt;PARENT&lt;/b&gt;&lt;/span&gt; directory</source>
         <translation>&lt;span style=&quot;color: red;&quot;&gt;&lt;b&gt;親フォルダ&lt;/b&gt;&lt;/span&gt;からデータを探索</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="768"/>
-        <location filename="../widgets/ai_train_dialog.py" line="768"/>
-        <location filename="../widgets/ai_train_dialog.py" line="768"/>
-        <source>Search data from &lt;span style=&quot;color: green;&quot;&gt;&lt;b&gt;CURRENT&lt;/b&gt;&lt;/span&gt; directory</source>
-        <translation>&lt;span style=&quot;color: green;&quot;&gt;&lt;b&gt;現在のフォルダ&lt;/b&gt;&lt;/span&gt;のデータを探索</translation>
+        <location filename="../widgets/ai_train_dialog.py" line="771"/>
+        <location filename="../widgets/ai_train_dialog.py" line="771"/>
+        <location filename="../widgets/ai_train_dialog.py" line="771"/>
+        <source>Search data of &lt;span style=&quot;color: green;&quot;&gt;&lt;b&gt;CURRENT&lt;/b&gt;&lt;/span&gt; directory</source>
+        <translation>&lt;span style=&quot;color: green;&quot;&gt;&lt;b&gt;フォルダ内&lt;/b&gt;&lt;/span&gt;のデータを探索</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="833"/>
-        <location filename="../widgets/ai_train_dialog.py" line="833"/>
-        <location filename="../widgets/ai_train_dialog.py" line="833"/>
+        <location filename="../widgets/ai_train_dialog.py" line="836"/>
+        <location filename="../widgets/ai_train_dialog.py" line="836"/>
+        <location filename="../widgets/ai_train_dialog.py" line="836"/>
         <source>Terminated training.</source>
         <translation>学習を中止しました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="842"/>
-        <location filename="../widgets/ai_train_dialog.py" line="842"/>
-        <location filename="../widgets/ai_train_dialog.py" line="842"/>
+        <location filename="../widgets/ai_train_dialog.py" line="845"/>
+        <location filename="../widgets/ai_train_dialog.py" line="845"/>
+        <location filename="../widgets/ai_train_dialog.py" line="845"/>
         <source>Done -- Elapsed time: {}h {}m {}s</source>
         <translation>完了 -- 学習時間: {}時間 {}分 {}秒</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="863"/>
-        <location filename="../widgets/ai_train_dialog.py" line="863"/>
-        <location filename="../widgets/ai_train_dialog.py" line="863"/>
+        <location filename="../widgets/ai_train_dialog.py" line="866"/>
+        <location filename="../widgets/ai_train_dialog.py" line="866"/>
+        <location filename="../widgets/ai_train_dialog.py" line="866"/>
         <source>Failed to convert to ONNX model.</source>
         <translation>ONNX モデルへの変換に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1032"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1032"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1032"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1035"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1035"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1035"/>
         <source>Label replacement dictionary updated with {} rules.</source>
         <translation>ラベル置換ルールが {} つ更新されました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1037"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1037"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1037"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1040"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1040"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1040"/>
         <source>Label replacement dictionary cleared.</source>
         <translation>ラベル置換辞書がクリアされました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1039"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1039"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1039"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1042"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1042"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1042"/>
         <source>Label replacement cancelled.</source>
         <translation>ラベル置換設定はキャンセルされました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1100"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1100"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1100"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1103"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1103"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1103"/>
         <source>[*] labels (all|train|val|test)</source>
         <translation>[*] ラベル (すべて|学習|検証|テスト)</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1111"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1111"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1111"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1114"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1114"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1114"/>
         <source>Dataset Number: {}</source>
         <translation>データセット番号: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1112"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1112"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1112"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1115"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1115"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1115"/>
         <source>Number of Data: {}</source>
         <translation>データ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1113"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1113"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1113"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1116"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1116"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1116"/>
         <source>Number of Train: {}</source>
         <translation>学習データ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1114"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1114"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1114"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1117"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1117"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1117"/>
         <source>Number of Validation: {}</source>
         <translation>検証データ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1115"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1115"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1115"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1118"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1118"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1118"/>
         <source>Number of Test: {}</source>
         <translation>テストデータ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1117"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1117"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1117"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1120"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1120"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1120"/>
         <source>Number of Train Directories: {}</source>
         <translation>学習用フォルダ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1118"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1118"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1118"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1121"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1121"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1121"/>
         <source>Number of Validation Directories: {}</source>
         <translation>検証用フォルダ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1119"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1119"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1119"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1122"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1122"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1122"/>
         <source>Number of Test Directories: {}</source>
         <translation>テスト用フォルダ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1120"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1120"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1120"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1123"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1123"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1123"/>
         <source>Train Steps: {}</source>
         <translation>学習ステップ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1121"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1121"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1121"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1124"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1124"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1124"/>
         <source>Validation Steps: {}</source>
         <translation>検証ステップ数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1122"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1122"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1122"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1125"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1125"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1125"/>
         <source>Number of Shapes: {}</source>
         <translation>図形の数: {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1123"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1123"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1123"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1126"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1126"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1126"/>
         <source>Class Information:
 {}</source>
         <translation>クラス情報:
 {}</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1232"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1232"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1232"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1235"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1235"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1235"/>
         <source>Please check {}.</source>
         <translation>{} を確認してください。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1240"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1240"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1240"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1243"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1243"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1243"/>
         <source>Confirmation</source>
         <translation>確認</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1258"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1258"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1258"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1261"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1261"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1261"/>
         <source>&apos;{}&apos; already exists. Overwrite?</source>
         <translation>&apos;{}&apos;はすでに存在します。上書きしますか？</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1260"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1260"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1260"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1263"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1263"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1263"/>
         <source>Training was cancelled.</source>
         <translation>学習はキャンセルされました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1316"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1316"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1316"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1319"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1319"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1319"/>
         <source>Augmentation settings updated.</source>
         <translation>データ拡張設定が更新されました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1323"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1323"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1323"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1326"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1326"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1326"/>
         <source>Augmentation settings unchanged.</source>
         <translation>データ拡張設定は変更されませんでした。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1566"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1543"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1420"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1566"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1543"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1420"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1566"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1543"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1420"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1569"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1546"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1423"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1569"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1546"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1423"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1569"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1546"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1423"/>
         <source>The directory was not found.</source>
         <translation>フォルダが見つかりませんでした。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1483"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1428"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1483"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1428"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1483"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1428"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1486"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1431"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1486"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1431"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1486"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1431"/>
         <source>Config file was not found.</source>
         <translation>設定ファイルが見つかりませんでした。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1492"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1437"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1492"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1437"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1492"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1437"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1495"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1440"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1495"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1440"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1495"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1440"/>
         <source>Not implemented function.</source>
         <translation>実装されていない機能です。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1498"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1443"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1498"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1443"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1498"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1443"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1501"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1446"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1501"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1446"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1501"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1446"/>
         <source>The ONNX model was not found.</source>
         <translation>ONNXモデルが見つかりませんでした。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1457"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1457"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1457"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1460"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1460"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1460"/>
         <source>Select Test Image</source>
         <translation>テスト画像を選択する</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1459"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1459"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1459"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1462"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1462"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1462"/>
         <source>Image files ({});;All files (*)</source>
         <translation>画像ファイル ({});;すべてのファイル (*)</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1522"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1468"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1522"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1468"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1522"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1468"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1525"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1471"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1525"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1471"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1525"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1471"/>
         <source>Processing...</source>
         <translation>処理中...</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1508"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1508"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1508"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1511"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1511"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1511"/>
         <source>Select Test Images Directory</source>
         <translation>テスト画像フォルダを選択してください</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1518"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1518"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1518"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1521"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1521"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1521"/>
         <source>The Directory is empty.</source>
         <translation>フォルダは空です。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1551"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1551"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1551"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1554"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1554"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1554"/>
         <source>Select Output Directory</source>
         <translation>保存先のフォルダを選択してください</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1578"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1562"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1578"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1562"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1578"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1562"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1581"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1565"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1581"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1565"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1581"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1565"/>
         <source>Export data to {}</source>
         <translation>データを{}にエクスポートしました</translation>
+    </message>
+    <message>
+        <source>Search data from &lt;span style=&quot;color: red;&quot;&gt;&lt;b&gt;PARENT&lt;/b&gt;&lt;/span&gt; directory</source>
+        <translation type="vanished">&lt;span style=&quot;color: red;&quot;&gt;&lt;b&gt;親フォルダ&lt;/b&gt;&lt;/span&gt;からデータを探索</translation>
+    </message>
+    <message>
+        <source>Search data from &lt;span style=&quot;color: green;&quot;&gt;&lt;b&gt;CURRENT&lt;/b&gt;&lt;/span&gt; directory</source>
+        <translation type="vanished">&lt;span style=&quot;color: green;&quot;&gt;&lt;b&gt;現在のフォルダ&lt;/b&gt;&lt;/span&gt;のデータを探索</translation>
     </message>
     <message>
         <source>Input Size X</source>
@@ -1979,141 +1987,141 @@ Adamのその他のパラメータはTensorFlowの既定値を使用します。
 <context>
     <name>AITrainThread</name>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1607"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1607"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1607"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1610"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1610"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1610"/>
         <source>Not configured. Terminated.</source>
         <translation>設定が未完了です。強制終了。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1618"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1618"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1618"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1621"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1621"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1621"/>
         <source>Model error. Terminated.</source>
         <translation>モデルエラー。強制終了。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1621"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1621"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1621"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1624"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1624"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1624"/>
         <source>Data loading...</source>
         <translation>データ読み込み中...</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1625"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1625"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1625"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1628"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1628"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1628"/>
         <source>Failed to load data.&lt;br&gt;Please check the settings or data.</source>
         <translation>データの読み込みに失敗しました。&lt;br&gt;設定またはデータを確認してください。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1629"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1629"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1629"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1632"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1632"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1632"/>
         <source>Failed to split data because of the few data.</source>
         <translation>データが少ないためデータの分割に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1633"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1633"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1633"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1636"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1636"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1636"/>
         <source>Please reduce the batch size.</source>
         <translation>バッチサイズを小さくしてください。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1666"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1666"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1666"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1669"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1669"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1669"/>
         <source>Model building...</source>
         <translation>モデルを構築中...</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1676"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1676"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1676"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1679"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1679"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1679"/>
         <source>Out of memory error.&lt;br&gt;Please reduce the batch size or use a smaller model.</source>
         <translation>メモリ容量エラーです。&lt;br&gt;バッチサイズを減らすか、入力サイズを小さくしてください。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1680"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1680"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1680"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1683"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1683"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1683"/>
         <source>Failed to build model.</source>
         <translation>モデルの構築に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1684"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1684"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1684"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1687"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1687"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1687"/>
         <source>Preparing...</source>
         <translation>準備中...</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1757"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1757"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1757"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1760"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1760"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1760"/>
         <source>Failed to train.</source>
         <translation>学習に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1817"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1820"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1776"/>
         <location filename="../widgets/ai_train_dialog.py" line="1773"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1770"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1817"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1820"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1776"/>
         <location filename="../widgets/ai_train_dialog.py" line="1773"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1770"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1817"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1820"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1776"/>
         <location filename="../widgets/ai_train_dialog.py" line="1773"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1770"/>
         <source>Done</source>
         <translation>完了</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1777"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1777"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1777"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1780"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1780"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1780"/>
         <source>Setting inference model...</source>
         <translation>推論モデルを設定しています...</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1781"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1781"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1781"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1784"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1784"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1784"/>
         <source>Generate test result images...</source>
         <translation>テスト結果の画像を生成中...</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1799"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1799"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1799"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1802"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1802"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1802"/>
         <source>Error: {} was not found.</source>
         <translation>エラー: {}が見つかりませんでした。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1804"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1804"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1804"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1807"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1807"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1807"/>
         <source>Evaluating...</source>
         <translation>評価中...</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1808"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1808"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1808"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1811"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1811"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1811"/>
         <source>Failed to evaluate.</source>
         <translation>評価に失敗しました。</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1812"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1812"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1812"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1815"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1815"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1815"/>
         <source>Convert model to ONNX...</source>
         <translation>モデルをONNXに変換中...</translation>
     </message>
     <message>
-        <location filename="../widgets/ai_train_dialog.py" line="1814"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1814"/>
-        <location filename="../widgets/ai_train_dialog.py" line="1814"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1817"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1817"/>
+        <location filename="../widgets/ai_train_dialog.py" line="1817"/>
         <source>Failed to convert model to ONNX.</source>
         <translation>ONNXへの変換に失敗しました。</translation>
     </message>
@@ -2783,892 +2791,920 @@ orange
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../app.py" line="140"/>
-        <location filename="../app.py" line="140"/>
+        <location filename="../app.py" line="136"/>
+        <location filename="../app.py" line="136"/>
         <source>Polygon Labels</source>
         <translation>アノテーション一覧</translation>
     </message>
     <message>
-        <location filename="../app.py" line="145"/>
-        <location filename="../app.py" line="145"/>
+        <location filename="../app.py" line="141"/>
+        <location filename="../app.py" line="141"/>
         <source>Refresh</source>
         <translation>更新</translation>
     </message>
     <message>
-        <location filename="../app.py" line="149"/>
-        <location filename="../app.py" line="149"/>
+        <location filename="../app.py" line="145"/>
+        <location filename="../app.py" line="145"/>
         <source>Search Label</source>
         <translation>ラベルの検索</translation>
     </message>
     <message>
-        <location filename="../app.py" line="153"/>
-        <location filename="../app.py" line="153"/>
+        <location filename="../app.py" line="149"/>
+        <location filename="../app.py" line="149"/>
         <source>Search File</source>
         <translation>ファイルの検索</translation>
     </message>
     <message>
-        <location filename="../app.py" line="216"/>
-        <location filename="../app.py" line="216"/>
+        <location filename="../app.py" line="212"/>
+        <location filename="../app.py" line="212"/>
         <source>File List</source>
         <translation>ファイル一覧</translation>
     </message>
     <message>
-        <location filename="../app.py" line="236"/>
-        <location filename="../app.py" line="236"/>
+        <location filename="../app.py" line="232"/>
+        <location filename="../app.py" line="232"/>
         <source>Summary</source>
         <translation>集計</translation>
     </message>
     <message>
-        <location filename="../app.py" line="255"/>
-        <location filename="../app.py" line="255"/>
+        <location filename="../app.py" line="251"/>
+        <location filename="../app.py" line="251"/>
         <source>DICOM Info</source>
         <translation>DICOM情報</translation>
     </message>
     <message>
-        <location filename="../app.py" line="267"/>
-        <location filename="../app.py" line="267"/>
+        <location filename="../app.py" line="263"/>
+        <location filename="../app.py" line="263"/>
         <source>Automatic Annotation</source>
         <translation>自動アノテーション</translation>
     </message>
     <message>
-        <location filename="../app.py" line="298"/>
-        <location filename="../app.py" line="298"/>
+        <location filename="../app.py" line="294"/>
+        <location filename="../app.py" line="294"/>
         <source>from Parent Directory</source>
         <translation>親フォルダからデータを参照する</translation>
     </message>
     <message>
-        <location filename="../app.py" line="299"/>
-        <location filename="../app.py" line="299"/>
+        <location filename="../app.py" line="295"/>
+        <location filename="../app.py" line="295"/>
         <source>Find data from the parent directory.</source>
         <translation>親フォルダからデータを参照します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="308"/>
-        <location filename="../app.py" line="308"/>
+        <location filename="../app.py" line="304"/>
+        <location filename="../app.py" line="304"/>
         <source>AI</source>
         <translation>人工知能</translation>
     </message>
     <message>
-        <location filename="../app.py" line="327"/>
-        <location filename="../app.py" line="327"/>
+        <location filename="../app.py" line="323"/>
+        <location filename="../app.py" line="323"/>
         <source>note</source>
         <translation>メモ</translation>
     </message>
     <message>
-        <location filename="../app.py" line="332"/>
-        <location filename="../app.py" line="332"/>
+        <location filename="../app.py" line="328"/>
+        <location filename="../app.py" line="328"/>
         <source>Note</source>
         <translation>メモ</translation>
     </message>
     <message>
-        <location filename="../app.py" line="346"/>
-        <location filename="../app.py" line="346"/>
+        <location filename="../app.py" line="342"/>
+        <location filename="../app.py" line="342"/>
         <source>Start</source>
         <translation>スタート</translation>
     </message>
     <message>
-        <location filename="../app.py" line="350"/>
-        <location filename="../app.py" line="350"/>
+        <location filename="../app.py" line="346"/>
+        <location filename="../app.py" line="346"/>
         <source>Stop</source>
         <translation>ストップ</translation>
     </message>
     <message>
-        <location filename="../app.py" line="356"/>
-        <location filename="../app.py" line="356"/>
+        <location filename="../app.py" line="352"/>
+        <location filename="../app.py" line="352"/>
         <source>Timer</source>
         <translation>タイマー</translation>
     </message>
     <message>
-        <location filename="../app.py" line="368"/>
-        <location filename="../app.py" line="368"/>
+        <location filename="../app.py" line="364"/>
+        <location filename="../app.py" line="364"/>
         <source>Labels</source>
         <translation>ラベル</translation>
     </message>
     <message>
-        <location filename="../app.py" line="440"/>
-        <location filename="../app.py" line="440"/>
+        <location filename="../app.py" line="436"/>
+        <location filename="../app.py" line="436"/>
         <source>&amp;Quit</source>
         <translation>&amp;終了</translation>
     </message>
     <message>
-        <location filename="../app.py" line="443"/>
-        <location filename="../app.py" line="443"/>
+        <location filename="../app.py" line="439"/>
+        <location filename="../app.py" line="439"/>
         <source>Quit application.</source>
         <translation>アプリケーションを終了します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="447"/>
-        <location filename="../app.py" line="447"/>
-        <source>&amp;Load Image</source>
-        <translation>&amp;画像を
-読み込む</translation>
+        <location filename="../app.py" line="443"/>
+        <location filename="../app.py" line="443"/>
+        <source>Load</source>
+        <translation>読み込み</translation>
     </message>
     <message>
-        <location filename="../app.py" line="451"/>
-        <location filename="../app.py" line="451"/>
+        <location filename="../app.py" line="447"/>
+        <location filename="../app.py" line="447"/>
         <source>Load image file.</source>
         <translation>画像ファイルを読み込みます。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="455"/>
-        <location filename="../app.py" line="455"/>
+        <location filename="../app.py" line="451"/>
+        <location filename="../app.py" line="451"/>
         <source>&amp;Next Image</source>
         <translation>&amp;次の画像</translation>
     </message>
     <message>
-        <location filename="../app.py" line="460"/>
-        <location filename="../app.py" line="460"/>
+        <location filename="../app.py" line="456"/>
+        <location filename="../app.py" line="456"/>
         <source>Open next image.</source>
         <translation>次の画像を開きます。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="464"/>
-        <location filename="../app.py" line="464"/>
+        <location filename="../app.py" line="460"/>
+        <location filename="../app.py" line="460"/>
         <source>&amp;Prev Image</source>
         <translation>&amp;前の画像</translation>
     </message>
     <message>
-        <location filename="../app.py" line="469"/>
-        <location filename="../app.py" line="469"/>
+        <location filename="../app.py" line="465"/>
+        <location filename="../app.py" line="465"/>
         <source>Open previous image.</source>
         <translation>前の画像を開きます。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="473"/>
-        <location filename="../app.py" line="473"/>
+        <location filename="../app.py" line="469"/>
+        <location filename="../app.py" line="469"/>
         <source>&amp;Save</source>
         <translation>&amp;保存</translation>
     </message>
     <message>
-        <location filename="../app.py" line="476"/>
-        <location filename="../app.py" line="476"/>
+        <location filename="../app.py" line="472"/>
+        <location filename="../app.py" line="472"/>
         <source>Save labels to file.</source>
         <translation>ラベルファイルを保存します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="479"/>
-        <location filename="../app.py" line="479"/>
+        <location filename="../app.py" line="475"/>
+        <location filename="../app.py" line="475"/>
         <source>&amp;Save As</source>
         <translation>&amp;名前を付けて保存</translation>
     </message>
     <message>
-        <location filename="../app.py" line="482"/>
-        <location filename="../app.py" line="482"/>
+        <location filename="../app.py" line="478"/>
+        <location filename="../app.py" line="478"/>
         <source>Save labels to a different file.</source>
         <translation>別名でラベルファイルを保存します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="486"/>
-        <location filename="../app.py" line="486"/>
+        <location filename="../app.py" line="482"/>
+        <location filename="../app.py" line="482"/>
         <source>&amp;Delete File</source>
         <translation>&amp;データの
 削除</translation>
     </message>
     <message>
-        <location filename="../app.py" line="490"/>
-        <location filename="../app.py" line="490"/>
+        <location filename="../app.py" line="486"/>
+        <location filename="../app.py" line="486"/>
         <source>Delete current label file.</source>
         <translation>ラベルファイルを削除します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="496"/>
-        <location filename="../app.py" line="496"/>
+        <location filename="../app.py" line="492"/>
+        <location filename="../app.py" line="492"/>
         <source>&amp;Export Annotations</source>
         <translation>&amp;アノテーションの書き出し</translation>
     </message>
     <message>
-        <location filename="../app.py" line="500"/>
-        <location filename="../app.py" line="500"/>
+        <location filename="../app.py" line="496"/>
+        <location filename="../app.py" line="496"/>
         <source>Export JSON annotation files.</source>
         <translation>JSON形式のアノテーションファイルを書き出します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="506"/>
-        <location filename="../app.py" line="506"/>
+        <location filename="../app.py" line="502"/>
+        <location filename="../app.py" line="502"/>
         <source>&amp;Import Pretrained Model</source>
         <translation>&amp;学習済みモデルのインポート</translation>
     </message>
     <message>
-        <location filename="../app.py" line="510"/>
-        <location filename="../app.py" line="510"/>
+        <location filename="../app.py" line="506"/>
+        <location filename="../app.py" line="506"/>
         <source>Import pretrained models.</source>
         <translation>学習済みモデルをインポートします。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="515"/>
-        <location filename="../app.py" line="515"/>
+        <location filename="../app.py" line="511"/>
+        <location filename="../app.py" line="511"/>
         <source>&amp;Close</source>
         <translation>&amp;閉じる</translation>
     </message>
     <message>
-        <location filename="../app.py" line="519"/>
-        <location filename="../app.py" line="519"/>
+        <location filename="../app.py" line="515"/>
+        <location filename="../app.py" line="515"/>
         <source>Close current file.</source>
         <translation>開いているファイルを閉じます。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="524"/>
-        <location filename="../app.py" line="524"/>
-        <source>Create Polygons</source>
+        <location filename="../app.py" line="520"/>
+        <location filename="../app.py" line="520"/>
+        <source>Polygons</source>
         <translation>ポリゴン</translation>
     </message>
     <message>
-        <location filename="../app.py" line="528"/>
-        <location filename="../app.py" line="528"/>
+        <location filename="../app.py" line="524"/>
+        <location filename="../app.py" line="524"/>
         <source>Start drawing polygons.</source>
         <translation>ポリゴンの描画を開始します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="532"/>
-        <location filename="../app.py" line="532"/>
-        <source>Create Rectangle</source>
+        <location filename="../app.py" line="528"/>
+        <location filename="../app.py" line="528"/>
+        <source>Rectangle</source>
         <translation>矩形</translation>
     </message>
     <message>
-        <location filename="../app.py" line="536"/>
-        <location filename="../app.py" line="536"/>
+        <location filename="../app.py" line="532"/>
+        <location filename="../app.py" line="532"/>
         <source>Start drawing rectangles.</source>
         <translation>矩形の作成を開始します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="540"/>
-        <location filename="../app.py" line="540"/>
-        <source>Create Linestrip</source>
+        <location filename="../app.py" line="536"/>
+        <location filename="../app.py" line="536"/>
+        <source>Linestrip</source>
         <translation>折れ線</translation>
     </message>
     <message>
-        <location filename="../app.py" line="544"/>
-        <location filename="../app.py" line="544"/>
+        <location filename="../app.py" line="540"/>
+        <location filename="../app.py" line="540"/>
         <source>Start drawing linestrips.</source>
         <translation>折れ線を作成します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="548"/>
-        <location filename="../app.py" line="548"/>
-        <source>Create Line</source>
+        <location filename="../app.py" line="544"/>
+        <location filename="../app.py" line="544"/>
+        <source>Line</source>
         <translation>線</translation>
     </message>
     <message>
-        <location filename="../app.py" line="552"/>
-        <location filename="../app.py" line="552"/>
+        <location filename="../app.py" line="548"/>
+        <location filename="../app.py" line="548"/>
         <source>Start drawing a line.</source>
         <translation>直線を作成します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="556"/>
-        <location filename="../app.py" line="556"/>
-        <source>Create Point</source>
+        <location filename="../app.py" line="552"/>
+        <location filename="../app.py" line="552"/>
+        <source>Point</source>
         <translation>点</translation>
     </message>
     <message>
-        <location filename="../app.py" line="560"/>
-        <location filename="../app.py" line="560"/>
+        <location filename="../app.py" line="556"/>
+        <location filename="../app.py" line="556"/>
         <source>Start drawing a point.</source>
         <translation>点を作成します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="564"/>
-        <location filename="../app.py" line="564"/>
-        <source>Edit Polygons</source>
+        <location filename="../app.py" line="560"/>
+        <location filename="../app.py" line="560"/>
+        <source>Edit</source>
         <translation>編集</translation>
     </message>
     <message>
-        <location filename="../app.py" line="568"/>
-        <location filename="../app.py" line="568"/>
+        <location filename="../app.py" line="564"/>
+        <location filename="../app.py" line="564"/>
         <source>Move and edit the selected polygons.</source>
         <translation>選択したポリゴンを編集します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="574"/>
-        <location filename="../app.py" line="574"/>
+        <location filename="../app.py" line="570"/>
+        <location filename="../app.py" line="570"/>
         <source>Delete Polygons</source>
         <translation>ポリゴン
 削除</translation>
     </message>
     <message>
-        <location filename="../app.py" line="578"/>
-        <location filename="../app.py" line="578"/>
+        <location filename="../app.py" line="574"/>
+        <location filename="../app.py" line="574"/>
         <source>Delete the selected polygons.</source>
         <translation>選択したポリゴンを削除します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="582"/>
-        <location filename="../app.py" line="582"/>
+        <location filename="../app.py" line="578"/>
+        <location filename="../app.py" line="578"/>
         <source>Duplicate Polygons</source>
         <translation>ポリゴン
 複製</translation>
     </message>
     <message>
-        <location filename="../app.py" line="586"/>
-        <location filename="../app.py" line="586"/>
+        <location filename="../app.py" line="582"/>
+        <location filename="../app.py" line="582"/>
         <source>Create a duplicate of the selected polygons.</source>
         <translation>選択したポリゴンの複製を作成します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="590"/>
-        <location filename="../app.py" line="590"/>
+        <location filename="../app.py" line="586"/>
+        <location filename="../app.py" line="586"/>
         <source>Undo last point</source>
         <translation>最後の点を取り消し</translation>
     </message>
     <message>
-        <location filename="../app.py" line="594"/>
-        <location filename="../app.py" line="594"/>
+        <location filename="../app.py" line="590"/>
+        <location filename="../app.py" line="590"/>
         <source>Undo last drawn point.</source>
         <translation>最後の点の描画を取り消します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="598"/>
-        <location filename="../app.py" line="598"/>
+        <location filename="../app.py" line="594"/>
+        <location filename="../app.py" line="594"/>
         <source>Add Point to Edge</source>
         <translation>点の追加</translation>
     </message>
     <message>
-        <location filename="../app.py" line="602"/>
-        <location filename="../app.py" line="602"/>
+        <location filename="../app.py" line="598"/>
+        <location filename="../app.py" line="598"/>
         <source>Add point to the nearest edge.</source>
         <translation>最も近い輪郭に点を追加します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="606"/>
-        <location filename="../app.py" line="606"/>
+        <location filename="../app.py" line="602"/>
+        <location filename="../app.py" line="602"/>
         <source>Remove Selected Point</source>
         <translation>選択した点の削除</translation>
     </message>
     <message>
-        <location filename="../app.py" line="613"/>
-        <location filename="../app.py" line="613"/>
+        <location filename="../app.py" line="609"/>
+        <location filename="../app.py" line="609"/>
         <source>Undo</source>
         <translation>取り消し</translation>
     </message>
     <message>
-        <location filename="../app.py" line="617"/>
-        <location filename="../app.py" line="617"/>
+        <location filename="../app.py" line="613"/>
+        <location filename="../app.py" line="613"/>
         <source>Undo last add and edit of shape.</source>
         <translation>点の追加と形の変形を取り消します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="621"/>
-        <location filename="../app.py" line="621"/>
+        <location filename="../app.py" line="617"/>
+        <location filename="../app.py" line="617"/>
         <source>&amp;Hide
 Polygons</source>
         <translation>&amp;全ポリゴンの非表示</translation>
     </message>
     <message>
-        <location filename="../app.py" line="625"/>
-        <location filename="../app.py" line="625"/>
+        <location filename="../app.py" line="621"/>
+        <location filename="../app.py" line="621"/>
         <source>Hide all polygons.</source>
         <translation>すべてのポリゴンを非表示にします。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="629"/>
-        <location filename="../app.py" line="629"/>
+        <location filename="../app.py" line="625"/>
+        <location filename="../app.py" line="625"/>
         <source>&amp;Show
 Polygons</source>
         <translation>&amp;全ポリゴンの表示</translation>
     </message>
     <message>
-        <location filename="../app.py" line="633"/>
-        <location filename="../app.py" line="633"/>
+        <location filename="../app.py" line="629"/>
+        <location filename="../app.py" line="629"/>
         <source>Show all polygons.</source>
         <translation>すべてのポリゴンを表示します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="637"/>
-        <location filename="../app.py" line="637"/>
+        <location filename="../app.py" line="633"/>
+        <location filename="../app.py" line="633"/>
         <source>&amp;Toggle
 Show/Hide Selected Polygon</source>
         <translation>&amp;選択ポリゴンの表示・非表示の切り替え</translation>
     </message>
     <message>
-        <location filename="../app.py" line="641"/>
-        <location filename="../app.py" line="641"/>
+        <location filename="../app.py" line="637"/>
+        <location filename="../app.py" line="637"/>
         <source>Toggle show/hide selected polygon.</source>
         <translation>選択したポリゴンの表示と非表示を切り替えます。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="645"/>
-        <location filename="../app.py" line="645"/>
+        <location filename="../app.py" line="641"/>
+        <location filename="../app.py" line="641"/>
         <source>Toggle Labels Show and Hide</source>
         <translation>ラベルの表示・非表示切り替え</translation>
     </message>
     <message>
-        <location filename="../app.py" line="650"/>
-        <location filename="../app.py" line="650"/>
+        <location filename="../app.py" line="646"/>
+        <location filename="../app.py" line="646"/>
         <source>Toggle labels show and hide.</source>
         <translation>ラベルの表示・非表示を切り替えます。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="656"/>
-        <location filename="../app.py" line="656"/>
+        <location filename="../app.py" line="652"/>
+        <location filename="../app.py" line="652"/>
         <source>&amp;Reset Brightness and Contrast</source>
         <translation>&amp;明るさ・コントラストの初期化</translation>
     </message>
     <message>
-        <location filename="../app.py" line="659"/>
-        <location filename="../app.py" line="659"/>
+        <location filename="../app.py" line="655"/>
+        <location filename="../app.py" line="655"/>
         <source>Reset brightness and contrast.</source>
         <translation>明るさとコントラストを初期化します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="666"/>
-        <location filename="../app.py" line="666"/>
+        <location filename="../app.py" line="662"/>
+        <location filename="../app.py" line="662"/>
         <source>Zoom in or out of the image. Also accessible with {} and {} from the canvas.</source>
         <translation>画像を拡大または縮小します。キャンバスから{}と{}で操作が可能です。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="675"/>
-        <location filename="../app.py" line="675"/>
+        <location filename="../app.py" line="671"/>
+        <location filename="../app.py" line="671"/>
         <source>Ctrl+Wheel</source>
         <translation>Ctrl+Wheel</translation>
     </message>
     <message>
-        <location filename="../app.py" line="681"/>
-        <location filename="../app.py" line="681"/>
+        <location filename="../app.py" line="677"/>
+        <location filename="../app.py" line="677"/>
         <source>Zoom &amp;In</source>
         <translation>&amp;拡大</translation>
     </message>
     <message>
-        <location filename="../app.py" line="685"/>
-        <location filename="../app.py" line="685"/>
+        <location filename="../app.py" line="681"/>
+        <location filename="../app.py" line="681"/>
         <source>Increase zoom level.</source>
         <translation>拡大します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="687"/>
-        <location filename="../app.py" line="687"/>
+        <location filename="../app.py" line="683"/>
+        <location filename="../app.py" line="683"/>
         <source>&amp;Zoom Out</source>
         <translation>&amp;縮小</translation>
     </message>
     <message>
-        <location filename="../app.py" line="691"/>
-        <location filename="../app.py" line="691"/>
+        <location filename="../app.py" line="687"/>
+        <location filename="../app.py" line="687"/>
         <source>Decrease zoom level.</source>
         <translation>縮小します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="693"/>
-        <location filename="../app.py" line="693"/>
+        <location filename="../app.py" line="689"/>
+        <location filename="../app.py" line="689"/>
         <source>&amp;Original size</source>
         <translation>&amp;元のサイズ</translation>
     </message>
     <message>
-        <location filename="../app.py" line="697"/>
-        <location filename="../app.py" line="697"/>
+        <location filename="../app.py" line="693"/>
+        <location filename="../app.py" line="693"/>
         <source>Zoom to original size.</source>
         <translation>元の画像サイズで表示します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="699"/>
-        <location filename="../app.py" line="699"/>
+        <location filename="../app.py" line="695"/>
+        <location filename="../app.py" line="695"/>
         <source>&amp;Fit Window</source>
         <translation>&amp;画面に
 合わせる</translation>
     </message>
     <message>
-        <location filename="../app.py" line="702"/>
-        <location filename="../app.py" line="702"/>
+        <location filename="../app.py" line="698"/>
+        <location filename="../app.py" line="698"/>
         <source>Zoom follows window size.</source>
         <translation>ウィンドウに合わせて表示します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="757"/>
-        <location filename="../app.py" line="717"/>
-        <location filename="../app.py" line="757"/>
-        <location filename="../app.py" line="717"/>
+        <location filename="../app.py" line="753"/>
+        <location filename="../app.py" line="713"/>
+        <location filename="../app.py" line="753"/>
+        <location filename="../app.py" line="713"/>
         <source>&amp;Edit Label</source>
         <translation>&amp;ラベルの編集</translation>
     </message>
     <message>
-        <location filename="../app.py" line="720"/>
-        <location filename="../app.py" line="720"/>
+        <location filename="../app.py" line="716"/>
+        <location filename="../app.py" line="716"/>
         <source>Modify the label of the selected polygon.</source>
         <translation>選択したポリゴンのラベルを修正します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="725"/>
-        <location filename="../app.py" line="725"/>
+        <location filename="../app.py" line="721"/>
+        <location filename="../app.py" line="721"/>
         <source>&amp;Copyright</source>
         <translation>&amp;Copyright</translation>
     </message>
     <message>
-        <location filename="../app.py" line="728"/>
-        <location filename="../app.py" line="728"/>
+        <location filename="../app.py" line="724"/>
+        <location filename="../app.py" line="724"/>
         <source>Open copyright information.</source>
         <translation>コピーライトの情報を表示します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="733"/>
-        <location filename="../app.py" line="733"/>
+        <location filename="../app.py" line="729"/>
+        <location filename="../app.py" line="729"/>
         <source>&amp;Setting</source>
         <translation>&amp;設定</translation>
     </message>
     <message>
-        <location filename="../app.py" line="736"/>
-        <location filename="../app.py" line="736"/>
+        <location filename="../app.py" line="732"/>
+        <location filename="../app.py" line="732"/>
         <source>Open setting dialog.</source>
         <translation>設定を開きます。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="741"/>
-        <location filename="../app.py" line="741"/>
+        <location filename="../app.py" line="737"/>
+        <location filename="../app.py" line="737"/>
         <source>&amp;Export PNG</source>
         <translation>&amp;PNG画像として保存</translation>
     </message>
     <message>
-        <location filename="../app.py" line="744"/>
-        <location filename="../app.py" line="744"/>
+        <location filename="../app.py" line="740"/>
+        <location filename="../app.py" line="740"/>
         <source>Export the canvas image to PNG image.</source>
         <translation>表示されている画像をPNG画像に変換して保存します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="749"/>
-        <location filename="../app.py" line="749"/>
+        <location filename="../app.py" line="745"/>
+        <location filename="../app.py" line="745"/>
         <source>&amp;Delete Pretrained Models</source>
         <translation>&amp;学習済みモデルの削除</translation>
     </message>
     <message>
-        <location filename="../app.py" line="752"/>
-        <location filename="../app.py" line="752"/>
+        <location filename="../app.py" line="748"/>
+        <location filename="../app.py" line="748"/>
         <source>Delete pretrained model.</source>
         <translation>学習済みモデルを削除します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="760"/>
-        <location filename="../app.py" line="760"/>
+        <location filename="../app.py" line="756"/>
+        <location filename="../app.py" line="756"/>
         <source>Edit labels directly</source>
         <translation>ラベルを直接編集します</translation>
     </message>
     <message>
-        <location filename="../app.py" line="770"/>
-        <location filename="../app.py" line="770"/>
+        <location filename="../app.py" line="766"/>
+        <location filename="../app.py" line="766"/>
         <source>&amp;Show Polygon Mode</source>
         <translation>&amp;ポリゴンモードの表示</translation>
     </message>
     <message>
-        <location filename="../app.py" line="782"/>
-        <location filename="../app.py" line="782"/>
+        <location filename="../app.py" line="778"/>
+        <location filename="../app.py" line="778"/>
         <source>&amp;Show Rectangle Mode</source>
         <translation>&amp;矩形モードの表示</translation>
     </message>
     <message>
-        <location filename="../app.py" line="794"/>
-        <location filename="../app.py" line="794"/>
+        <location filename="../app.py" line="790"/>
+        <location filename="../app.py" line="790"/>
         <source>&amp;Show Linestrip Mode</source>
         <translation type="obsolete">&amp;折れ線モードの表示</translation>
     </message>
     <message>
-        <location filename="../app.py" line="806"/>
-        <location filename="../app.py" line="806"/>
+        <location filename="../app.py" line="802"/>
+        <location filename="../app.py" line="802"/>
         <source>&amp;Show Line Mode</source>
         <translation type="obsolete">&amp;線モードの表示</translation>
     </message>
     <message>
-        <location filename="../app.py" line="818"/>
-        <location filename="../app.py" line="818"/>
+        <location filename="../app.py" line="814"/>
+        <location filename="../app.py" line="814"/>
         <source>&amp;Show Point Mode</source>
         <translation type="obsolete">&amp;点モードの表示</translation>
     </message>
     <message>
-        <location filename="../app.py" line="918"/>
-        <location filename="../app.py" line="918"/>
+        <location filename="../app.py" line="914"/>
+        <location filename="../app.py" line="914"/>
         <source>Open &amp;Recent</source>
         <translation>&amp;最近の項目を開く</translation>
     </message>
     <message>
-        <location filename="../app.py" line="921"/>
-        <location filename="../app.py" line="921"/>
+        <location filename="../app.py" line="917"/>
+        <location filename="../app.py" line="917"/>
         <source>&amp;File</source>
         <translation>&amp;ファイル</translation>
     </message>
     <message>
-        <location filename="../app.py" line="922"/>
-        <location filename="../app.py" line="922"/>
+        <location filename="../app.py" line="918"/>
+        <location filename="../app.py" line="918"/>
         <source>&amp;Edit</source>
         <translation>&amp;編集</translation>
     </message>
     <message>
-        <location filename="../app.py" line="923"/>
-        <location filename="../app.py" line="923"/>
+        <location filename="../app.py" line="919"/>
+        <location filename="../app.py" line="919"/>
         <source>&amp;View</source>
         <translation>&amp;表示</translation>
     </message>
     <message>
-        <location filename="../app.py" line="924"/>
-        <location filename="../app.py" line="924"/>
+        <location filename="../app.py" line="920"/>
+        <location filename="../app.py" line="920"/>
         <source>&amp;Tools</source>
         <translation>&amp;ツール</translation>
     </message>
     <message>
-        <location filename="../app.py" line="925"/>
-        <location filename="../app.py" line="925"/>
+        <location filename="../app.py" line="921"/>
+        <location filename="../app.py" line="921"/>
         <source>&amp;Option</source>
         <translation>&amp;オプション</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1036"/>
-        <location filename="../app.py" line="1036"/>
+        <location filename="../app.py" line="1032"/>
+        <location filename="../app.py" line="1032"/>
         <source>{} started.</source>
         <translation>{}を開始しました。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1075"/>
-        <location filename="../app.py" line="1075"/>
+        <location filename="../app.py" line="1071"/>
+        <location filename="../app.py" line="1071"/>
         <source>No GPU is available.&lt;br&gt;Please keep in mind that many times takes in training AI.</source>
         <translation>利用可能なGPUがありません。&lt;br&gt;AIの学習に長い時間を要することに注意してください。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1555"/>
-        <location filename="../app.py" line="1555"/>
+        <location filename="../app.py" line="1551"/>
+        <location filename="../app.py" line="1551"/>
         <source>&lt;p&gt;Error saving label data.&lt;/p&gt;&lt;b&gt;{}&lt;/b&gt;</source>
         <translation>&lt;p&gt;ラベルデータの保存でエラーが発生しました。&lt;/p&gt;&lt;b&gt;{}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1740"/>
-        <location filename="../app.py" line="1740"/>
+        <location filename="../app.py" line="1736"/>
+        <location filename="../app.py" line="1736"/>
         <source>No such file: &lt;b&gt;{}&lt;/b&gt;</source>
         <translation>そのようなファイルはありません。 &lt;b&gt;{}&lt;/b&gt;</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1746"/>
-        <location filename="../app.py" line="1746"/>
+        <location filename="../app.py" line="1742"/>
+        <location filename="../app.py" line="1742"/>
         <source>Loading {}...</source>
         <translation>{}を読み込み中...</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1780"/>
-        <location filename="../app.py" line="1780"/>
+        <location filename="../app.py" line="1776"/>
+        <location filename="../app.py" line="1776"/>
         <source>Loaded {}</source>
         <translation>{}を読み込みました</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1801"/>
-        <location filename="../app.py" line="1801"/>
+        <location filename="../app.py" line="1797"/>
+        <location filename="../app.py" line="1797"/>
         <source>&lt;p&gt;&lt;b&gt;{}&lt;/b&gt;&lt;/p&gt;&lt;p&gt;Make sure &lt;i&gt;{}&lt;/i&gt; is a valid label file.&lt;/p&gt;</source>
         <translation>&lt;p&gt;&lt;b&gt;{}&lt;/b&gt;&lt;/p&gt;&lt;p&gt; &lt;i&gt;{}&lt;/i&gt; は無効なラベルファイルです。&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1827"/>
-        <location filename="../app.py" line="1827"/>
+        <location filename="../app.py" line="1823"/>
+        <location filename="../app.py" line="1823"/>
         <source>&lt;p&gt;Cannot open DICOM file.&lt;/p&gt;&lt;p&gt;Error Details:&lt;br/&gt;{}&lt;/p&gt;</source>
         <translation>&lt;p&gt;DICOMファイルを開けません。&lt;/p&gt;&lt;p&gt;エラー詳細：&lt;br/&gt;{}&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1861"/>
-        <location filename="../app.py" line="1848"/>
-        <location filename="../app.py" line="1861"/>
-        <location filename="../app.py" line="1848"/>
+        <location filename="../app.py" line="1857"/>
+        <location filename="../app.py" line="1844"/>
+        <location filename="../app.py" line="1857"/>
+        <location filename="../app.py" line="1844"/>
         <source>&lt;p&gt;Cannot open image file.&lt;/p&gt;</source>
         <translation>&lt;p&gt;画像の読み込みに失敗しました。&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1855"/>
-        <location filename="../app.py" line="1855"/>
+        <location filename="../app.py" line="1851"/>
+        <location filename="../app.py" line="1851"/>
         <source>&lt;p&gt;Cannot load image file.&lt;/p&gt;</source>
         <translation>&lt;p&gt;画像ファイルを読み込めません。&lt;/p&gt;</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1856"/>
-        <location filename="../app.py" line="1856"/>
+        <location filename="../app.py" line="1852"/>
+        <location filename="../app.py" line="1852"/>
         <source>Error reading {}</source>
         <translation>{}の読み込みエラー</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1950"/>
-        <location filename="../app.py" line="1950"/>
+        <location filename="../app.py" line="1946"/>
+        <location filename="../app.py" line="1946"/>
         <source>Image files ({});;All files (*)</source>
         <translation>画像ファイル ({});;すべてのファイル (*)</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1956"/>
-        <location filename="../app.py" line="1956"/>
+        <location filename="../app.py" line="1952"/>
+        <location filename="../app.py" line="1952"/>
         <source>Choose image file</source>
         <translation>画像ファイルを選択してください</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1974"/>
-        <location filename="../app.py" line="1974"/>
+        <location filename="../app.py" line="1970"/>
+        <location filename="../app.py" line="1970"/>
         <source>The image file was not found.</source>
         <translation>画像ファイルが見つかりませんでした。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="1980"/>
-        <location filename="../app.py" line="1980"/>
+        <location filename="../app.py" line="1976"/>
+        <location filename="../app.py" line="1976"/>
         <source>This file format is not supported.</source>
         <translation>このファイルフォーマットはサポートされていません。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2013"/>
-        <location filename="../app.py" line="2013"/>
+        <location filename="../app.py" line="2009"/>
+        <location filename="../app.py" line="2009"/>
         <source>{} - Choose File</source>
         <translation>{} - ファイルの選択</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2028"/>
-        <location filename="../app.py" line="2014"/>
-        <location filename="../app.py" line="2028"/>
-        <location filename="../app.py" line="2014"/>
+        <location filename="../app.py" line="2024"/>
+        <location filename="../app.py" line="2010"/>
+        <location filename="../app.py" line="2024"/>
+        <location filename="../app.py" line="2010"/>
         <source>Label files (*{})</source>
         <translation>ラベルファイル (*{})</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2027"/>
-        <location filename="../app.py" line="2027"/>
+        <location filename="../app.py" line="2023"/>
+        <location filename="../app.py" line="2023"/>
         <source>Choose File</source>
         <translation>ファイルの選択</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2054"/>
-        <location filename="../app.py" line="2054"/>
+        <location filename="../app.py" line="2050"/>
+        <location filename="../app.py" line="2050"/>
         <source>You are about to permanently delete this label file, proceed anyway?</source>
         <translation>本当にこのラベルファイルを削除してもよろしいですか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2178"/>
-        <location filename="../app.py" line="2168"/>
-        <location filename="../app.py" line="2056"/>
-        <location filename="../app.py" line="2178"/>
-        <location filename="../app.py" line="2168"/>
-        <location filename="../app.py" line="2056"/>
+        <location filename="../app.py" line="2174"/>
+        <location filename="../app.py" line="2164"/>
+        <location filename="../app.py" line="2052"/>
+        <location filename="../app.py" line="2174"/>
+        <location filename="../app.py" line="2164"/>
+        <location filename="../app.py" line="2052"/>
         <source>Attention</source>
         <translation>注意</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2088"/>
-        <location filename="../app.py" line="2088"/>
+        <location filename="../app.py" line="2084"/>
+        <location filename="../app.py" line="2084"/>
         <source>Save annotations to &apos;{}&apos; before closing?</source>
         <translation>&apos;{}&apos; を閉じる前にアノテーションを保存しますか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2091"/>
-        <location filename="../app.py" line="2091"/>
+        <location filename="../app.py" line="2087"/>
+        <location filename="../app.py" line="2087"/>
         <source>Save annotations?</source>
         <translation>アノテーションを保存しますか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2111"/>
-        <location filename="../app.py" line="2111"/>
+        <location filename="../app.py" line="2107"/>
+        <location filename="../app.py" line="2107"/>
         <source>AI thread is running. Terminate?</source>
         <translation>AI処理が実行中です。強制終了しますか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2113"/>
-        <location filename="../app.py" line="2113"/>
+        <location filename="../app.py" line="2109"/>
+        <location filename="../app.py" line="2109"/>
         <source>AI thread is running!</source>
         <translation>AI処理が実行中です！</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2150"/>
-        <location filename="../app.py" line="2132"/>
-        <location filename="../app.py" line="2150"/>
-        <location filename="../app.py" line="2132"/>
+        <location filename="../app.py" line="2146"/>
+        <location filename="../app.py" line="2128"/>
+        <location filename="../app.py" line="2146"/>
+        <location filename="../app.py" line="2128"/>
         <source>Confirmation</source>
         <translation>確認</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2145"/>
-        <location filename="../app.py" line="2145"/>
+        <location filename="../app.py" line="2141"/>
+        <location filename="../app.py" line="2141"/>
         <source>Error</source>
         <translation>エラー</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2163"/>
-        <location filename="../app.py" line="2163"/>
+        <location filename="../app.py" line="2159"/>
+        <location filename="../app.py" line="2159"/>
         <source>You are about to permanently delete &apos;{}&apos; polygon, proceed anyway?</source>
         <translation>&apos;{}&apos;のポリゴンを完全に削除しようとしています。本当によろしいですか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2173"/>
-        <location filename="../app.py" line="2173"/>
+        <location filename="../app.py" line="2169"/>
+        <location filename="../app.py" line="2169"/>
         <source>You are about to permanently delete polygon you selected, proceed anyway?</source>
         <translation>選択したポリゴンを完全に削除しようとしています。よろしいですか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2618"/>
         <location filename="../app.py" line="2614"/>
-        <location filename="../app.py" line="2258"/>
-        <location filename="../app.py" line="2618"/>
+        <location filename="../app.py" line="2610"/>
+        <location filename="../app.py" line="2254"/>
         <location filename="../app.py" line="2614"/>
-        <location filename="../app.py" line="2258"/>
+        <location filename="../app.py" line="2610"/>
+        <location filename="../app.py" line="2254"/>
         <source>{} does not exists.</source>
         <translation>{}は存在しません。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2398"/>
-        <location filename="../app.py" line="2398"/>
+        <location filename="../app.py" line="2394"/>
+        <location filename="../app.py" line="2394"/>
         <source>[Images Total] {}</source>
         <translation>[画像枚数] {}</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2400"/>
-        <location filename="../app.py" line="2400"/>
+        <location filename="../app.py" line="2396"/>
+        <location filename="../app.py" line="2396"/>
         <source>[Annotations Total] {}</source>
         <translation>[アノテーション数] {}</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2529"/>
-        <location filename="../app.py" line="2529"/>
+        <location filename="../app.py" line="2525"/>
+        <location filename="../app.py" line="2525"/>
         <source>AI Model was not found.</source>
         <translation>AIモデルが見つかりませんでした。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2533"/>
-        <location filename="../app.py" line="2533"/>
+        <location filename="../app.py" line="2529"/>
+        <location filename="../app.py" line="2529"/>
         <source>Are you sure you want to overwrite annotations?</source>
         <translation>アノテーションを上書きしてもよろしいですか？</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2539"/>
-        <location filename="../app.py" line="2539"/>
+        <location filename="../app.py" line="2535"/>
+        <location filename="../app.py" line="2535"/>
         <source>AI Testing ...</source>
         <translation>AIテスト実行中…</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2564"/>
-        <location filename="../app.py" line="2564"/>
+        <location filename="../app.py" line="2560"/>
+        <location filename="../app.py" line="2560"/>
         <source>No detections.</source>
         <translation>検出なし。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2597"/>
-        <location filename="../app.py" line="2597"/>
+        <location filename="../app.py" line="2593"/>
+        <location filename="../app.py" line="2593"/>
         <source>Exported annotation files to {}</source>
         <translation>アノテーションファイルを{}に書き出しました</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2606"/>
-        <location filename="../app.py" line="2606"/>
+        <location filename="../app.py" line="2602"/>
+        <location filename="../app.py" line="2602"/>
         <source>Select Pretrained Model Directory</source>
         <translation>学習済みモデル（フォルダ）を選択してください</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2630"/>
-        <location filename="../app.py" line="2630"/>
+        <location filename="../app.py" line="2626"/>
+        <location filename="../app.py" line="2626"/>
         <source>The same model has already exists.</source>
         <translation>同じモデルがすでに存在します。</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2637"/>
-        <location filename="../app.py" line="2637"/>
+        <location filename="../app.py" line="2633"/>
+        <location filename="../app.py" line="2633"/>
         <source>Imported {}</source>
         <translation>{}をインポートしました</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2650"/>
-        <location filename="../app.py" line="2650"/>
+        <location filename="../app.py" line="2646"/>
+        <location filename="../app.py" line="2646"/>
         <source>Select Directory</source>
         <translation>フォルダの選択</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2662"/>
-        <location filename="../app.py" line="2662"/>
+        <location filename="../app.py" line="2658"/>
+        <location filename="../app.py" line="2658"/>
         <source>Select Output Directory</source>
         <translation>保存先のフォルダを選択してください</translation>
     </message>
     <message>
-        <location filename="../app.py" line="2672"/>
-        <location filename="../app.py" line="2672"/>
+        <location filename="../app.py" line="2668"/>
+        <location filename="../app.py" line="2668"/>
         <source>Are you sure you want to delete it?</source>
         <translation>本当に削除しますか？</translation>
+    </message>
+    <message>
+        <source>&amp;Load Image</source>
+        <translation type="vanished">&amp;画像を
+読み込む</translation>
+    </message>
+    <message>
+        <source>Create Polygons</source>
+        <translation type="vanished">ポリゴン</translation>
+    </message>
+    <message>
+        <source>Create Rectangle</source>
+        <translation type="vanished">矩形</translation>
+    </message>
+    <message>
+        <source>Create Linestrip</source>
+        <translation type="vanished">折れ線</translation>
+    </message>
+    <message>
+        <source>Create Line</source>
+        <translation type="vanished">線</translation>
+    </message>
+    <message>
+        <source>Create Point</source>
+        <translation type="vanished">点</translation>
+    </message>
+    <message>
+        <source>Edit Polygons</source>
+        <translation type="vanished">編集</translation>
     </message>
     <message>
         <source>Import</source>

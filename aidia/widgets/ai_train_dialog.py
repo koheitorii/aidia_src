@@ -65,7 +65,7 @@ class ParamComponent(object):
     def __init__(self, type, tag, tips, validate_func=None, items=None):
         super().__init__()
 
-        minimum_width = 250
+        minimum_width = 200
 
         if type == "text":
             self.input_field = QtWidgets.QLineEdit()

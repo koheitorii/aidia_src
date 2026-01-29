@@ -21,7 +21,7 @@ class InferenceModel(object):
         if img is None:
             return None
         img = image.pad_image_to_target_size(img, self.config.INPUT_SIZE)
-        inputs = image.preprocessing(img, is_tensor=True, channel_first=True)
+        inputs = image.preprocessing(img, is_tensor=True, channel_first=True, is_norm=True)
         result = self.session.run([], {self.input_name: inputs})[0][0]
         if save_path is not None:
             if self.config.TASK == SEG:
@@ -31,7 +31,6 @@ class InferenceModel(object):
             image.imwrite(result_img, save_path)
         return result
     
-
 class InferenceModel_Ultralytics(object):
     """Class for handling Ultralytics model inference."""
     def __init__(self, onnx_path: str, config: AIConfig = None):
@@ -58,7 +57,6 @@ class InferenceModel_Ultralytics(object):
             result_img = result.plot(labels=self.config.SHOW_LABELS, conf=self.config.SHOW_CONF, line_width=1)
             image.imwrite(result_img, save_path)
         return result
-
 
 def write_onnx_u(filepath: str):
     """Convert YOLO model to ONNX format."""

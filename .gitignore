@@ -5,6 +5,7 @@ build/
 Output/
 signtool/
 env/
+.env/
 
 pyinstaller*
 .DS_Store

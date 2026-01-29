@@ -440,7 +440,7 @@ class MainWindow(QtWidgets.QMainWindow):
         )
 
         open_action = create_action(
-            self.tr("&Load Image"),
+            self.tr("Load"),
             self.open_file,
             shortcuts["open"],
             QIcon.ThemeIcon.CameraPhoto,
@@ -517,7 +517,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # create actions for drawing shapes
         create_polygon_action = create_action(
-            text=self.tr("Create Polygons"),
+            text=self.tr("Polygons"),
             slot=lambda: self.toggleDrawMode(DrawMode.POLYGON),
             shortcut="N",
             icon="polygon",
@@ -525,7 +525,7 @@ class MainWindow(QtWidgets.QMainWindow):
             checkable=True,
         )
         create_rectangle_action = create_action(
-            self.tr("Create Rectangle"),
+            self.tr("Rectangle"),
             lambda: self.toggleDrawMode(DrawMode.RECTANGLE),
             shortcut="R",
             icon="rect",
@@ -533,7 +533,7 @@ class MainWindow(QtWidgets.QMainWindow):
             checkable=True,
         )
         create_linestrip_action = create_action(
-            self.tr("Create Linestrip"),
+            self.tr("Linestrip"),
             lambda: self.toggleDrawMode(DrawMode.LINESTRIP),
             "S",
             "linestrip",
@@ -541,7 +541,7 @@ class MainWindow(QtWidgets.QMainWindow):
             checkable=True,
         )
         create_line_action = create_action(
-            self.tr("Create Line"),
+            self.tr("Line"),
             lambda: self.toggleDrawMode(DrawMode.LINE),
             "L",
             "line",
@@ -549,7 +549,7 @@ class MainWindow(QtWidgets.QMainWindow):
             checkable=True,
         )
         mode_point_action = create_action(
-            self.tr("Create Point"),
+            self.tr("Point"),
             lambda: self.toggleDrawMode(DrawMode.POINT),
             "P",
             "point",
@@ -557,7 +557,7 @@ class MainWindow(QtWidgets.QMainWindow):
             checkable=True,
         )
         mode_edit_action = create_action(
-            self.tr("Edit Polygons"),
+            self.tr("Edit"),
             lambda: self.toggleDrawMode(DrawMode.EDIT),
             ["E", "ESC"],
             QIcon.ThemeIcon.EditCut,

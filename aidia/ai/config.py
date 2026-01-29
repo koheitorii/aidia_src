@@ -114,6 +114,14 @@ class AIConfig(object):
         if self.RANDOM_NOISE < 0.0 or self.RANDOM_NOISE > 0.5:
             self.RANDOM_NOISE = 0.1
 
+        # Handle old config with INPUT_SIZE_X and INPUT_SIZE_Y
+        input_size_x = getattr(self, "INPUT_SIZE_X", None)
+        input_size_y = getattr(self, "INPUT_SIZE_Y", None)
+        if input_size_x is not None and input_size_y is not None:
+            self.INPUT_SIZE = input_size_x
+            delattr(self, "INPUT_SIZE_X")
+            delattr(self, "INPUT_SIZE_Y")
+
         self.build_params()
 
     def save(self, json_path):
