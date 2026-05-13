@@ -1,15 +1,16 @@
-# Copyright (C) 2025 Kohei Torii.
+# Copyright (C) 2026 Kohei Torii.
 # Copyright (C) 2016 Kentaro Wada.
 # Copyright (C) 2011 Michael Pitidis, Hussein Abdulwahid.
 
 import os
 import logging
 import sys
+import functools
 from qtpy import QtGui
 
 
 __appname__ = "Aidia"
-__version__ = "2.0.4"
+__version__ = "2.1.0"
 
 
 # suppress debug message
@@ -39,6 +40,13 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
 aidia_logger.addHandler(file_handler)
 aidia_logger.addHandler(stream_handler)
+
+# Wrap logger methods with functools.partial to always include exc_info=True
+aidia_logger.debug = functools.partial(aidia_logger.debug, exc_info=True)
+aidia_logger.info = functools.partial(aidia_logger.info, exc_info=True)
+aidia_logger.warning = functools.partial(aidia_logger.warning, exc_info=True)
+aidia_logger.error = functools.partial(aidia_logger.error, exc_info=True)
+aidia_logger.critical = functools.partial(aidia_logger.critical, exc_info=True)
 
 # get image extensions
 EXTS = [".{}".format(fmt.data().decode("ascii").lower()) for fmt in QtGui.QImageReader.supportedImageFormats()]

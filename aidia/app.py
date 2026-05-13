@@ -34,9 +34,8 @@ from aidia.widgets import ZoomWidget
 from aidia.dicom import DICOM, is_dicom
 
 from aidia.widgets.ai_train_dialog import AITrainDialog
-from aidia.widgets.ai_eval_dialog import AIEvalDialog
-from aidia.ai.config import AIConfig
 from aidia.widgets.ai_test_widget import AITestWidget
+from aidia.ai.config import AIConfig
 
 
 NO_DATA, EDIT = 0, 1
@@ -117,8 +116,6 @@ class MainWindow(QtWidgets.QMainWindow):
     
         self.ai_train_dialog = AITrainDialog(parent=self)
         self.ai_train_dialog.aiRunning.connect(self.callback_ai_train_running)
-        self.ai_eval_dialog = AIEvalDialog(parent=self)
-        self.ai_eval_dialog.aiRunning.connect(self.callback_ai_eval_running)
 
         # initialize AI test widget
         self.ai_test_widget = AITestWidget(self)
@@ -275,21 +272,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ai_select.currentTextChanged.connect(_validate)
         self.ai_select.setEnabled(False)
 
-        # self.ai_import = QtWidgets.QPushButton(self)
-        # self.ai_import.setText(self.tr("Import"))
-        # self.ai_import.clicked.connect(self.import_model)
-            
         self.button_ai_train = QtWidgets.QPushButton(self)
         self.button_ai_train.setText("AI")
         self.button_ai_train.setMinimumHeight(50)
         self.button_ai_train.setStyleSheet("QPushButton{ text-align: center; font-weight: bold; font-size: 24px; background-color: #4CAF50; color: white; } QPushButton:hover{ background-color: #45a049; }")
         self.button_ai_train.clicked.connect(self.ai_train_popup)
         self.button_ai_train.setEnabled(True)
-
-        # self.button_ai_eval = QtWidgets.QPushButton(self)
-        # self.button_ai_eval.setText(self.tr("AI Evaluation"))
-        # self.button_ai_eval.clicked.connect(self.ai_eval_popup)
-        # self.button_ai_eval.setEnabled(True)
 
         self.input_is_submode = QtWidgets.QCheckBox(self.tr("from Parent Directory"))
         self.input_is_submode.setToolTip(self.tr("""Find data from the parent directory."""))
@@ -305,15 +293,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ai_dock.setObjectName("AI")
         ai_layout = QtWidgets.QGridLayout()
         ai_layout.setSizeConstraint(QtWidgets.QLayout.SetMinimumSize)
-        # ai_layout.addWidget(self.auto_create_button)
         ai_layout.addWidget(self.button_auto_annotation, 0, 0, 1, 4)
         ai_layout.addWidget(self.ai_select, 1, 0, 1, 4)
-        # ai_layout.addWidget(self.ai_import, 1, 3, 1, 1)
         ai_layout.addWidget(self.button_ai_train, 2, 0, 1, 4)
-        # ai_layout.addWidget(self.button_ai_eval, 2, 2, 1, 2)
         ai_layout.addWidget(self.input_is_submode, 3, 0, 1, 4, alignment=Qt.AlignmentFlag.AlignCenter)
-        # ai_layout.addWidget(self.input_is_submode, 3, 0, 1, 1, Qt.AlignRight)
-        # ai_layout.addWidget(self.tag_is_submode, 3, 1, 1, 3, Qt.AlignLeft)
         ai_widget = QtWidgets.QWidget()
         ai_widget.setLayout(ai_layout)
         self.ai_dock.setWidget(ai_widget)
@@ -1779,7 +1762,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # init AI functions
         self.ai_train_dialog.reset_state()
-        self.ai_eval_dialog.reset_state()
 
         return True
 
@@ -2101,8 +2083,7 @@ class MainWindow(QtWidgets.QMainWindow):
     
     
     def may_continue_ai_running(self):
-        if (self.ai_train_dialog.ai.isRunning() or
-            self.ai_eval_dialog.ai.isRunning()):
+        if self.ai_train_dialog.ai.isRunning():
             mb = QtWidgets.QMessageBox
             msg = self.tr("AI thread is running. Terminate?")
             answer = mb.question(self,
@@ -2113,8 +2094,6 @@ class MainWindow(QtWidgets.QMainWindow):
                 # terminate processing
                 if self.ai_train_dialog.ai.isRunning():
                     self.ai_train_dialog.ai.terminate()  # TODO:need more secure process
-                if self.ai_eval_dialog.ai.isRunning():
-                    self.ai_eval_dialog.ai.terminate()
                 return True
             else:
                 return False
@@ -2478,14 +2457,6 @@ class MainWindow(QtWidgets.QMainWindow):
         #     labels.extend(_labels)
         # labels = sorted(list(set(labels)))
         # self.reset_cursor()
-
-    def ai_eval_popup(self):
-        if self.is_submode:
-            parent_dir = utils.get_parent_path(self.work_dir)
-            self.ai_eval_dialog.popup(parent_dir)
-        else:
-            self.ai_eval_dialog.popup(self.work_dir)
-
 
     def update_ai_select(self):
         self.ai_select.clear()

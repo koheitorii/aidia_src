@@ -5,9 +5,8 @@ import glob
 import cv2
 import yaml
 
-from aidia import CLS, DET, SEG, EXTS, LOCAL_DATA_DIR_NAME
+from aidia import CLS, DET, SEG, EXTS
 from aidia import DrawMode, ModelTypes
-from aidia import aidia_logger
 from aidia import dicom
 from aidia import image
 from aidia import utils
@@ -90,7 +89,7 @@ class Dataset(object):
 
     def prepare(self):
         if not len(self.image_info):
-            raise errors.DataLoadingError('image infomation is empty')
+            raise errors.DataLoadingError
         self.num_images = len(self.image_info)
         self.num_classes = len(self.class_info)
         self.image_ids = np.arange(self.num_images)
@@ -135,24 +134,18 @@ class Dataset(object):
                     for key, value in dic.items():
                         setattr(self, key, value)
             except:
-                raise errors.DataLoadingError(f"Failed to load dataset.json: {e}")
+                raise errors.DataLoadingError
 
-    def save(self, json_path):
-        # p = os.path.join(self.config.log_dir, "dataset.json")
+    def save(self):
+        json_path = os.path.join(self.config.log_dir, 'dataset.json')
         save_dict = self.__dict__.copy()
         save_dict.pop("config")
-        save_dict.pop("image_info")
-        save_dict.pop("image_ids")
-        save_dict.pop("train_ids")
-        save_dict.pop("val_ids")
-        save_dict.pop("test_ids")
+        save_dict['path_dataset'] = self.config.dataset_dir
         for k, v in save_dict.items():
             if isinstance(v, np.ndarray):
                 save_dict[k] = v.tolist()
-        with open(json_path, mode='w', encoding="utf-8") as f:
+        with open(json_path, mode='w', encoding="utf-8") as f: 
             json.dump(save_dict, f, indent=2, ensure_ascii=False)
-        
-        #TODO: add functions of saving only dataset information
 
     def load_classes(self):
         """Load class information from config."""
@@ -167,7 +160,7 @@ class Dataset(object):
             dir_list = glob.glob(os.path.join(self.config.dataset_dir, "**"))
             json_paths = []
             for subdir_path in dir_list:
-                if utils.get_basename(subdir_path) == LOCAL_DATA_DIR_NAME:  # TODO
+                if utils.get_basename(subdir_path) == 'aidia_data':
                     continue
                 subdir_jsons = glob.glob(os.path.join(subdir_path, "*.json"))
                 for p in subdir_jsons:
@@ -257,7 +250,7 @@ class Dataset(object):
             train_subdir_ids = np.array_split(subdir_ids, self.config.N_SPLITS)
             test_subdir_ids = train_subdir_ids.pop(-i)
             train_subdir_ids = np.concatenate(train_subdir_ids)
-            split_pos = int(train_subdir_ids.size * 0.95)
+            split_pos = int(train_subdir_ids.size * 0.8)
             train_subdir_ids, val_subdir_ids = np.split(train_subdir_ids, [split_pos])
 
             self.num_subdir = len(self.subdir_ids)

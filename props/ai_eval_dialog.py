@@ -1,5 +1,6 @@
 
 import os
+import json
 import cv2
 import glob
 import numpy as np
@@ -10,7 +11,7 @@ from qtpy import QtCore, QtWidgets, QtGui
 from aidia import qt
 from aidia import utils
 from aidia import aidia_logger
-from aidia import HOME_DIR, CLS, DET, SEG, LOCAL_DATA_DIR_NAME
+from aidia import HOME_DIR, CLS, DET, SEG, LOCAL_DATA_DIR_NAME, DATASET_JSON
 from aidia.ai.config import AIConfig
 from aidia.ai.dataset import Dataset
 from aidia.ai.task.detection import DetectionModel
@@ -657,32 +658,21 @@ class AIEvalThread(QtCore.QThread):
             model.load_dataset()
         except Exception as e:
             self.notifyMessage.emit(self.tr("Failed to load dataset."))
-            aidia_logger.error(e, exc_info=True)
+            aidia_logger.error(e)
             return
         
         if isinstance(model.dataset, Dataset):
-            _info_dict = {
-                "dataset_num": model.dataset.dataset_num,
-                "num_images": model.dataset.num_images,
-                "num_shapes": model.dataset.num_shapes,
-                "num_classes": model.dataset.num_classes,
-                "num_per_class": model.dataset.num_per_class,
-                "num_train": model.dataset.num_train,
-                "num_val": model.dataset.num_val,
-                "num_test": model.dataset.num_test,
-                "class_ids": model.dataset.class_ids,
-                "class_names": model.dataset.class_names,
-                "train_per_class": model.dataset.train_per_class,
-                "val_per_class": model.dataset.val_per_class,
-                "test_per_class": model.dataset.test_per_class,
-                "train_steps": model.dataset.train_steps,
-                "val_steps": model.dataset.val_steps
-            }
-            if self.config.SUBMODE and self.config.DIR_SPLIT:
-                _info_dict["num_subdir"] = model.dataset.num_subdir
-                _info_dict["num_train_subdir"] = model.dataset.num_train_subdir
-                _info_dict["num_val_subdir"] = model.dataset.num_val_subdir
-                _info_dict["num_test_subdir"] = model.dataset.num_test_subdir
+            # Try to load dataset info from dataset.json
+            dataset_json_path = os.path.join(self.config.log_dir, DATASET_JSON)
+            _info_dict = None
+            
+            if os.path.exists(dataset_json_path):
+                try:
+                    with open(dataset_json_path, encoding="utf-8") as f:
+                        _info_dict = json.load(f)
+                except Exception as e:
+                    aidia_logger.warning(f"Failed to load dataset.json: {e}")
+                    _info_dict = None
             self.datasetInfo.emit(_info_dict)
 
         self.notifyMessage.emit(self.tr("Model building..."))
@@ -690,7 +680,7 @@ class AIEvalThread(QtCore.QThread):
             model.build_model(mode="test", weights_path=self.weights_path)
         except Exception as e:
             self.notifyMessage.emit(self.tr("Failed to build the model."))
-            aidia_logger.error(e, exc_info=True)
+            aidia_logger.error(e)
             return
 
         self.notifyMessage.emit(self.tr("Generate test result images..."))
@@ -755,7 +745,7 @@ class AIEvalThread(QtCore.QThread):
             results = model.evaluate(cb_widget=self)
         except Exception as e:
             self.notifyMessage.emit(self.tr("Failed to evaluate."))
-            aidia_logger.error(e, exc_info=True)
+            aidia_logger.error(e)
             return
         self.resultsList.emit(results)
 

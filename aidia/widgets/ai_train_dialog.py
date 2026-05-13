@@ -3,6 +3,7 @@ import shutil
 import time
 import random
 import glob
+import json
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
@@ -158,16 +159,9 @@ class AITrainDialog(QtWidgets.QDialog):
         self.left_row_count += 1
         self.right_row_count += 1
 
-        self._dataset_layout = QtWidgets.QVBoxLayout()
-        self._dataset_widget = QtWidgets.QWidget()
-
-        title_dataset = qt.head_text(self.tr("Dataset Information"))
-        title_dataset.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
-        title_dataset.setMaximumHeight(30)
-        self._dataset_layout.addWidget(title_dataset)
-
         self._augment_layout = QtWidgets.QVBoxLayout()
         self._augment_widget = QtWidgets.QWidget()
+        self._augment_widget.setMaximumWidth(300)
 
         title_augment = qt.head_text(self.tr("Data Augmentation"))
         title_augment.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
@@ -177,7 +171,7 @@ class AITrainDialog(QtWidgets.QDialog):
         # utility layout
         self._utility_layout = QtWidgets.QVBoxLayout()
         self._utility_widget = QtWidgets.QWidget()
-        self._utility_widget.setFixedHeight(350)
+        self._utility_widget.setMaximumWidth(300)
 
         title_utility = qt.head_text(self.tr("Utilities"))
         title_utility.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
@@ -620,13 +614,13 @@ The labels are separated with line breaks."""),
         self._layout.addWidget(self.button_train, row_count, 1, 1, 4)
         row_count += 1
 
-        # figure area
+        # Loss graph
         self.image_widget_loss = qt.ImageWidget(self)
         self.image_widget_loss.setMinimumHeight(800)
         self._layout.addWidget(self.image_widget_loss, row_count, 1, 1, 4)
         row_count += 1
 
-        # progress bar
+        # Progress bar
         self.progress = QtWidgets.QProgressBar(self)
         self.progress.setStyleSheet("""QProgressBar {
     border: 2px solid grey;
@@ -640,34 +634,68 @@ QProgressBar::chunk {
         self._layout.addWidget(self.progress, row_count, 1, 1, 4)
         row_count += 1
 
-        # status
+        # Status text
         self.text_status = QtWidgets.QLabel()
         self.text_status.setMaximumHeight(32)
         self._layout.addWidget(self.text_status, row_count, 1, 1, 4)
 
-        # stop button
-        # self.button_stop = QtWidgets.QPushButton(self.tr("Terminate"))
-        # self.button_stop.clicked.connect(self.stop_training)
-        # self._layout.addWidget(self.button_stop, row, 4, 1, 1, Qt.AlignRight)
-        # row += 1
+        ### Dataset information ###
+        self._dataset_layout = QtWidgets.QVBoxLayout()
+        self._dataset_widget = QtWidgets.QWidget()
+        self._dataset_widget.setMaximumWidth(300)
 
-        # dataset information
+        title_dataset = qt.head_text(self.tr("Dataset Information"))
+        title_dataset.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        title_dataset.setMaximumHeight(30)
+        self._dataset_layout.addWidget(title_dataset)
+
+        # Dataset information
         self.text_dataset = QtWidgets.QLabel()
         self.text_dataset.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
+        self.text_dataset.setTextFormat(Qt.TextFormat.RichText)
+        self.text_dataset.setWordWrap(True)
+        self.text_dataset.setStyleSheet("QLabel { font-size: 12px; line-height: 150%; }")
         self._dataset_layout.addWidget(self.text_dataset)
 
+        # Class information table
+        self.table_classes = QtWidgets.QTableWidget()
+        self.table_classes.setColumnCount(6)
+        self.table_classes.setHorizontalHeaderLabels([
+            "ID", 
+            self.tr("Label"), 
+            self.tr("All"), 
+            self.tr("Train"), 
+            self.tr("Val"), 
+            self.tr("Test")
+        ])
+        self.table_classes.horizontalHeader().setStretchLastSection(False)
+        self.table_classes.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self.table_classes.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeMode.Stretch)
+        self.table_classes.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self.table_classes.horizontalHeader().setSectionResizeMode(3, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self.table_classes.horizontalHeader().setSectionResizeMode(4, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self.table_classes.horizontalHeader().setSectionResizeMode(5, QtWidgets.QHeaderView.ResizeMode.ResizeToContents)
+        self.table_classes.verticalHeader().setVisible(False)
+        self.table_classes.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table_classes.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
+        self.table_classes.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
+        self.table_classes.setAlternatingRowColors(True)
+        self.table_classes.setMaximumHeight(200)
+        self._dataset_layout.addWidget(self.table_classes)
+
         self.image_widget_pie = qt.ImageWidget(self)
+        self.image_widget_pie.setMinimumHeight(300)
         self._dataset_layout.addWidget(self.image_widget_pie)
 
         ### set layouts ###
         self._dataset_widget.setLayout(self._dataset_layout)
-        self._layout.addWidget(self._dataset_widget, 0, 0, row_count + 1, 1)
+        self._layout.addWidget(self._dataset_widget, 0, 0, row_count + 1, 1, Qt.AlignmentFlag.AlignTop)
 
         self._augment_widget.setLayout(self._augment_layout)
-        self._layout.addWidget(self._augment_widget, 0, 5, row_count - 2, 1)
+        self._layout.addWidget(self._augment_widget, 0, 5, row_count - 2, 1, Qt.AlignmentFlag.AlignTop)
 
         self._utility_widget.setLayout(self._utility_layout)
-        self._layout.addWidget(self._utility_widget, row_count - 2, 5, 3, 1)
+        self._layout.addWidget(self._utility_widget, row_count - 2, 5, 3, 1, Qt.AlignmentFlag.AlignBottom)
         
         self.setLayout(self._layout)
 
@@ -686,7 +714,6 @@ QProgressBar::chunk {
     def popup(self, dataset_dir, is_submode=False, data_labels=None):
         """Popup train window and set config parameters to input fields."""
         self.dataset_dir = dataset_dir
-        self.setWindowTitle(self.tr("AI Training - {}").format(dataset_dir))
 
         # create data directory
         data_dirpath = utils.get_dirpath_with_mkdir(dataset_dir, LOCAL_DATA_DIR_NAME)
@@ -698,7 +725,7 @@ QProgressBar::chunk {
             try:
                 self.config.load(config_path)
             except Exception as e:
-                aidia_logger.error(e, exc_info=True)
+                aidia_logger.error(e)
 
         self.config.SUBMODE = is_submode
         if is_submode:
@@ -706,7 +733,7 @@ QProgressBar::chunk {
         else:
             self.label_current_mode.setText(self.tr('Search data of <span style="color: green;"><b>CURRENT</b></span> directory'))
 
-        # basic params
+        # Basic params
         self.param_task.input_field.setCurrentIndex(TASK_LIST.index(self.config.TASK))
         self.enable_params_by_task(self.config.TASK)
         self.param_model.input_field.setCurrentText(self.config.MODEL)
@@ -745,8 +772,17 @@ QProgressBar::chunk {
         self.update_augment_availability()
         self.update_logdir_list()
 
+        # Load dataset information
+        dataset_json_path = os.path.join(self.config.log_dir, 'dataset.json')
+        if os.path.exists(dataset_json_path):
+            try:
+                dataset_info = json.load(open(dataset_json_path, "r"))
+                self.update_dataset(dataset_info)
+            except Exception as e:
+                aidia_logger.error(e)
+
         self.exec_()
-        if os.path.exists(os.path.join(dataset_dir, LOCAL_DATA_DIR_NAME)):
+        if os.path.exists(os.path.join(dataset_dir, 'aidia_data')):
             self.config.save(config_path)
     
     ### Callbacks ###
@@ -793,7 +829,7 @@ QProgressBar::chunk {
                 model_path = os.path.join(self.config.log_dir, self.config.MODEL, "weights", "best.pt")
                 onnx_path = write_onnx_u(model_path)
             except Exception as e:
-                aidia_logger.error(e, exc_info=True)
+                aidia_logger.error(e)
                 self.text_status.setText(self.tr("Failed to convert to ONNX model."))
             else:
                 shutil.move(onnx_path, os.path.join(self.config.log_dir, "model.onnx"))
@@ -1003,62 +1039,109 @@ QProgressBar::chunk {
 
     def update_figure(self):
         """Update the figure for loss."""
+
+    def update_dataset(self, dataset_info: dict):
+        # Get dataset informationfrom the dictionary
+        dataset_num = dataset_info["dataset_num"]
+        num_images = dataset_info["num_images"]
+        num_shapes = dataset_info["num_shapes"]
+        num_classes = dataset_info["num_classes"]
+        num_train = dataset_info["num_train"]
+        num_val = dataset_info["num_val"]
+        num_test = dataset_info["num_test"]
+        class_names = dataset_info["class_names"]
+        num_per_class = dataset_info["num_per_class"]
+        train_per_class = dataset_info["train_per_class"]
+        val_per_class = dataset_info["val_per_class"]
+        test_per_class = dataset_info["test_per_class"]
+
+        # Set train and validation steps for progress tracking
+        self.train_steps = dataset_info["train_steps"]
+        self.val_steps = dataset_info["val_steps"]
+
+        # Build HTML formatted text with better readability
+        html = []
+        html.append("<html><body style='font-family: sans-serif;'>")
         
-
-    def update_dataset(self, value):
-        """Update dataset information."""
-        dataset_num = value["dataset_num"]
-        num_images = value["num_images"]
-        num_shapes = value["num_shapes"]
-        num_classes = value["num_classes"]
-        num_train = value["num_train"]
-        num_val = value["num_val"]
-        num_test = value["num_test"]
-        class_names = value["class_names"]
-        num_per_class = value["num_per_class"]
-        train_per_class = value["train_per_class"]
-        val_per_class = value["val_per_class"]
-        test_per_class = value["test_per_class"]
-        self.train_steps = value["train_steps"]
-        self.val_steps = value["val_steps"]
-
-        labels_info = [self.tr("[*] labels (all|train|val|test)")]
-        for i in range(num_classes):
-            name = class_names[i]
-            n = num_per_class[i]
-            n_train = train_per_class[i]
-            n_val = val_per_class[i]
-            n_test = test_per_class[i]
-            labels_info.append(f"[{i}] {name} ({n} | {n_train} | {n_val} | {n_test})")
-        labels_info = "\n".join(labels_info)
-
-        text = []
-        text.append(self.tr("Dataset Number: {}").format(dataset_num))
-        text.append(self.tr("Number of Data: {}").format(num_images))
-        text.append(self.tr("Number of Train: {}").format(num_train))
-        text.append(self.tr("Number of Validation: {}").format(num_val))
-        text.append(self.tr("Number of Test: {}").format(num_test))
+        # Dataset overview section
+        html.append("<div style='margin-bottom: 15px;'>")
+        html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Dataset Number')}:</b> <span style='color: #3498db; font-weight: bold;'>{dataset_num}</span></p>")
+        html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Number of Data')}:</b> <span style='color: #2ecc71; font-weight: bold;'>{num_images}</span></p>")
+        # html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Number of Shapes')}:</b> <span style='color: #2ecc71; font-weight: bold;'>{num_shapes}</span></p>")
+        html.append("</div>")
+        
+        # Data split section
+        html.append("<div style='margin-bottom: 15px; padding: 8px; background-color: rgba(52, 152, 219, 0.1); border-left: 3px solid #3498db;'>")
+        html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Number of Train')}:</b> <span style='color: #e74c3c; font-weight: bold;'>{num_train}</span></p>")
+        html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Number of Validation')}:</b> <span style='color: #f39c12; font-weight: bold;'>{num_val}</span></p>")
+        html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Number of Test')}:</b> <span style='color: #9b59b6; font-weight: bold;'>{num_test}</span></p>")
+        
         if self.config.SUBMODE and self.config.DIR_SPLIT:
-            text.append(self.tr("Number of Train Directories: {}").format(value["num_train_subdir"]))
-            text.append(self.tr("Number of Validation Directories: {}").format(value["num_val_subdir"]))
-            text.append(self.tr("Number of Test Directories: {}").format(value["num_test_subdir"]))
-        text.append(self.tr("Train Steps: {}").format(self.train_steps))
-        text.append(self.tr("Validation Steps: {}").format(self.val_steps))
-        text.append(self.tr("Number of Shapes: {}").format(num_shapes))
-        text.append(self.tr("Class Information:\n{}").format(labels_info))
-        text = "\n".join(text)
+            html.append(f"<p style='margin: 3px 0; margin-top: 8px;'><i>{self.tr('Number of Train Directories')}:</i> {dataset_info['num_train_subdir']}</p>")
+            html.append(f"<p style='margin: 3px 0;'><i>{self.tr('Number of Validation Directories')}:</i> {dataset_info['num_val_subdir']}</p>")
+            html.append(f"<p style='margin: 3px 0;'><i>{self.tr('Number of Test Directories')}:</i> {dataset_info['num_test_subdir']}</p>")
+        html.append("</div>")
+        
+        # Training steps section
+        html.append("<div style='margin-bottom: 15px;'>")
+        html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Train Steps')}:</b> {self.train_steps}</p>")
+        html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Validation Steps')}:</b> {self.val_steps}</p>")
+        html.append("</div>")
+        
+        html.append("</body></html>")
+        
+        text = "".join(html)
         self.text_dataset.setText(text)
 
-        # update label distribution
+        # Update class information table
+        self.table_classes.setRowCount(num_classes)
+        for i in range(num_classes):
+            # ID column
+            id_item = QtWidgets.QTableWidgetItem(f"{i}")
+            id_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            id_item.setFont(QtGui.QFont("", -1, QtGui.QFont.Weight.Bold))
+            self.table_classes.setItem(i, 0, id_item)
+            
+            # Label column
+            label_item = QtWidgets.QTableWidgetItem(class_names[i])
+            label_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.table_classes.setItem(i, 1, label_item)
+            
+            # All column
+            all_item = QtWidgets.QTableWidgetItem(str(num_per_class[i]))
+            all_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            all_item.setFont(QtGui.QFont("", -1, QtGui.QFont.Weight.Bold))
+            self.table_classes.setItem(i, 2, all_item)
+            
+            # Train column
+            train_item = QtWidgets.QTableWidgetItem(str(train_per_class[i]))
+            train_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            train_item.setForeground(QtGui.QColor("#e74c3c"))
+            self.table_classes.setItem(i, 3, train_item)
+            
+            # Val column
+            val_item = QtWidgets.QTableWidgetItem(str(val_per_class[i]))
+            val_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            val_item.setForeground(QtGui.QColor("#f39c12"))
+            self.table_classes.setItem(i, 4, val_item)
+            
+            # Test column
+            test_item = QtWidgets.QTableWidgetItem(str(test_per_class[i]))
+            test_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            test_item.setForeground(QtGui.QColor("#9b59b6"))
+            self.table_classes.setItem(i, 5, test_item)
+
+        # Update label distribution
         self.ax_pie.clear()
-        self.ax_pie.set_title('Label Distribusion', fontsize=20, color=qt.LabelColor.get_color("default"))
+        self.ax_pie.set_title('Label Distribusion', fontsize=24, color=qt.LabelColor.get_color("default"))
         self.ax_pie.pie(num_per_class,
                     labels=class_names,
                     #  autopct="%1.1f%%",
                     wedgeprops={'linewidth': 1, 'edgecolor': qt.LabelColor.get_color("default")},
                     textprops={'color': qt.LabelColor.get_color("default"),
-                               'fontsize': 16})
+                               'fontsize': 20})
         self.image_widget_pie.loadPixmap(fig2img(self.fig_pie, add_alpha=True))
+        self.image_widget_pie.setMinimumHeight(300)
 
     def update_status(self, value):
         """Update status text."""
@@ -1204,6 +1287,8 @@ QProgressBar::chunk {
         self.val_loss = []
         self.progress.setValue(0)
         self.text_dataset.clear()
+        self.table_classes.clearContents()
+        self.table_classes.setRowCount(0)
         self.image_widget_loss.clear()
         self.image_widget_pie.clear()
 
@@ -1507,7 +1592,6 @@ QProgressBar::chunk {
 class AITrainThread(QtCore.QThread):
     """Thread for AI training process."""
 
-    # fitStarted = QtCore.Signal(bool)
     epochLogList = QtCore.Signal(dict)
     batchLogList = QtCore.Signal(dict)
     notifyMessage = QtCore.Signal(str)
@@ -1543,67 +1627,52 @@ class AITrainThread(QtCore.QThread):
             self.errorMessage.emit(self.tr("Model error. Terminated."))
             return
         
+        # Build dataset
         self.notifyMessage.emit(self.tr("Data loading..."))
         try:
             model.build_dataset()
+            model.dataset.save()
         except errors.DataLoadingError as e:
             self.errorMessage.emit(self.tr("Failed to load data.<br>Please check the settings or data."))
-            aidia_logger.error(e, exc_info=True)
+            aidia_logger.error(e)
             return
         except errors.DataFewError as e:
             self.errorMessage.emit(self.tr("Failed to split data because of the few data."))
-            aidia_logger.error(e, exc_info=True)
+            aidia_logger.error(e)
             return
         except errors.BatchsizeError as e:
             self.errorMessage.emit(self.tr("Please reduce the batch size."))
-            aidia_logger.error(e, exc_info=True)
+            aidia_logger.error(e)
             return
         except Exception as e:
             self.errorMessage.emit(self.tr('Unexpected error.<br>{}'.format(e)))
-            aidia_logger.error(e, exc_info=True)
+            aidia_logger.error(e)
             return
 
         if isinstance(model.dataset, Dataset):
-            _info_dict = {
-                "dataset_num": model.dataset.dataset_num,
-                "num_images": model.dataset.num_images,
-                "num_shapes": model.dataset.num_shapes,
-                "num_classes": model.dataset.num_classes,
-                "num_per_class": model.dataset.num_per_class,
-                "num_train": model.dataset.num_train,
-                "num_val": model.dataset.num_val,
-                "num_test": model.dataset.num_test,
-                "class_ids": model.dataset.class_ids,
-                "class_names": model.dataset.class_names,
-                "train_per_class": model.dataset.train_per_class,
-                "val_per_class": model.dataset.val_per_class,
-                "test_per_class": model.dataset.test_per_class,
-                "train_steps": model.dataset.train_steps,
-                "val_steps": model.dataset.val_steps
-            }
-            if self.config.SUBMODE and self.config.DIR_SPLIT:
-                _info_dict["num_subdir"] = model.dataset.num_subdir
-                _info_dict["num_train_subdir"] = model.dataset.num_train_subdir
-                _info_dict["num_val_subdir"] = model.dataset.num_val_subdir
-                _info_dict["num_test_subdir"] = model.dataset.num_test_subdir
+            dataset_json_path = os.path.join(self.config.log_dir, DATASET_JSON)
+            _info_dict = None
+            
+            if os.path.exists(dataset_json_path):
+                try:
+                    with open(dataset_json_path, encoding="utf-8") as f:
+                        _info_dict = json.load(f)
+                except Exception as e:
+                    aidia_logger.warning(f"Failed to load dataset.json: {e}")
+                    _info_dict = None
             self.datasetInfo.emit(_info_dict)
 
+        # Build model
         self.notifyMessage.emit(self.tr("Model building..."))
-        # if self.config.gpu_num > 1 and self.config.USE_MULTI_GPUS: # apply multiple GPU support
-        #     strategy = tf.distribute.MirroredStrategy(cross_device_ops=tf.distribute.ReductionToOneDevice())
-        #     with strategy.scope():
-        #         model.build_model(mode="train")
-        # else:
-        #     model.build_model(mode="train")
         try:
             model.build_model(mode="train")
         except torch.OutOfMemoryError as e:
             self.errorMessage.emit(self.tr("Out of memory error.<br>Please reduce the batch size or use a smaller model."))
-            aidia_logger.error(e, exc_info=True)
+            aidia_logger.error(e)
             return
         except Exception as e:
             self.errorMessage.emit(self.tr("Failed to build model."))
-            aidia_logger.error(e, exc_info=True)
+            aidia_logger.error(e)
             return
 
         self.notifyMessage.emit(self.tr("Preparing..."))
@@ -1680,15 +1749,13 @@ class AITrainThread(QtCore.QThread):
             model.train(callbacks)
         except Exception as e:
             self.errorMessage.emit(self.tr("Failed to train."))
-            aidia_logger.error(e, exc_info=True)
+            aidia_logger.error(e)
             return
         
         # save all training setting and used data
         if isinstance(model.dataset, Dataset):
             config_path = os.path.join(self.config.dataset_dir, LOCAL_DATA_DIR_NAME, "config.json")
             shutil.copy(config_path, self.config.log_dir)
-            p = os.path.join(self.config.log_dir, "dataset.json")
-            model.dataset.save(p)
 
         ### Evaluation ###
         if self.config.is_ultralytics():
@@ -1722,7 +1789,7 @@ class AITrainThread(QtCore.QThread):
                     result_img = model.predict_by_id(image_id)
                 except FileNotFoundError as e:
                     self.notifyMessage.emit(self.tr("Error: {} was not found.").format(img_path))
-                    aidia_logger.error(e, exc_info=True)
+                    aidia_logger.error(e)
                     return
                 image.imwrite(result_img, save_path)
         
@@ -1731,7 +1798,7 @@ class AITrainThread(QtCore.QThread):
                 model.evaluate()
             except Exception as e:
                 self.notifyMessage.emit(self.tr("Failed to evaluate."))
-                aidia_logger.error(e, exc_info=True)
+                aidia_logger.error(e)
                 return
 
             self.notifyMessage.emit(self.tr("Convert model to ONNX..."))

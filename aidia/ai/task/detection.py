@@ -21,9 +21,6 @@ class DetectionModel(Model):
         self.dataset = Dataset(self.config)
         self.dataset.write_dataset_for_yolo()
 
-    def load_dataset(self):
-        self.dataset = Dataset(self.config, load=True)
-    
     def build_model(self, mode, weights_path=None):
         """Build YOLO model."""
         assert mode in ["train", "test"]

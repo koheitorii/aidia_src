@@ -36,9 +36,6 @@ class SegmentationModel(Model):
     def build_dataset(self):
         self.dataset = Dataset(self.config)
     
-    def load_dataset(self):
-        self.dataset = Dataset(self.config, load=True)
-    
     def build_model(self, mode, weights_path=None):
         assert mode in ["train", "test"]
 
