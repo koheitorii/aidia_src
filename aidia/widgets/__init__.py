@@ -4,7 +4,6 @@ from .canvas import Canvas
 
 from .label_widget import LabelWidget
 from .label_setting_dialog import LabelSettingDialog
-from .image_widget import ImageWidget
 
 from .setting_dialog import SettingDialog
 from .copyright_dialog import CopyrightDialog

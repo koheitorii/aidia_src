@@ -17,13 +17,14 @@ np.set_printoptions(suppress=True)
 
 from aidia import image
 from aidia import utils
+from aidia.ai.task.base import Model
 from aidia.ai.dataset import Dataset
 from aidia.ai.config import AIConfig
 from aidia.ai.models.unet import UNet
 from aidia.ai import metrics
 
 
-class SegmentationModel(object):
+class SegmentationModel(Model):
     def __init__(self, config:AIConfig) -> None:
         self.config = config
         self.dataset = None

@@ -141,6 +141,11 @@ class Dataset(object):
         # p = os.path.join(self.config.log_dir, "dataset.json")
         save_dict = self.__dict__.copy()
         save_dict.pop("config")
+        save_dict.pop("image_info")
+        save_dict.pop("image_ids")
+        save_dict.pop("train_ids")
+        save_dict.pop("val_ids")
+        save_dict.pop("test_ids")
         for k, v in save_dict.items():
             if isinstance(v, np.ndarray):
                 save_dict[k] = v.tolist()

@@ -13,11 +13,10 @@ from aidia import aidia_logger
 from aidia import HOME_DIR, CLS, DET, SEG, LOCAL_DATA_DIR_NAME
 from aidia.ai.config import AIConfig
 from aidia.ai.dataset import Dataset
-from aidia.ai.det import DetectionModel
+from aidia.ai.task.detection import DetectionModel
 # from aidia.ai.models.yolov4.yolov4_utils import postprocess_boxes, nms
 # from aidia.ai.models.yolov4.yolov4_config import YOLO_Config
-from aidia.ai.seg import SegmentationModel
-from aidia.widgets import ImageWidget
+from aidia.ai.task.segmentation import SegmentationModel
 from aidia.widgets import CopyDataDialog
 from aidia import image
 
@@ -135,7 +134,7 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         # figure area
         _bg = np.zeros((200, 300, 3), np.uint8)
         _bg.fill(255)
-        self.image_widget = ImageWidget(self, _bg)
+        self.image_widget = qt.ImageWidget(self, _bg)
         self._layout.addWidget(self.image_widget, row, 1, 1, 4)
         row += 1
 
@@ -163,15 +162,15 @@ If you did not select it, you can set "last_model.h5" or "****.h5" saved at the 
         self.text_dataset.setAlignment(QtCore.Qt.AlignLeading)
         self._dataset_layout.addWidget(self.text_dataset)
 
-        self.image_widget2 = ImageWidget(self, self._plt2img())
+        self.image_widget2 = qt.ImageWidget(self, self._plt2img())
         self._dataset_layout.addWidget(self.image_widget2)
 
         ### add preditcs images ###
-        self.iw1 = ImageWidget(self)
-        self.iw2 = ImageWidget(self)
-        self.iw3 = ImageWidget(self)
-        self.iw4 = ImageWidget(self)
-        self.iw5 = ImageWidget(self)
+        self.iw1 = qt.ImageWidget(self)
+        self.iw2 = qt.ImageWidget(self)
+        self.iw3 = qt.ImageWidget(self)
+        self.iw4 = qt.ImageWidget(self)
+        self.iw5 = qt.ImageWidget(self)
 
         self._images_layout.addWidget(self.iw1)
         self._images_layout.addWidget(self.iw2)

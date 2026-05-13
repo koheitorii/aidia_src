@@ -21,7 +21,6 @@ def mask_iou(pred, gt):
         ious.append(best_iou)
     return ious
 
-
 def calc_iou(box1, box2):
     inter_x1 = max(box1[0], box2[0])
     inter_y1 = max(box1[1], box2[1])
@@ -35,7 +34,6 @@ def calc_iou(box1, box2):
 
     iou = inter_area / union_area
     return iou
-
 
 def eval_on_iou(y_true, y_pred):
     tp = 0
@@ -57,7 +55,6 @@ def eval_on_iou(y_true, y_pred):
     f1 = (2 * precision * recall) / (precision + recall + 1e-12)
     return [precision, recall, f1]
 
-
 def common_metrics(tp, tn, fp, fn):
     acc = (tp + tn) / (tp + tn + fp + fn + 1e-12)
     precision = tp / (tp + fp + 1e-12)
@@ -65,7 +62,6 @@ def common_metrics(tp, tn, fp, fn):
     specificity = tn / (tn + fp + 1e-12)
     f1 = (2 * precision * recall) / (precision + recall + 1e-12)
     return [acc, precision, recall, specificity, f1]
-
 
 def mIoU(c_matrix) -> float:
     intersection = np.diag(c_matrix)
@@ -315,11 +311,55 @@ class MultiMetrics(nn.Module):
         return [precision, recall, specificity, tpr, fpr, f1]
     
     def reset_states(self):
-        """メトリクスの状態をリセットする"""
         self.true_positives.data.zero_()
         self.true_negatives.data.zero_()
         self.sum_ytrue.data.zero_()
         self.sum_ypred.data.zero_()
         self.sum_inv_ytrue.data.zero_()
-
         
+def voc_ap(rec, prec):
+        """
+        --- Official matlab code VOC2012---
+        mrec=[0 ; rec ; 1];
+        mpre=[0 ; prec ; 0];
+        for i=numel(mpre)-1:-1:1
+            mpre(i)=max(mpre(i),mpre(i+1));
+        end
+        i=find(mrec(2:end)~=mrec(1:end-1))+1;
+        ap=sum((mrec(i)-mrec(i-1)).*mpre(i));
+        """
+        rec.insert(0, 0.0) # insert 0.0 at begining of list
+        rec.append(1.0) # insert 1.0 at end of list
+        mrec = rec[:]
+        prec.insert(0, 0.0) # insert 0.0 at begining of list
+        prec.append(0.0) # insert 0.0 at end of list
+        mpre = prec[:]
+        """
+        This part makes the precision monotonically decreasing
+            (goes from the end to the beginning)
+            matlab:  for i=numel(mpre)-1:-1:1
+                        mpre(i)=max(mpre(i),mpre(i+1));
+        """
+        # matlab indexes start in 1 but python in 0, so I have to do:
+        #   range(start=(len(mpre) - 2), end=0, step=-1)
+        # also the python function range excludes the end, resulting in:
+        #   range(start=(len(mpre) - 2), end=-1, step=-1)
+        for i in range(len(mpre)-2, -1, -1):
+            mpre[i] = max(mpre[i], mpre[i+1])
+        """
+        This part creates a list of indexes where the recall changes
+            matlab:  i=find(mrec(2:end)~=mrec(1:end-1))+1;
+        """
+        i_list = []
+        for i in range(1, len(mrec)):
+            if mrec[i] != mrec[i-1]:
+                i_list.append(i) # if it was matlab would be i + 1
+        """
+        The Average Precision (AP) is the area under the curve
+            (numerical integration)
+            matlab: ap=sum((mrec(i)-mrec(i-1)).*mpre(i));
+        """
+        ap = 0.0
+        for i in i_list:
+            ap += ((mrec[i]-mrec[i-1])*mpre[i])
+        return ap, mrec, mpre

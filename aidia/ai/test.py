@@ -43,23 +43,18 @@ class TestModel():
             x_train, y_train = f["x_train"], f["y_train"]
             x_test, y_test = f["x_test"], f["y_test"]
         
-        # データを正規化 (0-255 -> 0-1)
         x_train = x_train.astype(np.float32) / 255.0
         x_test = x_test.astype(np.float32) / 255.0
         
-        # PyTorchテンソルに変換
         x_train_tensor = torch.from_numpy(x_train)
         y_train_tensor = torch.from_numpy(y_train).long()
         
-        # データセットを作成
         full_dataset = TensorDataset(x_train_tensor, y_train_tensor)
         
-        # 訓練データと検証データに分割 (80:20)
         train_size = int(0.8 * len(full_dataset))
         val_size = len(full_dataset) - train_size
         train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size])
         
-        # DataLoaderを作成
         self.train_loader = DataLoader(
             train_dataset, 
             batch_size=self.config.total_batchsize, 
@@ -85,7 +80,6 @@ class TestModel():
             if self.stop_flag:
                 break
                 
-            # トレーニングフェーズ
             self.model.train()
             train_loss = 0.0
             train_correct = 0
@@ -108,7 +102,6 @@ class TestModel():
                 train_total += targets.size(0)
                 train_correct += predicted.eq(targets).sum().item()
             
-            # 検証フェーズ
             self.model.eval()
             val_loss = 0.0
             val_correct = 0
@@ -125,13 +118,11 @@ class TestModel():
                     val_total += targets.size(0)
                     val_correct += predicted.eq(targets).sum().item()
             
-            # メトリクスの計算
             train_loss = train_loss / len(self.train_loader)
             train_acc = train_correct / train_total
             val_loss = val_loss / len(self.val_loader)
             val_acc = val_correct / val_total
             
-            # カスタムコールバックの実行
             if custom_callbacks:
                 logs = {
                     'loss': train_loss,

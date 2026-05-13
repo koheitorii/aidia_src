@@ -1,7 +1,9 @@
 from math import sqrt
+import os
 import os.path as osp
 
 import numpy as np
+import cv2
 
 from qtpy import QtCore
 from qtpy import QtGui
@@ -19,31 +21,14 @@ def is_dark_mode():
     window_color = palette.color(QtGui.QPalette.Window)
     return window_color.lightness() < 128
 
-def get_default_color(is_qcolor=False):
-    """Get the default color based on the current theme."""
-    if is_dark_mode():
-        if is_qcolor:
-            return QtGui.QColor(255, 255, 255)
-        else:
-            return "white"  # For dark mode, return white as default color
-    else:
-        if is_qcolor:
-            return QtGui.QColor(0, 0, 0)
-        else:
-            # For light mode, return black as default color
-            # This is useful for text or other elements that should be black in light mode
-            return "black"
-
 def new_icon(icon):
     """Create a new icon from the specified icon name or path."""
     icons_dir = osp.join(osp.dirname(osp.abspath(__file__)), 'icons')
     icon_path = osp.join(icons_dir, '%s.png' % icon)
     
     if is_dark_mode():
-        # ダークモード用にアイコンの色を調整
         pixmap = QtGui.QPixmap(icon_path)
         if not pixmap.isNull():
-            # アイコンを白色に変更
             white_pixmap = QtGui.QPixmap(pixmap.size())
             white_pixmap.fill(QtCore.Qt.GlobalColor.white)
             white_pixmap.setMask(pixmap.createMaskFromColor(QtCore.Qt.GlobalColor.transparent))
@@ -139,3 +124,127 @@ def hline():
     hr_label.setFrameStyle(QtWidgets.QFrame.HLine | QtWidgets.QFrame.Raised)
     hr_label.setLineWidth(2)
     return hr_label
+
+class LabelColor(object):
+    """Styles for QLabel."""
+    def __init__(self):
+        pass
+        
+    @staticmethod
+    def get_style(state):
+        """Get the style for a given state."""
+        if state == "default":
+            return "QLabel{ color: white; }" if is_dark_mode() else "QLabel{ color: black; }"
+        elif state == "error":
+            return "QLabel{ color: red; }"
+        elif state == "disabled":
+            return "QLabel{ color: gray; }"
+        else:
+            raise ValueError("Invalid state: %s" % state)
+    
+    @staticmethod
+    def get_qcolor(state):
+        """Get the QColor for a given state."""
+        if state == "default":
+            return QtGui.QColor(255, 255, 255) if is_dark_mode() else QtGui.QColor(0, 0, 0)
+        elif state == "error":
+            return QtGui.QColor(255, 0, 0)
+        elif state == "disabled":
+            return QtGui.QColor(128, 128, 128)
+        else:
+            raise ValueError("Invalid state: %s" % state)
+    
+    @staticmethod
+    def get_color(state):
+        """Get the color for a given state."""
+        if state == "default":
+            return "white" if is_dark_mode() else "black"
+        elif state == "error":
+            return "red"
+        elif state == "disabled":
+            return "gray"
+        else:
+            raise ValueError("Invalid state: %s" % state)
+        
+class ImageWidget(QtWidgets.QWidget):
+    """A widget for displaying images.
+    
+    Args:
+        parent: The parent widget.
+        image: The image to display (file path or numpy array).
+        resize: The size to resize the image to (width, height).
+        alpha: Whether to include the alpha channel when loading the image.
+    """
+    def __init__(self, parent, image=None, resize=None, alpha=False):
+        super().__init__(parent=parent)
+
+        from aidia.image import imread
+
+        self._painter = QtGui.QPainter()
+
+        self.pixmap = QtGui.QPixmap()
+        if image is not None:
+            if isinstance(image, str):
+                if not os.path.exists(image):
+                    raise FileNotFoundError(f"Image file not found: {image}")
+                image = imread(image, alpha=alpha)
+                if resize is not None:
+                    image = cv2.resize(image, resize, interpolation=cv2.INTER_AREA)
+                self.loadPixmap(image)
+            elif isinstance(image, np.ndarray):
+                self.loadPixmap(image)
+        self.show()
+    
+    def loadPixmap(self, image: np.ndarray):
+        byte_per_line = image[0].nbytes
+        h, w = image.shape[0:2]
+        if image.shape[2] == 4:
+            image = QtGui.QImage(image.flatten(), w, h, byte_per_line,
+                            QtGui.QImage.Format.Format_RGBA8888)
+        else:
+            image = QtGui.QImage(image.flatten(), w, h, byte_per_line,
+                            QtGui.QImage.Format.Format_RGB888)
+        self.pixmap = QtGui.QPixmap.fromImage(image)
+        self.setMinimumHeight(10)
+        self.setMinimumWidth(10)
+        self.update()
+    
+    def clear(self):
+        self.pixmap = QtGui.QPixmap()
+        self.update()
+    
+    def paintEvent(self, event):
+        p = self._painter
+        p.begin(self)
+
+        x = 0
+        y = 0
+        scale = 1.0
+        if self.pixmap.isNull():
+            # return super().paintEvent(event)
+            self.pixmap.fill()
+        else:
+            p.setRenderHint(QtGui.QPainter.Antialiasing)
+            p.setRenderHint(QtGui.QPainter.SmoothPixmapTransform)
+
+            img_w = self.pixmap.width()
+            img_h = self.pixmap.height()
+            win_w = self.width()
+            win_h = self.height()
+            # if w > 0 or h > 0:
+            #     w_scale = self.width() / w
+            #     h_scale = self.height() / h
+            #     p.scale(w_scale, h_scale)
+            scale = win_h / img_h
+            if  win_w < img_w * scale:
+                scale = win_w / img_w
+                y = int(win_h / 2) - int(img_h * scale / 2)
+            else:
+                x = (int(win_w / 2) - int(img_w * scale / 2))
+
+        p.scale(scale, scale)
+        p.drawPixmap(int(x/scale), int(y/scale), self.pixmap)
+        p.end()
+
+    def resizeEvent(self, event):
+        self.update()

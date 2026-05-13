@@ -25,13 +25,12 @@ from aidia.image import fig2img
 from aidia.ai.config import AIConfig
 from aidia.ai.dataset import Dataset
 from aidia.ai.test import TestModel
-from aidia.ai.det import DetectionModel
-from aidia.ai.seg import SegmentationModel
+from aidia.ai.task.detection import DetectionModel
+from aidia.ai.task.segmentation import SegmentationModel
 from aidia.ai.ai_utils import InferenceModel, InferenceModel_Ultralytics
-from aidia.widgets import ImageWidget
-from aidia.widgets.ai_augment_dialog import AIAugmentDialog
-from aidia.widgets.ai_label_replace_dialog import AILabelReplaceDialog
-from aidia.widgets.copy_data_dialog import CopyDataDialog
+from aidia.widgets import AIAugmentDialog
+from aidia.widgets import AILabelReplaceDialog
+from aidia.widgets import CopyDataDialog
 
 import torch
 
@@ -50,13 +49,6 @@ def clear_session():
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         torch.cuda.synchronize()
-
-
-class LabelStyle:
-    """Styles for QLabel."""
-    DEFAULT = "QLabel{ color: white; }" if qt.is_dark_mode() else "QLabel{ color: black; }"
-    ERROR = "QLabel{ color: red; }"
-    DISABLED = "QLabel{ color: gray; }"
 
 
 class ParamComponent(object):
@@ -102,12 +94,9 @@ class ParamComponent(object):
         self.state = CLEAR
 
 
-
-
 class AITrainDialog(QtWidgets.QDialog):
 
     aiRunning = QtCore.Signal(bool)
-    # aiTerminated = QtCore.Signal()
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -118,9 +107,10 @@ class AITrainDialog(QtWidgets.QDialog):
                             | Qt.WindowCloseButtonHint
                             | Qt.WindowMaximizeButtonHint
                             )
-        self.setWindowTitle(self.tr("AI Training"))
+        self.setWindowTitle("AI Workspace")
 
         self.setMinimumSize(QtCore.QSize(1200, 900))
+        self.setWindowState(Qt.WindowState.WindowMaximized)
 
         self.dataset_dir = None
         self.target_logdir = None
@@ -187,16 +177,15 @@ class AITrainDialog(QtWidgets.QDialog):
         # utility layout
         self._utility_layout = QtWidgets.QVBoxLayout()
         self._utility_widget = QtWidgets.QWidget()
+        self._utility_widget.setFixedHeight(350)
 
         title_utility = qt.head_text(self.tr("Utilities"))
         title_utility.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
-        title_utility.setMaximumHeight(30)
         self._utility_layout.addWidget(title_utility)
 
         self.tag_logdir = QtWidgets.QLabel(self.tr("Select Experiment Directory"))
         self.tag_logdir.setMaximumHeight(16)
-        self.tag_logdir.setToolTip(self.tr("Select the experiment directory."))
-        self._utility_layout.addWidget(self.tag_logdir, alignment=Qt.AlignmentFlag.AlignBottom | Qt.AlignmentFlag.AlignLeft)
+        self._utility_layout.addWidget(self.tag_logdir)
 
         self.input_logdir = QtWidgets.QComboBox()
         def _validate(idx):
@@ -266,14 +255,12 @@ class AITrainDialog(QtWidgets.QDialog):
         self._utility_layout.addWidget(self.prediction_group)
 
         # export model button
-        self.button_export_model = QtWidgets.QPushButton(self.tr("Export Model"))
-        self.button_export_model.setToolTip(self.tr("Export the model data."))
+        self.button_export_model = QtWidgets.QPushButton(self.tr("Export ONNX"))
         self.button_export_model.clicked.connect(self.export_model)
         self._utility_layout.addWidget(self.button_export_model)
 
         # export model to pretrained button
-        self.button_export_model_to_pretrained = QtWidgets.QPushButton(self.tr("Export Model to Pretrained"))
-        self.button_export_model_to_pretrained.setToolTip(self.tr("Export the model data to pretrained directory."))
+        self.button_export_model_to_pretrained = QtWidgets.QPushButton(self.tr("Export for Auto Annotation"))
         self.button_export_model_to_pretrained.clicked.connect(self.export_model_to_pretrained)
         self._utility_layout.addWidget(self.button_export_model_to_pretrained)
 
@@ -282,13 +269,6 @@ class AITrainDialog(QtWidgets.QDialog):
         self.ai_pred.notifyMessage.connect(self.update_pred_status)
         self.ai_pred.progressValue.connect(self.update_pred_progress)
         self.ai_pred.finished.connect(self.ai_pred_finished)
-
-        # directory information
-        # self.tag_directory = QtWidgets.QLabel()
-        # self.tag_directory.setMaximumHeight(100)
-        # self._layout.addWidget(self.tag_directory, 0, 1, 1, 4)
-        # self.left_row += 1
-        # self.right_row_count += 1
 
         # task selection
         def _validate(idx):
@@ -448,44 +428,6 @@ The labels are separated with line breaks."""),
             validate_func=_validate,
         )
         self.add_param_component(self.param_labels, right=True, custom_size=(4, 1))
-
-        # save best only
-        # self.tag_is_savebest = QtWidgets.QLabel(self.tr("Save Only the Best Weights"))
-        # self.tag_is_savebest.setToolTip(self.tr("""Enable saving only the weights achived the minimum validation loss."""))
-        # self.input_is_savebest = QtWidgets.QCheckBox()
-        # def _validate(state): # check:2, empty:0
-        #     if state == 2:
-        #         self.config.SAVE_BEST = True
-        #     else:
-        #         self.config.SAVE_BEST = False
-        # self.input_is_savebest.stateChanged.connect(_validate)
-        # self._add_basic_params(self.tag_is_savebest, self.input_is_savebest, right=True, reverse=True)
-
-        # early stopping
-        # def _validate(state): # check:2, empty:0
-        #     if state == 2:
-        #         self.config.EARLY_STOPPING = True
-        #     else:
-        #         self.config.EARLY_STOPPING = False
-        # self.param_is_earlystop = AIParamComponent(
-        #     type="checkbox",
-        #     tag=self.tr("Early Stopping"),
-        #     tips=self.tr("""(BETA) Enable Early Stopping."""),
-        #     validate_func=_validate
-        # )
-        # self.add_param_component(self.param_is_earlystop, right=True, reverse=True)
-
-        # use multiple gpu
-        # self.tag_is_multi = QtWidgets.QLabel(self.tr("Use Multiple GPUs"))
-        # self.tag_is_multi.setToolTip(self.tr("""Enable parallel calculation with multiple GPUs."""))
-        # self.input_is_multi = QtWidgets.QCheckBox()
-        # def _validate(state): # check:2, empty:0
-        #     if state == 2:
-        #         self.config.USE_MULTI_GPUS = True
-        #     else:
-        #         self.config.USE_MULTI_GPUS = False
-        # self.input_is_multi.stateChanged.connect(_validate)
-        # self._add_basic_params(self.tag_is_multi, self.input_is_multi, right=True, reverse=True)
 
         # label replacement button
         button_label_replace = QtWidgets.QPushButton(self.tr("Label Replacement"))
@@ -679,7 +621,7 @@ The labels are separated with line breaks."""),
         row_count += 1
 
         # figure area
-        self.image_widget_loss = ImageWidget(self)
+        self.image_widget_loss = qt.ImageWidget(self)
         self.image_widget_loss.setMinimumHeight(800)
         self._layout.addWidget(self.image_widget_loss, row_count, 1, 1, 4)
         row_count += 1
@@ -714,7 +656,7 @@ QProgressBar::chunk {
         self.text_dataset.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignLeft)
         self._dataset_layout.addWidget(self.text_dataset)
 
-        self.image_widget_pie = ImageWidget(self)
+        self.image_widget_pie = qt.ImageWidget(self)
         self._dataset_layout.addWidget(self.image_widget_pie)
 
         ### set layouts ###
@@ -739,13 +681,7 @@ QProgressBar::chunk {
         self.ai.batchLogList.connect(self.update_batch)
         self.ai.finished.connect(self.ai_finished)
 
-        # self.aiTerminated.connect(self.ai.quit)
-
-        self.text_status.setText(self.tr("Ready"))
-
-    # def stop_training(self):
-    #     self.aiTerminated.emit()
-    #     self.button_stop.setEnabled(False)
+        self.text_status.setText("Ready")
 
     def popup(self, dataset_dir, is_submode=False, data_labels=None):
         """Popup train window and set config parameters to input fields."""
@@ -784,20 +720,18 @@ QProgressBar::chunk {
         self.param_batchsize.input_field.setText(str(self.config.BATCH_SIZE))
         self.param_lr.input_field.setText(str(self.config.LEARNING_RATE))
 
+        # Label definition
         if len(self.config.LABELS) > 0:
             self.param_labels.input_field.setText("\n".join(self.config.LABELS))
         else:
             self.param_labels.input_field.setText("\n".join(data_labels))
-        # if self.config.gpu_num < 2:
-        #     self.input_is_multi.setEnabled(False)
-        # self.input_is_multi.setChecked(self.config.USE_MULTI_GPUS)
-        # self.input_is_savebest.setChecked(self.config.SAVE_BEST)
-        # self.param_is_earlystop.input_field.setChecked(self.config.EARLY_STOPPING)
+
+        # Data separation
         if not self.config.SUBMODE:
             self.param_is_dir_split.input_field.setEnabled(False)
         self.param_is_dir_split.input_field.setChecked(self.config.DIR_SPLIT)
 
-        # prediction display settings
+        # Inference display settings
         self.checkbox_show_labels.setChecked(self.config.SHOW_LABELS)
         if not self.config.SHOW_LABELS:
             self.checkbox_show_conf.setChecked(False)
@@ -807,11 +741,8 @@ QProgressBar::chunk {
         else:
             self.checkbox_show_conf.setChecked(self.config.SHOW_CONF)
 
-        # augment params
         self.update_augment_checkboxes()
-        # Update augmentation parameter availability after loading config
         self.update_augment_availability()
-
         self.update_logdir_list()
 
         self.exec_()
@@ -931,38 +862,29 @@ QProgressBar::chunk {
     def switch_enabled(self, targets: list[ParamComponent], enabled:bool):
         for obj in targets:
             if enabled:
-                obj.tag.setStyleSheet(LabelStyle.DEFAULT)
+                obj.tag.setStyleSheet(qt.LabelColor.get_style("default"))
             else:
-                obj.tag.setStyleSheet(LabelStyle.DISABLED)
+                obj.tag.setStyleSheet(qt.LabelColor.get_style("disabled"))
             obj.input_field.setEnabled(enabled)
-        # if enabled and self.config.gpu_num < 2:
-        #     self.tag_is_multi.setStyleSheet(LabelStyle.DISABLED)
-        #     self.input_is_multi.setEnabled(False)
         if enabled and not self.config.SUBMODE:
-            self.param_is_dir_split.tag.setStyleSheet(LabelStyle.DISABLED)
+            self.param_is_dir_split.tag.setStyleSheet(qt.LabelColor.get_style("disabled"))
             self.param_is_dir_split.input_field.setEnabled(False)
 
     def switch_global_params(self):
-        # if self.config.gpu_num < 2:
-        #     self.tag_is_multi.setStyleSheet(LabelStyle.DISABLED)
-        #     self.input_is_multi.setEnabled(False)
-        # else:
-        #     self.tag_is_multi.setStyleSheet(LabelStyle.DEFAULT)
-        #     self.input_is_multi.setEnabled(True)
         if not self.config.SUBMODE or self.config.TASK in [TEST]:
-            self.param_is_dir_split.tag.setStyleSheet(LabelStyle.DISABLED)
+            self.param_is_dir_split.tag.setStyleSheet(qt.LabelColor.get_style("disabled"))
             self.param_is_dir_split.input_field.setEnabled(False)
         else:
-            self.param_is_dir_split.tag.setStyleSheet(LabelStyle.DEFAULT)
+            self.param_is_dir_split.tag.setStyleSheet(qt.LabelColor.get_style("default"))
             self.param_is_dir_split.input_field.setEnabled(True)
     
     def _enable_params(self):
         """Enable all components."""
         for obj in self.param_objects.values():
             obj.input_field.setEnabled(True)
-            obj.tag.setStyleSheet(LabelStyle.DEFAULT)
+            obj.tag.setStyleSheet(qt.LabelColor.get_style("default"))
             if obj.state == ERROR:
-                obj.tag.setStyleSheet(LabelStyle.ERROR)
+                obj.tag.setStyleSheet(qt.LabelColor.get_style("error"))
 
     def enable_utility(self):
         """Enable utility components."""
@@ -995,7 +917,7 @@ QProgressBar::chunk {
         """Disable all components."""
         for obj in self.param_objects.values():
             obj.input_field.setEnabled(False)
-            obj.tag.setStyleSheet(LabelStyle.DISABLED)
+            obj.tag.setStyleSheet(qt.LabelColor.get_style("disabled"))
         self.button_label_replace.setEnabled(False)
         self.button_advanced.setEnabled(False)
         self.button_train.setEnabled(False)
@@ -1071,12 +993,12 @@ QProgressBar::chunk {
    
     def set_error(self, obj: ParamComponent):
         """Set error state to the parameter component."""
-        obj.tag.setStyleSheet(LabelStyle.ERROR)
+        obj.tag.setStyleSheet(qt.LabelColor.get_style("error"))
         obj.state = ERROR
 
     def set_ok(self, obj: ParamComponent):
         """Set ok state to the parameter component."""
-        obj.tag.setStyleSheet(LabelStyle.DEFAULT)
+        obj.tag.setStyleSheet(qt.LabelColor.get_style("default"))
         obj.state = CLEAR
 
     def update_figure(self):
@@ -1129,12 +1051,12 @@ QProgressBar::chunk {
 
         # update label distribution
         self.ax_pie.clear()
-        self.ax_pie.set_title('Label Distribusion', fontsize=20, color=qt.get_default_color())
+        self.ax_pie.set_title('Label Distribusion', fontsize=20, color=qt.LabelColor.get_color("default"))
         self.ax_pie.pie(num_per_class,
                     labels=class_names,
                     #  autopct="%1.1f%%",
-                    wedgeprops={'linewidth': 1, 'edgecolor': qt.get_default_color()},
-                    textprops={'color': qt.get_default_color(),
+                    wedgeprops={'linewidth': 1, 'edgecolor': qt.LabelColor.get_color("default")},
+                    textprops={'color': qt.LabelColor.get_color("default"),
                                'fontsize': 16})
         self.image_widget_pie.loadPixmap(fig2img(self.fig_pie, add_alpha=True))
 
@@ -1205,15 +1127,15 @@ QProgressBar::chunk {
 
         # update figure
         self.ax_loss.clear()
-        self.ax_loss.set_xlabel("Epoch", fontsize=16, color=qt.get_default_color())
-        self.ax_loss.set_ylabel("Loss", fontsize=16, color=qt.get_default_color())
-        self.ax_loss.tick_params(axis='both', labelsize=14, colors=qt.get_default_color())
+        self.ax_loss.set_xlabel("Epoch", fontsize=16, color=qt.LabelColor.get_color("default"))
+        self.ax_loss.set_ylabel("Loss", fontsize=16, color=qt.LabelColor.get_color("default"))
+        self.ax_loss.tick_params(axis='both', labelsize=14, colors=qt.LabelColor.get_color("default"))
         self.ax_loss.spines['top'].set_visible(False)
         self.ax_loss.spines['right'].set_visible(False)
-        self.ax_loss.spines['left'].set_color(qt.get_default_color())
-        self.ax_loss.spines['bottom'].set_color(qt.get_default_color())
+        self.ax_loss.spines['left'].set_color(qt.LabelColor.get_color("default"))
+        self.ax_loss.spines['bottom'].set_color(qt.LabelColor.get_color("default"))
         self.ax_loss.patch.set_alpha(0.0)
-        self.ax_loss.grid(alpha=0.3, color=qt.get_default_color(), linestyle="--", linewidth=1)
+        self.ax_loss.grid(alpha=0.3, color=qt.LabelColor.get_color("default"), linestyle="--", linewidth=1)
         if len(self.epoch):
             if len(self.loss):
                 self.ax_loss.plot(self.epoch, self.loss, color="red", linestyle="solid", label="train")
@@ -1225,7 +1147,7 @@ QProgressBar::chunk {
             if len(self.loss) > 1 and len(self.val_loss) > 1:
                 max_loss = max(self.loss[1:] + self.val_loss[1:])
                 self.ax_loss.set_ylim([0, max_loss * 1.1])
-            self.ax_loss.legend(fontsize=16, labelcolor=qt.get_default_color(), frameon=False)
+            self.ax_loss.legend(fontsize=16, labelcolor=qt.LabelColor.get_color("default"), frameon=False)
             self.image_widget_loss.loadPixmap(fig2img(self.fig_loss, add_alpha=True))
 
     def check_errors(self):
@@ -1384,29 +1306,29 @@ QProgressBar::chunk {
         if is_ultralytics:
             self.param_contrast.input_field.setEnabled(False)
             self.param_contrast.input_field.setChecked(False)
-            self.param_contrast.tag.setStyleSheet(LabelStyle.DISABLED)
+            self.param_contrast.tag.setStyleSheet(qt.LabelColor.get_style("disabled"))
             self.config.RANDOM_CONTRAST = 0.0
         else:
             self.param_contrast.input_field.setEnabled(True)
-            self.param_contrast.tag.setStyleSheet(LabelStyle.DEFAULT)
+            self.param_contrast.tag.setStyleSheet(qt.LabelColor.get_style("default"))
     
         if is_ultralytics:
             self.param_blur.input_field.setEnabled(False)
             self.param_blur.input_field.setChecked(False)
-            self.param_blur.tag.setStyleSheet(LabelStyle.DISABLED)
+            self.param_blur.tag.setStyleSheet(qt.LabelColor.get_style("disabled"))
             self.config.RANDOM_BLUR = 0.0
         else:
             self.param_blur.input_field.setEnabled(True)
-            self.param_blur.tag.setStyleSheet(LabelStyle.DEFAULT)
+            self.param_blur.tag.setStyleSheet(qt.LabelColor.get_style("default"))
     
         if is_ultralytics:
             self.param_noise.input_field.setEnabled(False)
             self.param_noise.input_field.setChecked(False)
-            self.param_noise.tag.setStyleSheet(LabelStyle.DISABLED)
+            self.param_noise.tag.setStyleSheet(qt.LabelColor.get_style("disabled"))
             self.config.RANDOM_NOISE = 0.0
         else:
             self.param_noise.input_field.setEnabled(True)
-            self.param_noise.tag.setStyleSheet(LabelStyle.DEFAULT)
+            self.param_noise.tag.setStyleSheet(qt.LabelColor.get_style("default"))
         
     def update_logdir_list(self):
         """Update the list of log directories."""

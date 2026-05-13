@@ -32,11 +32,11 @@ class SettingDialog(QtWidgets.QDialog):
         def _validate(text):
             if text.replace(".", "", 1).isdigit() and 0.0 < float(text) < 1.0:
                 self.approx_epsilon = float(text)
-                self.approx_epsilon_text.setStyleSheet("QLabel{ color: black; }")
+                self.approx_epsilon_text.setStyleSheet(qt.LabelColor.get_style("default"))
                 self.error[S_EPSILON] = CLEAR
             else:
                 self.approx_epsilon = None
-                self.approx_epsilon_text.setStyleSheet("QLabel{ color: red; }")
+                self.approx_epsilon_text.setStyleSheet(qt.LabelColor.get_style("error"))
                 self.error[S_EPSILON] = ERROR
         self.approx_epsilon_input.textChanged.connect(_validate)
 
@@ -51,11 +51,11 @@ If you set 0, all shapes will be generated."""
         def _validate(text):
             if text.isdigit() and 0 <= int(text):
                 self.area_limit = int(text)
-                self.area_limit_text.setStyleSheet("QLabel{ color: black; }")
+                self.area_limit_text.setStyleSheet(qt.LabelColor.get_style("default"))
                 self.error[S_AREA_LIMIT] = CLEAR
             else:
                 self.area_limit = None
-                self.area_limit_text.setStyleSheet("QLabel{ color: red; }")
+                self.area_limit_text.setStyleSheet(qt.LabelColor.get_style("error"))
                 self.error[S_AREA_LIMIT] = ERROR
         self.area_limit_input.textChanged.connect(_validate)
 
@@ -89,7 +89,6 @@ If you set 0, all shapes will be generated."""
             return
         else:
             self.accept()
-
 
     def popUp(self, params_dict=None):
         approx_epsilon = params_dict[S_EPSILON]
