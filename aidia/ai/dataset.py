@@ -283,7 +283,7 @@ class Dataset(object):
             self.train_ids = np.array_split(ids, self.config.N_SPLITS)
             self.test_ids = self.train_ids.pop(-i)
             self.train_ids = np.concatenate(self.train_ids)
-            split_pos = int(self.train_ids.size * 0.95)
+            split_pos = int(self.train_ids.size * 0.8)
             self.train_ids, self.val_ids = np.split(self.train_ids, [split_pos])
         
         if len(self.val_ids) == 0 or len(self.test_ids) == 0:

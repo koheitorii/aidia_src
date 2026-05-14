@@ -7,8 +7,6 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset as TorchDataset
 from torch.utils.data import DataLoader
-import torchvision.transforms.v2 as T
-from torchvision import tv_tensors
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -17,7 +15,7 @@ np.set_printoptions(suppress=True)
 
 from aidia import image
 from aidia import utils
-from aidia.ai.task.base import Model
+from aidia.ai.task.base import Model, CustomAugmentation
 from aidia.ai.dataset import Dataset
 from aidia.ai.config import AIConfig
 from aidia.ai.models.unet import UNet
@@ -138,7 +136,6 @@ class SegmentationModel(Model):
         last_path = os.path.join(checkpoint_dir, "last.pt")
         torch.save(self.model.state_dict(), last_path)
     
-    
     def get_pytorch_dataloaders(self):
         """Get PyTorch DataLoaders for training and validation."""
         train_dataset = SegDataset(self.dataset, self.config, mode="train")
@@ -146,16 +143,16 @@ class SegmentationModel(Model):
 
         g = torch.Generator()
         g.manual_seed(self.config.SEED)
-        
+
         train_loader = DataLoader(
             train_dataset,
             batch_size=self.config.total_batchsize,
             shuffle=True,
-            num_workers=4,
+            num_workers=0,
             pin_memory=torch.cuda.is_available(),
             drop_last=True,
             generator=g,
-            persistent_workers=True,
+            # persistent_workers=True,
         )
         
         val_loader = DataLoader(
@@ -166,13 +163,10 @@ class SegmentationModel(Model):
             pin_memory=torch.cuda.is_available(),
             drop_last=False,
             generator=g,
-            persistent_workers=False,
+            # persistent_workers=False,
         )
         
         return train_loader, val_loader
-
-    # def stop_training(self):
-    #     self.model.stop_training = True
 
     def evaluate(self):
         res = {}
@@ -430,31 +424,11 @@ class SegDataset(TorchDataset):
         if mode == "train":
             # Shuffle training data
             np.random.shuffle(self.image_ids)
-
-            # augmentations
-            self.transforms = T.Compose([
-                T.RandomHorizontalFlip(p=0.5) if self.config.RANDOM_HFLIP else T.Identity(),
-                T.RandomVerticalFlip(p=0.5) if self.config.RANDOM_VFLIP else T.Identity(),
-                T.RandomAffine(
-                    degrees=self.config.RANDOM_ROTATE * 180 if self.config.RANDOM_ROTATE > 0.0 else 0.0,
-                    translate=(self.config.RANDOM_SHIFT, self.config.RANDOM_SHIFT) if self.config.RANDOM_SHIFT > 0.0 else (0.0, 0.0),
-                    scale=(1 - self.config.RANDOM_SCALE, 1 + self.config.RANDOM_SCALE) if self.config.RANDOM_SCALE > 0.0 else (1.0, 1.0),
-                    shear=self.config.RANDOM_SHEAR * 40 if self.config.RANDOM_SHEAR > 0.0 else 0.0,
-                    fill=0.5,
-                    ),
-                T.ColorJitter(
-                    brightness=self.config.RANDOM_BRIGHTNESS if self.config.RANDOM_BRIGHTNESS > 0.0 else 0.0,
-                    contrast=self.config.RANDOM_CONTRAST if self.config.RANDOM_CONTRAST > 0.0 else 0.0,
-                    saturation=0,
-                    hue=0,
-                    ),
-                T.GaussianBlur(
-                    kernel_size=3,
-                    sigma=(0.1, self.config.RANDOM_BLUR * 20.0),) if self.config.RANDOM_BLUR > 0.0 else T.Identity(),
-                T.GaussianNoise(
-                    mean=0.0,
-                    sigma=random.uniform(0.0, self.config.RANDOM_NOISE * 0.1),) if self.config.RANDOM_NOISE > 0.0 else T.Identity(),
-            ])
+            
+            # Use CustomAugmentation for training
+            self.augmentation = CustomAugmentation(self.config)
+        else:
+            self.augmentation = None
         
     
     def __len__(self):
@@ -467,6 +441,14 @@ class SegDataset(TorchDataset):
         img = self.dataset.load_image(image_id)
         masks = self.dataset.load_masks(image_id)
 
+        # Apply augmentations if in training mode
+        if self.mode == "train" and self.augmentation is not None:
+            # Albumentations expects numpy arrays with shape (H, W, C)
+            # and mask with shape (H, W, C) for multi-class segmentation
+            augmented = self.augmentation.augmentation(image=img, mask=masks)
+            img = augmented['image']
+            masks = augmented['mask']
+        
         # Convert to torch tensors
         img_tensor = torch.from_numpy(img.astype(np.float32))
         mask_tensor = torch.from_numpy(masks.astype(np.float32))
@@ -478,12 +460,6 @@ class SegDataset(TorchDataset):
             mask_tensor = mask_tensor.permute(2, 0, 1)
 
         img_tensor /= 255.0  # Normalize to [0, 1]
-        
-        if self.mode == "train":
-            mask_tensor = tv_tensors.Mask(mask_tensor)
-            img_tensor, mask_tensor = self.transforms(img_tensor, mask_tensor)
-            if img_tensor is None or mask_tensor is None:
-                raise ValueError("Transformations resulted in None tensor.")
             
         return img_tensor, mask_tensor
     

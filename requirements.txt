@@ -14,3 +14,4 @@ onnxruntime==1.17.1
 openpyxl
 PyYAML
 pyinstaller-versionfile
+albumentations

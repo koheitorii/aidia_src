@@ -81,66 +81,50 @@ class AIAugmentDialog(QtWidgets.QDialog):
         """Initialize all parameter input widgets."""
         
         # Rotation parameter
-        self.rotation_spinbox = QtWidgets.QDoubleSpinBox()
-        self.rotation_spinbox.setRange(0.0, 0.5)
-        self.rotation_spinbox.setSingleStep(0.01)
-        self.rotation_spinbox.setDecimals(2)
+        self.rotation_spinbox = QtWidgets.QComboBox()
+        self.rotation_spinbox.addItems(["0.0", "0.1", "0.2", "0.3", "0.4", "0.5"])
         self.rotation_spinbox.setToolTip(self.tr("Random rotation factor"))
         self.param_layout.addRow(self.tr("Rotation Factor:"), self.rotation_spinbox)
 
         # Scale parameter
-        self.scale_spinbox = QtWidgets.QDoubleSpinBox()
-        self.scale_spinbox.setRange(0.0, 0.5)
-        self.scale_spinbox.setSingleStep(0.01)
-        self.scale_spinbox.setDecimals(2)
+        self.scale_spinbox = QtWidgets.QComboBox()
+        self.scale_spinbox.addItems(["0.0", "0.1", "0.2", "0.3", "0.4", "0.5"])
         self.scale_spinbox.setToolTip(self.tr("Random scale variation factor"))
         self.param_layout.addRow(self.tr("Scale Factor:"), self.scale_spinbox)
 
         # Shift parameter
-        self.shift_spinbox = QtWidgets.QDoubleSpinBox()
-        self.shift_spinbox.setRange(0.0, 0.5)
-        self.shift_spinbox.setSingleStep(0.01)
-        self.shift_spinbox.setDecimals(2)
+        self.shift_spinbox = QtWidgets.QComboBox()
+        self.shift_spinbox.addItems(["0.0", "0.1", "0.2", "0.3", "0.4", "0.5"])
         self.shift_spinbox.setToolTip(self.tr("Random translation factor"))
         self.param_layout.addRow(self.tr("Shift Factor:"), self.shift_spinbox)
 
         # Shear parameter
-        self.shear_spinbox = QtWidgets.QDoubleSpinBox()
-        self.shear_spinbox.setRange(0.0, 0.5)
-        self.shear_spinbox.setSingleStep(0.01)
-        self.shear_spinbox.setDecimals(2)
+        self.shear_spinbox = QtWidgets.QComboBox()
+        self.shear_spinbox.addItems(["0.0", "0.1", "0.2", "0.3", "0.4", "0.5"])
         self.shear_spinbox.setToolTip(self.tr("Random shear factor"))
         self.param_layout.addRow(self.tr("Shear Factor:"), self.shear_spinbox)
 
         # Brightness parameter
-        self.brightness_spinbox = QtWidgets.QDoubleSpinBox()
-        self.brightness_spinbox.setRange(0.0, 0.5)
-        self.brightness_spinbox.setSingleStep(0.01)
-        self.brightness_spinbox.setDecimals(2)
+        self.brightness_spinbox = QtWidgets.QComboBox()
+        self.brightness_spinbox.addItems(["0.0", "0.1", "0.2", "0.3", "0.4", "0.5"])
         self.brightness_spinbox.setToolTip(self.tr("Random brightness adjustment factor"))
         self.param_layout.addRow(self.tr("Brightness Factor:"), self.brightness_spinbox)
 
         # Contrast parameter
-        self.contrast_spinbox = QtWidgets.QDoubleSpinBox()
-        self.contrast_spinbox.setRange(0.0, 0.5)
-        self.contrast_spinbox.setSingleStep(0.01)
-        self.contrast_spinbox.setDecimals(2)
+        self.contrast_spinbox = QtWidgets.QComboBox()
+        self.contrast_spinbox.addItems(["0.0", "0.1", "0.2", "0.3", "0.4", "0.5"])
         self.contrast_spinbox.setToolTip(self.tr("Random contrast adjustment factor"))
         self.param_layout.addRow(self.tr("Contrast Factor:"), self.contrast_spinbox)
 
         # Blur parameter
-        self.blur_spinbox = QtWidgets.QDoubleSpinBox()
-        self.blur_spinbox.setRange(0.0, 0.5)
-        self.blur_spinbox.setSingleStep(0.01)
-        self.blur_spinbox.setDecimals(2)
+        self.blur_spinbox = QtWidgets.QComboBox()
+        self.blur_spinbox.addItems(["0.0", "0.1", "0.2", "0.3", "0.4", "0.5"])
         self.blur_spinbox.setToolTip(self.tr("Random blur factor"))
         self.param_layout.addRow(self.tr("Blur Factor:"), self.blur_spinbox)
 
         # Noise parameter
-        self.noise_spinbox = QtWidgets.QDoubleSpinBox()
-        self.noise_spinbox.setRange(0.0, 0.5)
-        self.noise_spinbox.setSingleStep(0.01)
-        self.noise_spinbox.setDecimals(2)
+        self.noise_spinbox = QtWidgets.QComboBox()
+        self.noise_spinbox.addItems(["0.0", "0.1", "0.2", "0.3", "0.4", "0.5"])
         self.noise_spinbox.setToolTip(self.tr("Random noise factor"))
         self.param_layout.addRow(self.tr("Noise Factor:"), self.noise_spinbox)
 
@@ -149,14 +133,14 @@ class AIAugmentDialog(QtWidgets.QDialog):
         self.config = config
 
         # Load numeric parameters
-        self.rotation_spinbox.setValue(config.RANDOM_ROTATE)
-        self.scale_spinbox.setValue(config.RANDOM_SCALE)
-        self.shift_spinbox.setValue(config.RANDOM_SHIFT)
-        self.shear_spinbox.setValue(config.RANDOM_SHEAR)
-        self.brightness_spinbox.setValue(config.RANDOM_BRIGHTNESS)
-        self.contrast_spinbox.setValue(config.RANDOM_CONTRAST)
-        self.blur_spinbox.setValue(config.RANDOM_BLUR)
-        self.noise_spinbox.setValue(config.RANDOM_NOISE)
+        self.rotation_spinbox.setCurrentText(str(config.RANDOM_ROTATE))
+        self.scale_spinbox.setCurrentText(str(config.RANDOM_SCALE))
+        self.shift_spinbox.setCurrentText(str(config.RANDOM_SHIFT))
+        self.shear_spinbox.setCurrentText(str(config.RANDOM_SHEAR))
+        self.brightness_spinbox.setCurrentText(str(config.RANDOM_BRIGHTNESS))
+        self.contrast_spinbox.setCurrentText(str(config.RANDOM_CONTRAST))
+        self.blur_spinbox.setCurrentText(str(config.RANDOM_BLUR))
+        self.noise_spinbox.setCurrentText(str(config.RANDOM_NOISE))
 
         # Disable contrast, blur, and noise for Ultralytics models
         is_ultralytics = config.is_ultralytics()
@@ -177,26 +161,26 @@ class AIAugmentDialog(QtWidgets.QDialog):
             return
 
         # Save numeric parameters
-        self.config.RANDOM_ROTATE = self.rotation_spinbox.value()
-        self.config.RANDOM_SCALE = self.scale_spinbox.value()
-        self.config.RANDOM_SHIFT = self.shift_spinbox.value()
-        self.config.RANDOM_SHEAR = self.shear_spinbox.value()
-        self.config.RANDOM_BRIGHTNESS = self.brightness_spinbox.value()
+        self.config.RANDOM_ROTATE = float(self.rotation_spinbox.currentText())
+        self.config.RANDOM_SCALE = float(self.scale_spinbox.currentText())
+        self.config.RANDOM_SHIFT = float(self.shift_spinbox.currentText())
+        self.config.RANDOM_SHEAR = float(self.shear_spinbox.currentText())
+        self.config.RANDOM_BRIGHTNESS = float(self.brightness_spinbox.currentText())
         
         # For Ultralytics models, force contrast, blur, and noise to 0
         is_ultralytics = self.config.is_ultralytics()
-        self.config.RANDOM_CONTRAST = 0.0 if is_ultralytics else self.contrast_spinbox.value()
-        self.config.RANDOM_BLUR = 0.0 if is_ultralytics else self.blur_spinbox.value()
-        self.config.RANDOM_NOISE = 0.0 if is_ultralytics else self.noise_spinbox.value()
+        self.config.RANDOM_CONTRAST = 0.0 if is_ultralytics else float(self.contrast_spinbox.currentText())
+        self.config.RANDOM_BLUR = 0.0 if is_ultralytics else float(self.blur_spinbox.currentText())
+        self.config.RANDOM_NOISE = 0.0 if is_ultralytics else float(self.noise_spinbox.currentText())
 
     def reset_to_defaults(self):
         """Reset all parameters to default values."""
         # Default values based on AIConfig initialization
-        self.rotation_spinbox.setValue(0.1)
-        self.scale_spinbox.setValue(0.1)
-        self.shift_spinbox.setValue(0.1)
-        self.shear_spinbox.setValue(0.1)
-        self.brightness_spinbox.setValue(0.1)
+        self.rotation_spinbox.setCurrentText("0.1")
+        self.scale_spinbox.setCurrentText("0.1")
+        self.shift_spinbox.setCurrentText("0.1")
+        self.shear_spinbox.setCurrentText("0.1")
+        self.brightness_spinbox.setCurrentText("0.1")
         
         # Check if current model is Ultralytics
         is_ultralytics = self.config.is_ultralytics()
@@ -206,9 +190,9 @@ class AIAugmentDialog(QtWidgets.QDialog):
         blur_value = 0.0 if is_ultralytics else 0.1
         noise_value = 0.0 if is_ultralytics else 0.1
         
-        self.contrast_spinbox.setValue(contrast_value)
-        self.blur_spinbox.setValue(blur_value)
-        self.noise_spinbox.setValue(noise_value)
+        self.contrast_spinbox.setCurrentText(str(contrast_value))
+        self.blur_spinbox.setCurrentText(str(blur_value))
+        self.noise_spinbox.setCurrentText(str(noise_value))
         
         self.contrast_spinbox.setEnabled(not is_ultralytics)
         self.blur_spinbox.setEnabled(not is_ultralytics)
