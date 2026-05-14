@@ -141,20 +141,7 @@ class AIAugmentDialog(QtWidgets.QDialog):
         self.contrast_spinbox.setCurrentText(str(config.RANDOM_CONTRAST))
         self.blur_spinbox.setCurrentText(str(config.RANDOM_BLUR))
         self.noise_spinbox.setCurrentText(str(config.RANDOM_NOISE))
-
-        # Disable contrast, blur, and noise for Ultralytics models
-        is_ultralytics = config.is_ultralytics()
-        self.contrast_spinbox.setEnabled(not is_ultralytics)
-        self.blur_spinbox.setEnabled(not is_ultralytics)
-        self.noise_spinbox.setEnabled(not is_ultralytics)
         
-        # Update tooltips for disabled parameters
-        if is_ultralytics:
-            disabled_tooltip = self.tr("This parameter is not supported for Ultralytics models")
-            self.contrast_spinbox.setToolTip(disabled_tooltip)
-            self.blur_spinbox.setToolTip(disabled_tooltip)
-            self.noise_spinbox.setToolTip(disabled_tooltip)
-
     def save_config(self):
         """Save dialog values back to the configuration."""
         if self.config is None:
@@ -166,12 +153,9 @@ class AIAugmentDialog(QtWidgets.QDialog):
         self.config.RANDOM_SHIFT = float(self.shift_spinbox.currentText())
         self.config.RANDOM_SHEAR = float(self.shear_spinbox.currentText())
         self.config.RANDOM_BRIGHTNESS = float(self.brightness_spinbox.currentText())
-        
-        # For Ultralytics models, force contrast, blur, and noise to 0
-        is_ultralytics = self.config.is_ultralytics()
-        self.config.RANDOM_CONTRAST = 0.0 if is_ultralytics else float(self.contrast_spinbox.currentText())
-        self.config.RANDOM_BLUR = 0.0 if is_ultralytics else float(self.blur_spinbox.currentText())
-        self.config.RANDOM_NOISE = 0.0 if is_ultralytics else float(self.noise_spinbox.currentText())
+        self.config.RANDOM_CONTRAST =float(self.contrast_spinbox.currentText())
+        self.config.RANDOM_BLUR = float(self.blur_spinbox.currentText())
+        self.config.RANDOM_NOISE = float(self.noise_spinbox.currentText())
 
     def reset_to_defaults(self):
         """Reset all parameters to default values."""
@@ -181,23 +165,10 @@ class AIAugmentDialog(QtWidgets.QDialog):
         self.shift_spinbox.setCurrentText("0.1")
         self.shear_spinbox.setCurrentText("0.1")
         self.brightness_spinbox.setCurrentText("0.1")
+        self.contrast_spinbox.setCurrentText("0.1")
+        self.blur_spinbox.setCurrentText("0.1")
+        self.noise_spinbox.setCurrentText("0.1")
         
-        # Check if current model is Ultralytics
-        is_ultralytics = self.config.is_ultralytics()
-        
-        # Set values and enable/disable based on model type
-        contrast_value = 0.0 if is_ultralytics else 0.1
-        blur_value = 0.0 if is_ultralytics else 0.1
-        noise_value = 0.0 if is_ultralytics else 0.1
-        
-        self.contrast_spinbox.setCurrentText(str(contrast_value))
-        self.blur_spinbox.setCurrentText(str(blur_value))
-        self.noise_spinbox.setCurrentText(str(noise_value))
-        
-        self.contrast_spinbox.setEnabled(not is_ultralytics)
-        self.blur_spinbox.setEnabled(not is_ultralytics)
-        self.noise_spinbox.setEnabled(not is_ultralytics)
-
     def accept_changes(self):
         """Accept changes and close dialog."""
         self.save_config()

@@ -1,6 +1,6 @@
 
 from aidia import ModelTypes
-from aidia.ai.task.base import Model
+from aidia.ai.task.base import Model, CustomAugmentation
 from aidia.ai.dataset import Dataset
 from aidia.ai.config import AIConfig
 from aidia.image import det2merge
@@ -40,38 +40,45 @@ class DetectionModel(Model):
         assert self.dataset is not None, "Dataset must be built or loaded before training."
         assert self.model is not None, "Model must be built before training."
 
-        if custom_callbacks is not None:
-            # add custom callbacks to the model
-            self.model.add_callback("on_train_batch_end", custom_callbacks[0])
-            self.model.add_callback("on_val_end", custom_callbacks[1])
+        if self.config.is_ultralytics():
+            if custom_callbacks is not None:
+                # add custom callbacks to the model
+                self.model.add_callback("on_train_batch_end", custom_callbacks[0])
+                self.model.add_callback("on_val_end", custom_callbacks[1])
 
-        self.model.train(
-            data=self.dataset.path_yaml,
-            epochs=self.config.EPOCHS,
-            imgsz=self.config.INPUT_SIZE,
-            batch=self.config.BATCH_SIZE,
-            optimizer='Adam',
-            lr0=self.config.LEARNING_RATE,
-            project=self.config.log_dir,
-            name=self.config.MODEL,
-            fliplr=0.5 if self.config.RANDOM_HFLIP else 0.0,
-            flipud=0.5 if self.config.RANDOM_VFLIP else 0.0,
-            degrees=self.config.RANDOM_ROTATE * 180.0 if self.config.RANDOM_ROTATE > 0.0 else 0.0,
-            scale=self.config.RANDOM_SCALE if self.config.RANDOM_SCALE > 0.0 else 0.0,
-            translate=self.config.RANDOM_SHIFT if self.config.RANDOM_SHIFT > 0.0 else 0.0,
-            shear=self.config.RANDOM_SHEAR * 40.0 if self.config.RANDOM_SHEAR > 0.0 else 0.0,
-            hsv_v=self.config.RANDOM_BRIGHTNESS if self.config.RANDOM_BRIGHTNESS > 0.0 else 0.0,
-            hsv_s=0.0,
-            hsv_h=0.0,
-            perspective=0.0,
-            mosaic=0.0,
-            mixup=0.0,
-            erasing=0.0,
-            auto_augment=None,
-            verbose=False,
-            seed=self.config.SEED,
-            workers=4,
-        )
+            custom_aug = CustomAugmentation(self.config, type='ultralytics')
+
+            self.model.train(
+                data=self.dataset.path_yaml,
+                epochs=self.config.EPOCHS,
+                imgsz=self.config.INPUT_SIZE,
+                batch=self.config.BATCH_SIZE,
+                optimizer='Adam',
+                lr0=self.config.LEARNING_RATE,
+                project=self.config.log_dir,
+                name=self.config.MODEL,
+                fliplr=0.5 if self.config.RANDOM_HFLIP else 0.0,
+                flipud=0.5 if self.config.RANDOM_VFLIP else 0.0,
+                degrees=self.config.RANDOM_ROTATE * 90.0 if self.config.RANDOM_ROTATE > 0.0 else 0.0,
+                scale=self.config.RANDOM_SCALE if self.config.RANDOM_SCALE > 0.0 else 0.0,
+                translate=self.config.RANDOM_SHIFT if self.config.RANDOM_SHIFT > 0.0 else 0.0,
+                shear=self.config.RANDOM_SHEAR * 45 if self.config.RANDOM_SHEAR > 0.0 else 0.0,
+                hsv_v=0.0,
+                hsv_s=0.0,
+                hsv_h=0.0,
+                perspective=0.0,
+                mosaic=0.0,
+                mixup=0.0,
+                erasing=0.0,
+                auto_augment=None,
+                verbose=False,
+                seed=self.config.SEED,
+                workers=0,
+                augmentations=custom_aug.augmentation,
+            )
+
+        else:
+            raise ValueError("Unsupported model for training.")
 
     def predict(self, images, conf=0.25, iou=0.45):
         """Predict bounding boxes for a given image."""

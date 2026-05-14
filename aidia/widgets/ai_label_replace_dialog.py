@@ -7,7 +7,7 @@ from aidia import aidia_logger
 
 
 class AILabelReplaceDialog(QtWidgets.QDialog):
-    """ラベル置換設定ダイアログ"""
+    """Label replacement settings dialog"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -21,15 +21,15 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
         self.setup_ui()
         
     def setup_ui(self):
-        """UIの設定"""
+        """Setup UI"""
         layout = QtWidgets.QVBoxLayout()
         
-        # タイトル
+        # Title
         title = qt.head_text(self.tr("Label Replacement Settings"))
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
         
-        # 説明文
+        # Description
         description = QtWidgets.QLabel(
             self.tr("Enter old labels (left) and new labels (right), one per line.\n"
                    "The number of lines must match between both text boxes.")
@@ -38,10 +38,10 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
         description.setStyleSheet("color: gray; font-size: 12px; margin: 10px;")
         layout.addWidget(description)
         
-        # テキストエディタレイアウト
+        # Text editor layout
         text_layout = QtWidgets.QHBoxLayout()
         
-        # 左側（変換前ラベル）
+        # Left side (original labels)
         left_layout = QtWidgets.QVBoxLayout()
         left_label = QtWidgets.QLabel(self.tr("Original Labels"))
         left_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -55,7 +55,7 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
         self.old_labels_edit.setMinimumHeight(200)
         left_layout.addWidget(self.old_labels_edit)
         
-        # 矢印
+        # Arrow
         arrow_layout = QtWidgets.QVBoxLayout()
         arrow_layout.addStretch()
         arrow_label = QtWidgets.QLabel("→")
@@ -64,7 +64,7 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
         arrow_layout.addWidget(arrow_label)
         arrow_layout.addStretch()
         
-        # 右側（変換後ラベル）
+        # Right side (new labels)
         right_layout = QtWidgets.QVBoxLayout()
         right_label = QtWidgets.QLabel(self.tr("New Labels"))
         right_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -83,27 +83,27 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
         text_layout.addLayout(right_layout)
         layout.addLayout(text_layout)
         
-        # 検証状態表示
+        # Validation status display
         self.status_label = QtWidgets.QLabel()
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.status_label)
         
-        # ボタン
+        # Buttons
         button_layout = QtWidgets.QHBoxLayout()
         
-        # 検証ボタン
+        # Validate button
         # validate_button = QtWidgets.QPushButton(self.tr("Validate"))
         # validate_button.clicked.connect(self.validate_labels)
         # button_layout.addWidget(validate_button)
         
-        # クリアボタン
+        # Clear button
         clear_button = QtWidgets.QPushButton(self.tr("Clear"))
         clear_button.clicked.connect(self.clear_text)
         button_layout.addWidget(clear_button)
         
         button_layout.addStretch()
         
-        # OKキャンセルボタン
+        # OK/Cancel buttons
         ok_button = QtWidgets.QPushButton(self.tr("OK"))
         ok_button.clicked.connect(self.accept)
         ok_button.setDefault(True)
@@ -116,12 +116,12 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
         layout.addLayout(button_layout)
         self.setLayout(layout)
         
-        # テキスト変更時の検証
+        # Validate on text change
         self.old_labels_edit.textChanged.connect(self.on_text_changed)
         self.new_labels_edit.textChanged.connect(self.on_text_changed)
         
     def on_text_changed(self):
-        """テキスト変更時の処理"""
+        """Process when text is changed"""
         old_text = self.old_labels_edit.toPlainText().strip()
         new_text = self.new_labels_edit.toPlainText().strip()
         
@@ -133,7 +133,7 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
         old_labels = [label.strip() for label in old_text.split('\n') if label.strip()]
         new_labels = [label.strip() for label in new_text.split('\n') if label.strip()]
         
-        # 行数チェック
+        # Check line count
         if len(old_labels) != len(new_labels):
             self.status_label.setText(
                 self.tr("✗ Line count mismatch: {} old labels, {} new labels").format(
@@ -145,7 +145,7 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
             self.status_label.setText(self.tr("✗ No labels entered"))
             self.status_label.setStyleSheet("color: red;")
         else:
-            # 重複チェック
+            # Check for duplicates
             if len(set(old_labels)) != len(old_labels):
                 self.status_label.setText(self.tr("✗ Duplicate old labels found"))
                 self.status_label.setStyleSheet("color: red;")
@@ -156,7 +156,7 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
                 self.status_label.setStyleSheet("color: green;")
     
     def validate_labels(self):
-        """ラベルの検証"""
+        """Validate labels"""
         old_text = self.old_labels_edit.toPlainText().strip()
         new_text = self.new_labels_edit.toPlainText().strip()
         
@@ -171,7 +171,7 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
         old_labels = [label.strip() for label in old_text.split('\n') if label.strip()]
         new_labels = [label.strip() for label in new_text.split('\n') if label.strip()]
         
-        # 行数チェック
+        # Check line count
         if len(old_labels) != len(new_labels):
             QtWidgets.QMessageBox.warning(
                 self, 
@@ -182,7 +182,7 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
             )
             return False
         
-        # 空のラベルチェック
+        # Check for empty labels
         if len(old_labels) == 0:
             QtWidgets.QMessageBox.warning(
                 self, 
@@ -191,7 +191,7 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
             )
             return False
         
-        # 重複チェック
+        # Check for duplicates
         if len(set(old_labels)) != len(old_labels):
             duplicates = [label for label in set(old_labels) if old_labels.count(label) > 1]
             QtWidgets.QMessageBox.warning(
@@ -201,7 +201,7 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
             )
             return False
         
-        # 空文字列チェック
+        # Check for empty strings
         empty_old = [i for i, label in enumerate(old_labels) if not label]
         empty_new = [i for i, label in enumerate(new_labels) if not label]
         
@@ -221,7 +221,7 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
         return True
     
     def clear_text(self):
-        """テキストをクリア"""
+        """Clear text"""
         reply = QtWidgets.QMessageBox.question(
             self,
             self.tr("Confirm"),
@@ -235,7 +235,7 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
             self.new_labels_edit.clear()
     
     def get_replace_dict(self):
-        """置換辞書を取得"""
+        """Get replacement dictionary"""
         old_text = self.old_labels_edit.toPlainText().strip()
         new_text = self.new_labels_edit.toPlainText().strip()
         
@@ -245,20 +245,20 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
         old_labels = [label.strip() for label in old_text.split('\n') if label.strip()]
         new_labels = [label.strip() for label in new_text.split('\n') if label.strip()]
         
-        # 行数が一致しない場合は空の辞書を返す
+        # Return empty dictionary if line counts don't match
         if len(old_labels) != len(new_labels):
             return {}
         
-        # 辞書を作成
+        # Create dictionary
         replace_dict = {}
         for old_label, new_label in zip(old_labels, new_labels):
-            if old_label and new_label:  # 空文字列をスキップ
+            if old_label and new_label:  # Skip empty strings
                 replace_dict[old_label] = new_label
         
         return replace_dict
     
     def set_replace_dict(self, replace_dict):
-        """置換辞書を設定"""
+        """Set replacement dictionary"""
         if isinstance(replace_dict, dict) and replace_dict:
             old_labels = list(replace_dict.keys())
             new_labels = list(replace_dict.values())
@@ -270,26 +270,26 @@ class AILabelReplaceDialog(QtWidgets.QDialog):
             self.new_labels_edit.clear()
     
     def accept(self):
-        """OKボタンが押された時の処理"""
+        """Process when OK button is pressed"""
         old_text = self.old_labels_edit.toPlainText().strip()
         new_text = self.new_labels_edit.toPlainText().strip()
         
-        # 何も入力されていない場合はそのまま受け入れる
+        # Accept as is if nothing is entered
         if not old_text and not new_text:
             self.replace_dict = {}
             super().accept()
             return
         
-        # 入力がある場合は検証
+        # Validate if there is input
         if old_text or new_text:
             if not self.validate_labels():
-                return  # 検証に失敗した場合は閉じない
+                return  # Don't close if validation fails
         
         self.replace_dict = self.get_replace_dict()
         super().accept()
     
     def popup(self, replace_dict=None):
-        """ダイアログを表示"""
+        """Show dialog"""
         if replace_dict:
             self.set_replace_dict(replace_dict)
         

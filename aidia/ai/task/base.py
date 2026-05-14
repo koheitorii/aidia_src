@@ -2,6 +2,8 @@ import os
 import random
 import cv2
 import time
+import torch
+import torchvision.transforms as T
 import albumentations as A
 from aidia import APP_DIR
 from aidia.ai.config import AIConfig
@@ -50,38 +52,44 @@ class Model(object):
 
 class CustomAugmentation(object):
     """Custom augmentation class using Albumentations."""
-    def __init__(self, config: AIConfig):
+    def __init__(self, config: AIConfig, type='torch') -> None:
         self.config = config
-        self.augmentation = self.build_augmentation()
+        self.augmentation = self.build_augmentation(type)
 
-    def build_augmentation(self):
+    def build_augmentation(self, type='torch'):
         """Build the augmentation pipeline based on the configuration."""
+        assert type in ['torch', 'ultralytics'], "Type must be 'torch' or 'ultralytics'."
+
         augmentations = []
-        if self.config.RANDOM_HFLIP:
-            augmentations.append(A.HorizontalFlip(p=0.5))
-        if self.config.RANDOM_VFLIP:
-            augmentations.append(A.VerticalFlip(p=0.5))
         
-        # Combine geometric transformations to preserve image size
-        if self.config.RANDOM_ROTATE > 0.0 or self.config.RANDOM_SHIFT > 0.0 or self.config.RANDOM_SCALE > 0.0:
-            augmentations.append(A.ShiftScaleRotate(
-                shift_limit=self.config.RANDOM_SHIFT if self.config.RANDOM_SHIFT > 0.0 else 0.0,
-                scale_limit=self.config.RANDOM_SCALE if self.config.RANDOM_SCALE > 0.0 else 0.0,
-                rotate_limit=self.config.RANDOM_ROTATE * 90.0 if self.config.RANDOM_ROTATE > 0.0 else 0.0,
-                border_mode=0,  # cv2.BORDER_CONSTANT
-                fill=128,
-                fill_mask=0,
-                p=0.5
-            ))
-        
-        if self.config.RANDOM_SHEAR > 0.0:
-            augmentations.append(A.Affine(
-                shear=(-self.config.RANDOM_SHEAR * 45, self.config.RANDOM_SHEAR * 45),
-                border_mode=0,  # cv2.BORDER_CONSTANT
-                fill=128,
-                fill_mask=0,
-                p=0.5
-            ))
+        # Shape transformations (only for torch, as Ultralytics has built-in support for these)
+        if type == 'torch':
+            if self.config.RANDOM_HFLIP:
+                augmentations.append(A.HorizontalFlip(p=0.5))
+            if self.config.RANDOM_VFLIP:
+                augmentations.append(A.VerticalFlip(p=0.5))
+            # Combine geometric transformations to preserve image size
+            if self.config.RANDOM_ROTATE > 0.0 or self.config.RANDOM_SHIFT > 0.0 or self.config.RANDOM_SCALE > 0.0:
+                augmentations.append(A.ShiftScaleRotate(
+                    shift_limit=self.config.RANDOM_SHIFT if self.config.RANDOM_SHIFT > 0.0 else 0.0,
+                    scale_limit=self.config.RANDOM_SCALE if self.config.RANDOM_SCALE > 0.0 else 0.0,
+                    rotate_limit=self.config.RANDOM_ROTATE * 90.0 if self.config.RANDOM_ROTATE > 0.0 else 0.0,
+                    border_mode=0,  # cv2.BORDER_CONSTANT
+                    fill=128,
+                    fill_mask=0,
+                    p=1.0
+                ))
+            
+            if self.config.RANDOM_SHEAR > 0.0:
+                augmentations.append(A.Affine(
+                    shear=(-self.config.RANDOM_SHEAR * 45, self.config.RANDOM_SHEAR * 45),
+                    border_mode=0,  # cv2.BORDER_CONSTANT
+                    fill=128,
+                    fill_mask=0,
+                    p=1.0
+                ))
+
+        # Color transformations
         if self.config.RANDOM_BRIGHTNESS > 0.0:
             augmentations.append(A.RandomBrightnessContrast(
                 brightness_limit=self.config.RANDOM_BRIGHTNESS,
@@ -95,8 +103,14 @@ class CustomAugmentation(object):
                 p=0.5
             ))
         if self.config.RANDOM_BLUR > 0.0:
-            augmentations.append(A.Blur(blur_limit=(3, int(self.config.RANDOM_BLUR * 10 + 2)), p=self.config.RANDOM_BLUR))
+            augmentations.append(A.Blur(blur_limit=(3, int(self.config.RANDOM_BLUR * 10 + 2)), p=0.5))
         if self.config.RANDOM_NOISE > 0.0:
             augmentations.append(A.GaussNoise(std_range=(0, self.config.RANDOM_NOISE * 0.5), p=0.5))
 
-        return A.Compose(augmentations, seed=self.config.SEED)
+        if type == 'torch':
+            return A.Compose(augmentations, seed=self.config.SEED)
+        elif type == 'ultralytics':
+            return augmentations
+        else:
+            raise ValueError("Type must be 'torch' or 'ultralytics'.")
+        

@@ -1409,36 +1409,6 @@ QProgressBar::chunk {
             self.param_contrast.input_field.setEnabled(False)
             return
 
-        is_ultralytics = self.config.is_ultralytics()
-            
-        # For Ultralytics models, disable contrast, blur, and noise
-        if is_ultralytics:
-            self.param_contrast.input_field.setEnabled(False)
-            self.param_contrast.input_field.setChecked(False)
-            self.param_contrast.tag.setStyleSheet(qt.LabelColor.get_style("disabled"))
-            self.config.RANDOM_CONTRAST = 0.0
-        else:
-            self.param_contrast.input_field.setEnabled(True)
-            self.param_contrast.tag.setStyleSheet(qt.LabelColor.get_style("default"))
-    
-        if is_ultralytics:
-            self.param_blur.input_field.setEnabled(False)
-            self.param_blur.input_field.setChecked(False)
-            self.param_blur.tag.setStyleSheet(qt.LabelColor.get_style("disabled"))
-            self.config.RANDOM_BLUR = 0.0
-        else:
-            self.param_blur.input_field.setEnabled(True)
-            self.param_blur.tag.setStyleSheet(qt.LabelColor.get_style("default"))
-    
-        if is_ultralytics:
-            self.param_noise.input_field.setEnabled(False)
-            self.param_noise.input_field.setChecked(False)
-            self.param_noise.tag.setStyleSheet(qt.LabelColor.get_style("disabled"))
-            self.config.RANDOM_NOISE = 0.0
-        else:
-            self.param_noise.input_field.setEnabled(True)
-            self.param_noise.tag.setStyleSheet(qt.LabelColor.get_style("default"))
-        
     def update_logdir_list(self):
         """Update the list of log directories."""
         self.param_select_logdir.input_field.clear()
