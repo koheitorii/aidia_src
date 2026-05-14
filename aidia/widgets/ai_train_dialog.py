@@ -1318,42 +1318,14 @@ QProgressBar::chunk {
 
     def augment_setting_popup(self):
         """Open data augmentation settings dialog."""
-        # Check if Ultralytics model and warn user about limitations
-        is_ultralytics = self.config.is_ultralytics()
-        
         dialog = AIAugmentDialog(self)
-        
-        # If Ultralytics model, disable specific parameters in the dialog
-        if is_ultralytics:
-            # Set the values to 0 for Ultralytics models before opening dialog
-            original_contrast = self.config.RANDOM_CONTRAST
-            original_blur = self.config.RANDOM_BLUR
-            original_noise = self.config.RANDOM_NOISE
-            
-            self.config.RANDOM_CONTRAST = 0.0
-            self.config.RANDOM_BLUR = 0.0
-            self.config.RANDOM_NOISE = 0.0
-        
         result = dialog.popup(self.config)
         
         if result == QtWidgets.QDialog.DialogCode.Accepted:
-            # For Ultralytics models, ensure disabled parameters remain 0
-            if is_ultralytics:
-                self.config.RANDOM_CONTRAST = 0.0
-                self.config.RANDOM_BLUR = 0.0
-                self.config.RANDOM_NOISE = 0.0
-            
-            # Update checkbox states based on new config values
             self.update_augment_checkboxes()
-            # Update parameter availability
             self.update_augment_availability()
             self.text_status.setText(self.tr("Augmentation settings updated."))
         else:
-            # Restore original values if user cancelled and it was Ultralytics
-            if is_ultralytics:
-                self.config.RANDOM_CONTRAST = original_contrast
-                self.config.RANDOM_BLUR = original_blur
-                self.config.RANDOM_NOISE = original_noise
             self.text_status.setText(self.tr("Augmentation settings unchanged."))
 
     def update_augment_checkboxes(self):
