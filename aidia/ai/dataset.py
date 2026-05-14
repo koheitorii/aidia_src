@@ -137,6 +137,8 @@ class Dataset(object):
                 raise errors.DataLoadingError
 
     def save(self):
+        if not os.path.exists(self.config.log_dir):
+            os.makedirs(self.config.log_dir)
         json_path = os.path.join(self.config.log_dir, 'dataset.json')
         save_dict = self.__dict__.copy()
         save_dict.pop("config")

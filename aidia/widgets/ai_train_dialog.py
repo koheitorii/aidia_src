@@ -115,6 +115,7 @@ class AITrainDialog(QtWidgets.QDialog):
 
         self.dataset_dir = None
         self.target_logdir = None
+        self.prev_log_name = None
         self.prev_dir = None
         self.start_time = 0
         self.start_epoch_time = 0
@@ -159,111 +160,6 @@ class AITrainDialog(QtWidgets.QDialog):
         self.left_row_count += 1
         self.right_row_count += 1
 
-        self._augment_layout = QtWidgets.QVBoxLayout()
-        self._augment_widget = QtWidgets.QWidget()
-        self._augment_widget.setMaximumWidth(300)
-
-        title_augment = qt.head_text(self.tr("Data Augmentation"))
-        title_augment.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
-        title_augment.setMaximumHeight(30)
-        self._augment_layout.addWidget(title_augment)
-
-        # utility layout
-        self._utility_layout = QtWidgets.QVBoxLayout()
-        self._utility_widget = QtWidgets.QWidget()
-        self._utility_widget.setMaximumWidth(300)
-
-        title_utility = qt.head_text(self.tr("Utilities"))
-        title_utility.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
-        self._utility_layout.addWidget(title_utility)
-
-        self.tag_logdir = QtWidgets.QLabel(self.tr("Select Experiment Directory"))
-        self.tag_logdir.setMaximumHeight(16)
-        self._utility_layout.addWidget(self.tag_logdir)
-
-        self.input_logdir = QtWidgets.QComboBox()
-        def _validate(idx):
-            idx = int(idx)
-            if idx < 0:
-                return
-            name = self.input_logdir.itemText(idx)
-            self.target_logdir = os.path.join(self.dataset_dir, LOCAL_DATA_DIR_NAME, name)
-        self.input_logdir.currentIndexChanged.connect(_validate)
-        self._utility_layout.addWidget(self.input_logdir)
-
-        self.button_open_logdir = QtWidgets.QPushButton(self.tr("Open Log Directory"))
-        self.button_open_logdir.setToolTip(self.tr("Open the selected log directory."))
-        self.button_open_logdir.setAutoDefault(False)
-        self.button_open_logdir.clicked.connect(lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.target_logdir)))
-        self._utility_layout.addWidget(self.button_open_logdir)
-
-        # Prediction settings group box
-        self.prediction_group = QtWidgets.QGroupBox(self.tr("Prediction"))
-        self.prediction_layout = QtWidgets.QVBoxLayout(self.prediction_group)
-        
-        # Prediction display settings
-        self.checkbox_show_labels = QtWidgets.QCheckBox(self.tr("Show Labels"))
-        self.checkbox_show_labels.setToolTip(self.tr("Show labels in prediction results."))
-        self.checkbox_show_labels.setChecked(True)
-        def _on_show_labels_changed(state):
-            if state == 2:
-                self.show_labels = True
-                self.checkbox_show_conf.setEnabled(True)
-            else:
-                self.show_labels = False
-                self.checkbox_show_conf.setChecked(False)
-                self.checkbox_show_conf.setEnabled(False)
-                self.show_conf = False
-        self.checkbox_show_labels.stateChanged.connect(_on_show_labels_changed)
-        self.prediction_layout.addWidget(self.checkbox_show_labels)
-
-        self.checkbox_show_conf = QtWidgets.QCheckBox(self.tr("Show Confidence"))
-        self.checkbox_show_conf.setToolTip(self.tr("Show confidence scores in prediction results."))
-        self.checkbox_show_conf.setChecked(True)
-        def _on_show_conf_changed(state):
-            if self.show_labels is False:
-                self.checkbox_show_conf.setChecked(False)
-                self.checkbox_show_conf.setEnabled(False)
-                self.show_conf = False
-                return
-            if state == 2:
-                self.show_conf = True
-            else:
-                self.show_conf = False
-        self.checkbox_show_conf.stateChanged.connect(_on_show_conf_changed)
-        self.prediction_layout.addWidget(self.checkbox_show_conf)
-
-        self.button_pred = QtWidgets.QPushButton(self.tr("Select Image"))
-        self.button_pred.setToolTip(self.tr("Predict a single image."))
-        self.button_pred.setAutoDefault(False)
-        self.button_pred.clicked.connect(self.predict_image)
-        self.prediction_layout.addWidget(self.button_pred)
-
-        self.button_pred_dir = QtWidgets.QPushButton(self.tr("Select Directory"))
-        self.button_pred_dir.setToolTip(self.tr("Predict images in the directory you selected."))
-        self.button_pred_dir.setAutoDefault(False)
-        self.button_pred_dir.clicked.connect(self.predict_images_from_directory)
-        self.prediction_layout.addWidget(self.button_pred_dir)
-        
-        # Add prediction group to utility layout
-        self._utility_layout.addWidget(self.prediction_group)
-
-        # export model button
-        self.button_export_model = QtWidgets.QPushButton(self.tr("Export ONNX"))
-        self.button_export_model.clicked.connect(self.export_model)
-        self._utility_layout.addWidget(self.button_export_model)
-
-        # export model to pretrained button
-        self.button_export_model_to_pretrained = QtWidgets.QPushButton(self.tr("Export for Auto Annotation"))
-        self.button_export_model_to_pretrained.clicked.connect(self.export_model_to_pretrained)
-        self._utility_layout.addWidget(self.button_export_model_to_pretrained)
-
-        # connect AI prediction thread
-        self.ai_pred = AIPredThread(self)
-        self.ai_pred.notifyMessage.connect(self.update_pred_status)
-        self.ai_pred.progressValue.connect(self.update_pred_progress)
-        self.ai_pred.finished.connect(self.ai_pred_finished)
-
         # task selection
         def _validate(idx):
             idx = int(idx)
@@ -306,7 +202,11 @@ If Performance Test are selected, the training test using MNIST dataset are perf
         # name
         def _validate(text):
             text = text.strip().replace(" ", "_")
-            self.config.NAME = text
+            if text == "":
+                self.set_error(self.param_name)
+            else:
+                self.set_ok(self.param_name)
+                self.config.NAME = text
         self.param_name = ParamComponent(
             type="text",
             tag=self.tr("Experiment Directory Name"),
@@ -315,25 +215,43 @@ If Performance Test are selected, the training test using MNIST dataset are perf
         )
         self.add_param_component(self.param_name)
 
-        # dataset idx
-        def _validate(idx):
-            self.config.DATASET_NUM = int(idx+1)
-        self.param_dataset = ParamComponent(
+        # select experiment directory
+        def _validate_logdir(idx):
+            idx = int(idx)
+            if idx < 0:
+                return
+            name = self.param_select_logdir.input_field.itemText(idx)
+            self.target_logdir = os.path.join(self.dataset_dir, 'aidia_data', name)
+            if name != self.config.NAME:
+                self.config.NAME = name
+                self.param_name.input_field.setText(name)
+        self.param_select_logdir = ParamComponent(
             type="combo",
-            tag=self.tr("Dataset"),
-            tips=self.tr("""Select the dataset pattern.
-Aidia splits the data into a 4:1 ratio (train:test) depend on the selected pattern.
-You can use this function for 5-fold cross-validation."""),
-            validate_func=_validate,
-            items=[
-                self.tr("Pattern 1"),
-                self.tr("Pattern 2"),
-                self.tr("Pattern 3"),
-                self.tr("Pattern 4"),
-                self.tr("Pattern 5"),
-            ]
+            tag=self.tr("Select Existing Directory"),
+            tips=self.tr("Select an existing directory."),
+            validate_func=_validate_logdir,
         )
-        self.add_param_component(self.param_dataset)
+        self.add_param_component(self.param_select_logdir)
+
+#         # dataset idx
+#         def _validate(idx):
+#             self.config.DATASET_NUM = int(idx+1)
+#         self.param_dataset = ParamComponent(
+#             type="combo",
+#             tag=self.tr("Dataset"),
+#             tips=self.tr("""Select the dataset pattern.
+# Aidia splits the data into a 4:1 ratio (train:test) depend on the selected pattern.
+# You can use this function for 5-fold cross-validation."""),
+#             validate_func=_validate,
+#             items=[
+#                 self.tr("Pattern 1"),
+#                 self.tr("Pattern 2"),
+#                 self.tr("Pattern 3"),
+#                 self.tr("Pattern 4"),
+#                 self.tr("Pattern 5"),
+#             ]
+#         )
+#         self.add_param_component(self.param_dataset)
 
         # input size
         def _validate(idx):
@@ -346,8 +264,7 @@ You can use this function for 5-fold cross-validation."""),
             items=[
                 "128", "160", "192", "224", "256",
                 "320", "384", "448", "512", "576", "640", "704",
-                "768", "832", "896", "960", "1024", "1088",
-                "1152", "1216", "1280"
+                "768", "832", "896", "960", "1024",
             ]
         )
         self.add_param_component(self.param_input_size)
@@ -447,6 +364,15 @@ The labels are separated with line breaks."""),
         self.add_param_component(self.param_is_dir_split, right=True)
 
         ### add augment params ###
+        self._augment_layout = QtWidgets.QVBoxLayout()
+        self._augment_widget = QtWidgets.QWidget()
+        self._augment_widget.setMaximumWidth(300)
+
+        title_augment = qt.head_text(self.tr("Data Augmentation"))
+        title_augment.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        title_augment.setMaximumHeight(30)
+        self._augment_layout.addWidget(title_augment)
+
         # vertical flip
         def _validate_vflip(state): # check:2, empty:0
             if state == 2:
@@ -608,6 +534,7 @@ The labels are separated with line breaks."""),
 
         # train button
         self.button_train = QtWidgets.QPushButton(self.tr("Train"))
+        self.button_train.setAutoDefault(False)
         self.button_train.setMinimumHeight(64)
         self.button_train.setStyleSheet("font-size: 20px;")
         self.button_train.clicked.connect(self.train)
@@ -678,7 +605,7 @@ QProgressBar::chunk {
         self.table_classes.verticalHeader().setVisible(False)
         self.table_classes.setEditTriggers(QtWidgets.QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table_classes.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectionBehavior.SelectRows)
-        self.table_classes.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
+        self.table_classes.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.NoSelection)
         self.table_classes.setAlternatingRowColors(True)
         self.table_classes.setMaximumHeight(200)
         self._dataset_layout.addWidget(self.table_classes)
@@ -686,6 +613,90 @@ QProgressBar::chunk {
         self.image_widget_pie = qt.ImageWidget(self)
         self.image_widget_pie.setMinimumHeight(300)
         self._dataset_layout.addWidget(self.image_widget_pie)
+
+        # utility layout
+        self._utility_layout = QtWidgets.QVBoxLayout()
+        self._utility_widget = QtWidgets.QWidget()
+        self._utility_widget.setMaximumWidth(300)
+
+        title_utility = qt.head_text(self.tr("Utilities"))
+        title_utility.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        self._utility_layout.addWidget(title_utility)
+
+        self.button_open_logdir = QtWidgets.QPushButton(self.tr("Open Log Directory"))
+        self.button_open_logdir.setToolTip(self.tr("Open the selected log directory."))
+        self.button_open_logdir.setAutoDefault(False)
+        self.button_open_logdir.clicked.connect(lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.target_logdir)))
+        self._utility_layout.addWidget(self.button_open_logdir)
+
+        # Prediction settings group box
+        self.prediction_group = QtWidgets.QGroupBox(self.tr("Prediction"))
+        self.prediction_layout = QtWidgets.QVBoxLayout(self.prediction_group)
+        
+        # Prediction display settings
+        self.checkbox_show_labels = QtWidgets.QCheckBox(self.tr("Show Labels"))
+        self.checkbox_show_labels.setToolTip(self.tr("Show labels in prediction results."))
+        self.checkbox_show_labels.setChecked(True)
+        def _on_show_labels_changed(state):
+            if state == 2:
+                self.show_labels = True
+                self.checkbox_show_conf.setEnabled(True)
+            else:
+                self.show_labels = False
+                self.checkbox_show_conf.setChecked(False)
+                self.checkbox_show_conf.setEnabled(False)
+                self.show_conf = False
+        self.checkbox_show_labels.stateChanged.connect(_on_show_labels_changed)
+        self.prediction_layout.addWidget(self.checkbox_show_labels)
+
+        self.checkbox_show_conf = QtWidgets.QCheckBox(self.tr("Show Confidence"))
+        self.checkbox_show_conf.setToolTip(self.tr("Show confidence scores in prediction results."))
+        self.checkbox_show_conf.setChecked(True)
+        def _on_show_conf_changed(state):
+            if self.show_labels is False:
+                self.checkbox_show_conf.setChecked(False)
+                self.checkbox_show_conf.setEnabled(False)
+                self.show_conf = False
+                return
+            if state == 2:
+                self.show_conf = True
+            else:
+                self.show_conf = False
+        self.checkbox_show_conf.stateChanged.connect(_on_show_conf_changed)
+        self.prediction_layout.addWidget(self.checkbox_show_conf)
+
+        self.button_pred = QtWidgets.QPushButton(self.tr("Select Image"))
+        self.button_pred.setToolTip(self.tr("Predict a single image."))
+        self.button_pred.setAutoDefault(False)
+        self.button_pred.clicked.connect(self.predict_image)
+        self.prediction_layout.addWidget(self.button_pred)
+
+        self.button_pred_dir = QtWidgets.QPushButton(self.tr("Select Directory"))
+        self.button_pred_dir.setToolTip(self.tr("Predict images in the directory you selected."))
+        self.button_pred_dir.setAutoDefault(False)
+        self.button_pred_dir.clicked.connect(self.predict_images_from_directory)
+        self.prediction_layout.addWidget(self.button_pred_dir)
+        
+        # Add prediction group to utility layout
+        self._utility_layout.addWidget(self.prediction_group)
+
+        # export model button
+        self.button_export_model = QtWidgets.QPushButton(self.tr("Export ONNX"))
+        self.button_export_model.setAutoDefault(False)
+        self.button_export_model.clicked.connect(self.export_model)
+        self._utility_layout.addWidget(self.button_export_model)
+
+        # export model to pretrained button
+        self.button_export_model_to_pretrained = QtWidgets.QPushButton(self.tr("Export for Auto Annotation"))
+        self.button_export_model_to_pretrained.setAutoDefault(False)
+        self.button_export_model_to_pretrained.clicked.connect(self.export_model_to_pretrained)
+        self._utility_layout.addWidget(self.button_export_model_to_pretrained)
+
+        # connect AI prediction thread
+        self.ai_pred = AIPredThread(self)
+        self.ai_pred.notifyMessage.connect(self.update_pred_status)
+        self.ai_pred.progressValue.connect(self.update_pred_progress)
+        self.ai_pred.finished.connect(self.ai_pred_finished)
 
         ### set layouts ###
         self._dataset_widget.setLayout(self._dataset_layout)
@@ -712,15 +723,21 @@ QProgressBar::chunk {
         self.text_status.setText("Ready")
 
     def popup(self, dataset_dir, is_submode=False, data_labels=None):
-        """Popup train window and set config parameters to input fields."""
+        """Popup train window and set config parameters to input fields.
+        
+        Args:
+            dataset_dir (str): Dataset directory path.
+            is_submode (bool): If True, the training data is searched under the parent directory of the dataset directory. Otherwise, the training data is searched under the dataset directory.
+            data_labels (list): List of labels in the dataset. This is used to set default label definition.
+        """
         self.dataset_dir = dataset_dir
 
         # create data directory
-        data_dirpath = utils.get_dirpath_with_mkdir(dataset_dir, LOCAL_DATA_DIR_NAME)
+        data_dirpath = utils.get_dirpath_with_mkdir(dataset_dir, 'aidia_data')
 
         # load config parameters
         self.config = AIConfig(dataset_dir)
-        config_path = os.path.join(data_dirpath, CONFIG_JSON)
+        config_path = os.path.join(data_dirpath, 'config.json')
         if os.path.exists(config_path):
             try:
                 self.config.load(config_path)
@@ -733,12 +750,15 @@ QProgressBar::chunk {
         else:
             self.label_current_mode.setText(self.tr('Search data of <span style="color: green;"><b>CURRENT</b></span> directory'))
 
+        # Store previous log directory for later use (e.g., to delete or move if the name is changed)
+        self.prev_log_name = self.config.NAME
+
         # Basic params
         self.param_task.input_field.setCurrentIndex(TASK_LIST.index(self.config.TASK))
         self.enable_params_by_task(self.config.TASK)
         self.param_model.input_field.setCurrentText(self.config.MODEL)
         self.param_name.input_field.setText(self.config.NAME)
-        self.param_dataset.input_field.setCurrentIndex(int(self.config.DATASET_NUM) - 1)
+        # self.param_dataset.input_field.setCurrentIndex(int(self.config.DATASET_NUM) - 1)
         if self.config.INPUT_SIZE in [int(self.param_input_size.input_field.itemText(i)) for i in range(self.param_input_size.input_field.count())]:
             self.param_input_size.input_field.setCurrentText(str(self.config.INPUT_SIZE))
         else:
@@ -790,12 +810,15 @@ QProgressBar::chunk {
         """Call back function when AI thread finished."""
         self.enable_params_by_task(self.config.TASK)
 
-        # clear cuda cache
+        # Set log name to previous if the current log directory does not exist (e.g., when the log directory is deleted due to name change during training)
+        self.prev_log_name = self.config.NAME
+
+        # Clear cuda cache
         clear_session()
         
-        # raise error handle
-        config_path = os.path.join(self.config.log_dir, CONFIG_JSON)
-        dataset_path = os.path.join(self.config.log_dir, DATASET_JSON)
+        # Raise error handle
+        config_path = os.path.join(self.config.log_dir, 'config.json')
+        dataset_path = os.path.join(self.config.log_dir, 'dataset.json')
         if not os.path.exists(config_path) or not os.path.exists(dataset_path):
             # self.text_status.setText(self.tr("Training was failed."))
             self.reset_state()
@@ -803,7 +826,7 @@ QProgressBar::chunk {
             self.text_status.setText(self.tr("Terminated training."))
             return
         
-        # display elapsed time
+        # Display elapsed time
         now = time.time()
         etime = now - self.start_time
         h = int(etime // 3600)
@@ -811,7 +834,7 @@ QProgressBar::chunk {
         s = int(etime % 60)
         self.text_status.setText(self.tr("Done -- Elapsed time: {}h {}m {}s").format(h, m, s))
 
-        # save metrics
+        # Save metrics
         df_dic = {
             "epoch": self.epoch,
             "loss": self.loss,
@@ -890,7 +913,7 @@ QProgressBar::chunk {
 
     def switch_utility(self):
         """Switch enabled state of utility components."""
-        if self.input_logdir.count() == 0:
+        if self.param_select_logdir.input_field.count() == 0:
             self.disable_utility()
         else:
             self.enable_utility()
@@ -924,7 +947,7 @@ QProgressBar::chunk {
 
     def enable_utility(self):
         """Enable utility components."""
-        self.input_logdir.setEnabled(True)
+        self.param_select_logdir.input_field.setEnabled(True)
         self.button_open_logdir.setEnabled(True)
         self.checkbox_show_labels.setEnabled(True)
         if not self.show_labels:
@@ -940,7 +963,7 @@ QProgressBar::chunk {
     
     def disable_utility(self):
         """Disable utility components."""
-        self.input_logdir.setEnabled(False)
+        self.param_select_logdir.input_field.setEnabled(False)
         self.button_open_logdir.setEnabled(False)
         self.checkbox_show_labels.setEnabled(False)
         self.checkbox_show_conf.setEnabled(False)
@@ -959,7 +982,7 @@ QProgressBar::chunk {
         self.button_train.setEnabled(False)
         
         # Disable utility components
-        self.input_logdir.setEnabled(False)
+        self.param_select_logdir.input_field.setEnabled(False)
         self.button_open_logdir.setEnabled(False)
         self.checkbox_show_labels.setEnabled(False)
         self.checkbox_show_conf.setEnabled(False)
@@ -1065,7 +1088,7 @@ QProgressBar::chunk {
         
         # Dataset overview section
         html.append("<div style='margin-bottom: 15px;'>")
-        html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Dataset Number')}:</b> <span style='color: #3498db; font-weight: bold;'>{dataset_num}</span></p>")
+        # html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Dataset Number')}:</b> <span style='color: #3498db; font-weight: bold;'>{dataset_num}</span></p>")
         html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Number of Data')}:</b> <span style='color: #2ecc71; font-weight: bold;'>{num_images}</span></p>")
         # html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Number of Shapes')}:</b> <span style='color: #2ecc71; font-weight: bold;'>{num_shapes}</span></p>")
         html.append("</div>")
@@ -1237,7 +1260,8 @@ QProgressBar::chunk {
         """Check if there are any errors in the parameters."""
         for tag_text, obj in self.param_objects.items():
             if obj.state == ERROR:
-                self.text_status.setText(self.tr("Please check {}.").format(tag_text))
+                # self.text_status.setText(self.tr("Please check {}.").format(tag_text))
+                self.popup_error(self.tr("Please check {}.").format(tag_text))
                 return False
         return True
     
@@ -1417,13 +1441,14 @@ QProgressBar::chunk {
         
     def update_logdir_list(self):
         """Update the list of log directories."""
-        self.input_logdir.clear()
-        for glob_dir in glob.glob(os.path.join(self.dataset_dir, LOCAL_DATA_DIR_NAME, "*")):
+        self.param_select_logdir.input_field.clear()
+        for glob_dir in glob.glob(os.path.join(self.dataset_dir, 'aidia_data', "*")):
             if os.path.isdir(glob_dir) and os.path.exists(os.path.join(glob_dir, "model.onnx")):
                 name = os.path.basename(glob_dir)
-                self.input_logdir.addItem(name)
-        if self.input_logdir.count() == 0:
+                self.param_select_logdir.input_field.addItem(name)
+        if self.param_select_logdir.input_field.count() == 0:
             self.disable_utility()
+        self.param_select_logdir.input_field.setCurrentText(self.prev_log_name)
         
     def predict_image(self):
         if not os.path.exists(self.target_logdir):
@@ -1650,7 +1675,7 @@ class AITrainThread(QtCore.QThread):
             return
 
         if isinstance(model.dataset, Dataset):
-            dataset_json_path = os.path.join(self.config.log_dir, DATASET_JSON)
+            dataset_json_path = os.path.join(self.config.log_dir, 'dataset.json')
             _info_dict = None
             
             if os.path.exists(dataset_json_path):
