@@ -7,6 +7,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset as TorchDataset
 from torch.utils.data import DataLoader
+import torchmetrics
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -60,86 +61,7 @@ class SegmentationModel(Model):
             model.eval()
             self.model = model
             return model
-           
-    def train(self, custom_callbacks=None):
-        """Train the model with the dataset."""
-        checkpoint_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, "weights")
-
-        train_dataloader, val_dataloader = self.get_pytorch_dataloaders()
-
-        if custom_callbacks is not None:
-            on_train_batch_end = custom_callbacks[0]
-            on_val_end = custom_callbacks[1]
-
-        best_val_loss = float('inf')
         
-        for epoch in range(self.config.EPOCHS):
-            # Training phase
-            self.model.train()
-            train_loss = 0.0
-            batch_num = 0
-            tmp_imgs = []
-            
-            for batch_idx, (images, masks) in enumerate(train_dataloader):
-                images = images.to(self.device)
-                masks = masks.to(self.device)
-                
-                if epoch == 0 and batch_idx < 10:
-                    tmp_imgs.append(images.cpu().numpy()[0].transpose(1,2,0)*255)
-                
-                # Forward pass
-                self.optimizer.zero_grad()
-                outputs = self.model(images)
-                loss = self.criterion(outputs, masks)
-                
-                # Backward pass
-                loss.backward()
-                self.optimizer.step()
-                
-                train_loss += loss.item()
-                batch_num += 1
-            
-                avg_train_loss = train_loss / batch_num
-                on_train_batch_end(avg_train_loss)
-
-            if epoch == 0:
-                tmp_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, "train_images")
-                for i, _img in enumerate(tmp_imgs):
-                    image.imwrite(
-                        np.array(_img, dtype=np.uint8),
-                        os.path.join(tmp_dir, f"train_input_{i}.png"))
-            
-            # Validation phase
-            self.model.eval()
-            val_batch_num = 0
-            val_loss = 0.0
-            
-            with torch.no_grad():
-                for images, masks in val_dataloader:
-                    images = images.to(self.device)
-                    masks = masks.to(self.device)
-                    
-                    outputs = self.model(images)
-                    loss = self.criterion(outputs, masks)
-                    val_loss += loss.item()
-                    val_batch_num += 1
-            
-            avg_val_loss = val_loss / val_batch_num
-            on_val_end(avg_val_loss)
-            
-            # Update learning rate
-            self.scheduler.step()
-            
-            # Save best model
-            if avg_val_loss < best_val_loss:
-                best_val_loss = avg_val_loss
-                best_path = os.path.join(checkpoint_dir, "best.pt")
-                torch.save(self.model.state_dict(), best_path)
-        
-        # Save last model
-        last_path = os.path.join(checkpoint_dir, "last.pt")
-        torch.save(self.model.state_dict(), last_path)
-    
     def get_pytorch_dataloaders(self):
         """Get PyTorch DataLoaders for training and validation."""
         train_dataset = SegDataset(self.dataset, self.config, mode="train")
@@ -171,6 +93,102 @@ class SegmentationModel(Model):
         )
         
         return train_loader, val_loader
+           
+    def train(self, custom_callbacks=None):
+        """Train the model with the dataset."""
+        checkpoint_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, "weights")
+
+        train_dataloader, val_dataloader = self.get_pytorch_dataloaders()
+
+        if custom_callbacks is not None:
+            on_train_batch_end = custom_callbacks[0]
+            on_val_end = custom_callbacks[1]
+
+        # best_val_loss = float('inf')
+        best_val_acc = 0.0
+        
+        # Initialize torchmetrics Accuracy (ignoring class 0 - background)
+        val_accuracy = torchmetrics.Accuracy(
+            task='binary',
+            ignore_index=0,  # ignore background class
+            average='macro'
+        ).to(self.device)
+        
+        for epoch in range(self.config.EPOCHS):
+            # Training phase
+            self.model.train()
+            train_loss = 0.0
+            batch_num = 0
+            tmp_imgs = []
+            
+            for batch_idx, (images, masks) in enumerate(train_dataloader):
+                images = images.to(self.device)
+                masks = masks.to(self.device)
+                
+                if epoch == 0 and batch_idx < 10:
+                    tmp_imgs.append(images.cpu().numpy()[0].transpose(1,2,0)*255)
+                
+                # Forward pass
+                self.optimizer.zero_grad()
+                outputs = self.model(images)
+                loss = self.criterion(outputs, masks)
+                
+                # Backward pass
+                loss.backward()
+                self.optimizer.step()
+                
+                train_loss += loss.item()
+                batch_num += 1
+
+                avg_train_loss = train_loss / batch_num
+                if custom_callbacks is not None:
+                    on_train_batch_end(avg_train_loss)
+
+            if epoch == 0:
+                tmp_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, "train_images")
+                for i, _img in enumerate(tmp_imgs):
+                    image.imwrite(
+                        np.array(_img, dtype=np.uint8),
+                        os.path.join(tmp_dir, f"train_input_{i}.png"))
+            
+            # Validation phase
+            self.model.eval()
+            val_batch_num = 0
+            val_loss = 0.0
+            val_accuracy.reset()
+            
+            with torch.no_grad():
+                for images, masks in val_dataloader:
+                    images = images.to(self.device)
+                    masks = masks.to(self.device)
+                    
+                    outputs = self.model(images)
+                    loss = self.criterion(outputs, masks)
+                    val_loss += loss.item()
+                    val_batch_num += 1
+                    
+                    # Calculate accuracy (ignoring background class 0)
+                    preds = torch.argmax(outputs, dim=1)
+                    targets = torch.argmax(masks, dim=1)
+                    val_accuracy.update(preds, targets)
+            
+            avg_val_loss = val_loss / val_batch_num
+            avg_val_acc = val_accuracy.compute().item()
+            if custom_callbacks is not None:
+                on_val_end(avg_val_loss, avg_val_acc)
+            
+            # Update learning rate
+            self.scheduler.step()
+            
+            # Save best model based on validation accuracy
+            if avg_val_acc > best_val_acc:
+                best_val_acc = avg_val_acc
+                best_path = os.path.join(checkpoint_dir, "best.pt")
+                torch.save(self.model.state_dict(), best_path)
+        
+        # Save last model
+        last_path = os.path.join(checkpoint_dir, "last.pt")
+        torch.save(self.model.state_dict(), last_path)
 
     def evaluate(self):
         res = {}
@@ -183,27 +201,20 @@ class SegmentationModel(Model):
         ]
 
         # prepare labels
-        num_classes = self.config.num_classes + 1
+        num_classes = self.config.num_classes
         labels = self.config.LABELS[:]
-        labels.insert(0, 'background')  # add background class
 
         eval_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'evaluation')
         roc_pr_dir = utils.get_dirpath_with_mkdir(eval_dir, 'roc_pr_fig')
 
-        # THRESHOLDS = [0.00001, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 0.99999]
         THRESHOLDS = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
 
         tptnfpfn_per_class = np.zeros((num_classes, len(THRESHOLDS),  4), int)
         eval_per_class = np.zeros((num_classes, len(eval_dict["Metrics"])), float)
         cm_multi_class = np.zeros((num_classes, num_classes), float)
 
-        # predict all test data
+        # Predict all test data
         for i, image_id in enumerate(self.dataset.test_ids):
-            # for DEBUG
-            # if i > 50:
-            #     break
-
-            # predict
             img = self.dataset.load_image(image_id)
             mask = self.dataset.load_masks(image_id)
             inputs = image.preprocessing(img, is_tensor=True, channel_first=True, is_norm=True)
@@ -217,16 +228,21 @@ class SegmentationModel(Model):
                 pred = self.model(inputs_tensor)
             pred = pred.cpu().numpy()[0]
             
+            # Convert to numpy arrays for metric calculations
             y_true = np.array(mask)
             y_pred = np.array(pred)
 
-            # multiclass confusion matrix
+            # Remove background class (class 0) for evaluation
+            y_true = y_true[..., 1:]  # shape: (H, W, num_classes-1)
+            y_pred = y_pred[1:, ...]  # shape: (num_classes-1, H, W)
+
+            # Multiclass confusion matrix
             yt_label = y_true.argmax(axis=2).ravel()
             yp_label = y_pred.argmax(axis=0).ravel()
             cm_multi_class += metrics.multi_confusion_matrix(yt_label, yp_label, num_classes)
 
-            # calculate tp tn fp fn per class
-            for class_id in range(num_classes):
+            # Calculate tp tn fp fn per class
+            for class_id in range(len(labels)):
                 # get result by class
                 yt_class = y_true[..., class_id]
                 yp_class = y_pred[class_id]
@@ -246,7 +262,7 @@ class SegmentationModel(Model):
                     _cm = np.array([tp, tn, fp, fn])
                     tptnfpfn_per_class[class_id, i] += _cm
 
-        # calculate evaluation values per class
+        # Calculate evaluation values per class
         for class_id in range(len(labels)):
             class_name = labels[class_id]
             fpr = [0.0]
@@ -280,7 +296,7 @@ class SegmentationModel(Model):
                 auc += abs(fpr[-1] - fpr[-3]) * tpr[-1]
                 ap += abs(recs[-1] - recs[-3]) * pres[-3]
                   
-            # add the last value
+            # Add the last value
             tpr.append(1.0)
             fpr.append(fpr[-1])
             tpr.append(1.0)
@@ -293,7 +309,7 @@ class SegmentationModel(Model):
             recs.append(1.0)
             ap += abs(recs[-1] - recs[-3]) * pres[-3]
 
-            # draw curves
+            # Draw curves
             ax.plot([0.0, 1.0], [0.0, 1.0], color='k', linestyle='--', label='baseline')
             ax.plot(fpr, tpr, marker='o', color='red', label='ours')
             ax.text(0.8, 0.2, f'AUC = {auc:.02f}', ha='center', color='red', fontsize=16)
@@ -316,11 +332,11 @@ class SegmentationModel(Model):
             fig.savefig(os.path.join(roc_pr_dir, f"{class_name}_pr.png"))
             ax.clear()
 
-            # add result per class
+            # Add result per class
             eval_dict[class_name] = result_at_05 + [auc, ap]
             eval_per_class[class_id] = result_at_05 + [auc, ap]
         
-        # macro mean
+        # Macro mean
         acc = np.mean(eval_per_class[..., 0])
         pre = np.mean(eval_per_class[..., 1])
         rec = np.mean(eval_per_class[..., 2])
@@ -329,17 +345,18 @@ class SegmentationModel(Model):
         auc = np.mean(eval_per_class[..., 5])
         ap = np.mean(eval_per_class[..., 6])
 
-        # confusion matrix
-        cm_multi_class = cm_multi_class / (np.sum(cm_multi_class, axis=1) + 1e-12)[:, None]
+        if len(labels) > 2:
+            # Confusion matrix
+            cm_multi_class = cm_multi_class / (np.sum(cm_multi_class, axis=1) + 1e-12)[:, None]
 
-        # figure of confusion matrix
-        ax.set_title('Confusion Matrix', fontsize=20)
-        metrics.confusion_matrix_display(fig, ax, 
-                                         confusion_matrix=cm_multi_class,
-                                         display_labels=labels)
-        filename = os.path.join(eval_dir, "confusion_matrix.png")
-        fig.savefig(filename)
-        img = image.fig2img(fig)
+            # Figure of confusion matrix
+            ax.set_title('Confusion Matrix', fontsize=20)
+            metrics.confusion_matrix_display(fig, ax, 
+                                            confusion_matrix=cm_multi_class,
+                                            display_labels=labels)
+            filename = os.path.join(eval_dir, "confusion_matrix.png")
+            fig.savefig(filename)
+            img = image.fig2img(fig)
 
         # save eval dict
         eval_dict["(Macro Mean)"] = [acc, pre, rec, spe, fscore, auc, ap]

@@ -125,16 +125,22 @@ class AITrainDialog(QtWidgets.QDialog):
         self.epoch = []
         self.loss = []
         self.val_loss = []
+        self.val_acc = []
         self.train_steps = 0
         self.val_steps = 0
 
-        # inference display settings
+        # Inference display settings
         self.show_labels = True
         self.show_conf = False
 
-        self.fig_loss, self.ax_loss = plt.subplots(figsize=(12, 6))
+        # Create figures
+        self.fig_loss, self.ax_loss = plt.subplots(figsize=(6, 6))
         self.fig_loss.patch.set_alpha(0.0)
         self.ax_loss.axis("off")
+
+        self.fig_acc, self.ax_acc = plt.subplots(figsize=(6, 6))
+        self.fig_acc.patch.set_alpha(0.0)
+        self.ax_acc.axis("off")
         
         self.fig_pie, self.ax_pie = plt.subplots(figsize=(6, 6))
         self.fig_pie.patch.set_alpha(0.0)
@@ -587,8 +593,13 @@ The labels are separated with line breaks."""),
 
         # Loss graph
         self.image_widget_loss = qt.ImageWidget(self)
-        self.image_widget_loss.setMinimumHeight(400)
-        self._layout.addWidget(self.image_widget_loss, row_count, 1, 1, 4)
+        self.image_widget_loss.setMinimumHeight(300)
+        self._layout.addWidget(self.image_widget_loss, row_count, 1, 1, 2)
+
+        # Accuracy graph
+        self.image_widget_acc = qt.ImageWidget(self)
+        self.image_widget_acc.setMinimumHeight(300)
+        self._layout.addWidget(self.image_widget_acc, row_count, 3, 1, 2)
         row_count += 1
 
         # Progress bar
@@ -873,6 +884,12 @@ The labels are separated with line breaks."""),
         loss_graph_path = os.path.join(self.config.log_dir, "loss.png")
         if os.path.exists(loss_graph_path):
             self.image_widget_loss.set_image(loss_graph_path, alpha=True)
+
+        # Load accuracy graph
+        self.image_widget_acc.clear()
+        acc_graph_path = os.path.join(self.config.log_dir, "acc.png")
+        if os.path.exists(acc_graph_path):
+            self.image_widget_acc.set_image(acc_graph_path, alpha=True)
     
     ### Callbacks ###
     def ai_finished(self):
@@ -893,7 +910,6 @@ The labels are separated with line breaks."""),
             self.reset_state()
             self.aiRunning.emit(False)
             self.text_status.setText(self.tr("Terminated training."))
-            self.popup_error(self.tr("Training was failed. Please check if the dataset is correct and try again."))
             return
         
         # Display elapsed time
@@ -908,12 +924,14 @@ The labels are separated with line breaks."""),
         df_dic = {
             "epoch": self.epoch,
             "loss": self.loss,
-            "val_loss": self.val_loss
+            "val_loss": self.val_loss,
+            "val_acc": self.val_acc,
         }
         utils.save_dict_to_excel(df_dic, os.path.join(self.config.log_dir, "loss.xlsx"))
 
-        # save figure
+        # Save figure
         self.fig_loss.savefig(os.path.join(self.config.log_dir, "loss.png"))
+        self.fig_acc.savefig(os.path.join(self.config.log_dir, "acc.png"))
 
         # convet YOLO model to ONNX
         if self.config.is_ultralytics():
@@ -1221,7 +1239,6 @@ The labels are separated with line breaks."""),
 
         # Update label distribution
         self.ax_pie.clear()
-        self.ax_pie.set_title('Label Distribusion', fontsize=24, color=qt.LabelColor.get_color("default"))
         self.ax_pie.pie(num_per_class,
                     labels=class_names,
                     #  autopct="%1.1f%%",
@@ -1248,6 +1265,10 @@ The labels are separated with line breaks."""),
         epoch = len(self.epoch) + 1
         batch = value.get("batch")
         loss = value.get("loss")
+        if self.config.TASK in [DET]:
+            acc = value.get("map50")
+        else:
+            acc = value.get("acc")
 
         text = f"epoch: {epoch:>4}/{self.config.EPOCHS} "
         if batch is not None:
@@ -1256,8 +1277,12 @@ The labels are separated with line breaks."""),
             text += f"batch: {batch:>6} / {self.train_steps} "
         if loss is not None:
             text += f"loss: {loss:>8.4f} "
+        if acc is not None:
+            text += f"acc: {acc:>8.4f} "
         if len(self.val_loss):
-            text += f"val_loss: {self.val_loss[-1]:>8.4f}"
+            text += f"val_loss: {self.val_loss[-1]:>8.4f} "
+        if len(self.val_acc):
+            text += f"val_acc: {self.val_acc[-1]:>8.4f}"
 
         # Calculate estimated remaining time based on batch progress
         if self.start_epoch_time != 0 and self.end_epoch_time != 0:
@@ -1284,6 +1309,13 @@ The labels are separated with line breaks."""),
         epoch = value.get("epoch")
         loss = value.get("loss")
         val_loss = value.get("val_loss")
+        if self.config.TASK in [DET]:
+            acc = value.get("map50")
+            val_acc = value.get("val_map50")
+        else:
+            acc = value.get("acc")
+            val_acc = value.get("val_acc")
+
         progress_value = int(epoch / self.config.EPOCHS * 100)
 
         if epoch is not None:
@@ -1294,36 +1326,60 @@ The labels are separated with line breaks."""),
             self.loss.append(loss)
         if val_loss is not None:
             self.val_loss.append(val_loss)
+        
+        if val_acc is not None:
+            self.val_acc.append(val_acc)
 
         if self.start_epoch_time == 0:
             self.start_epoch_time = time.time()
         elif self.end_epoch_time == 0:
             self.end_epoch_time = time.time()
 
-        # update figure
-        self.ax_loss.clear()
-        self.ax_loss.set_xlabel("Epoch", fontsize=16, color=qt.LabelColor.get_color("default"))
-        self.ax_loss.set_ylabel("Loss", fontsize=16, color=qt.LabelColor.get_color("default"))
-        self.ax_loss.tick_params(axis='both', labelsize=14, colors=qt.LabelColor.get_color("default"))
-        self.ax_loss.spines['top'].set_visible(False)
-        self.ax_loss.spines['right'].set_visible(False)
-        self.ax_loss.spines['left'].set_color(qt.LabelColor.get_color("default"))
-        self.ax_loss.spines['bottom'].set_color(qt.LabelColor.get_color("default"))
-        self.ax_loss.patch.set_alpha(0.0)
-        self.ax_loss.grid(alpha=0.3, color=qt.LabelColor.get_color("default"), linestyle="--", linewidth=1)
+        fontsize = 16
+
         if len(self.epoch):
-            if len(self.loss):
+            # Update loss figure
+            if len(self.loss) or len(self.val_loss):
+                self.ax_loss.clear()
+                self.ax_loss.set_xlabel("Epoch", fontsize=fontsize, color=qt.LabelColor.get_color("default"))
+                self.ax_loss.set_ylabel("Loss", fontsize=fontsize, color=qt.LabelColor.get_color("default"))
+                self.ax_loss.tick_params(axis='both', labelsize=fontsize//2, colors=qt.LabelColor.get_color("default"))
+                self.ax_loss.spines['top'].set_visible(False)
+                self.ax_loss.spines['right'].set_visible(False)
+                self.ax_loss.spines['left'].set_color(qt.LabelColor.get_color("default"))
+                self.ax_loss.spines['bottom'].set_color(qt.LabelColor.get_color("default"))
+                self.ax_loss.patch.set_alpha(0.0)
+                self.ax_loss.grid(alpha=0.3, color=qt.LabelColor.get_color("default"), linestyle="--", linewidth=1)
                 self.ax_loss.plot(self.epoch, self.loss, color="red", linestyle="solid", label="train")
-            if len(self.val_loss):
                 self.ax_loss.plot(self.epoch, self.val_loss, color="green", linestyle="solid", label="val")
-            self.ax_loss.xaxis.set_major_locator(MaxNLocator(integer=True))
-            mx = min((len(self.epoch) // 10 + 1) * 10, self.config.EPOCHS)
-            self.ax_loss.set_xlim([1, mx])
-            if len(self.loss) > 1 and len(self.val_loss) > 1:
-                max_loss = max(self.loss[1:] + self.val_loss[1:])
-                self.ax_loss.set_ylim([0, max_loss * 1.1])
-            self.ax_loss.legend(fontsize=16, labelcolor=qt.LabelColor.get_color("default"), frameon=False)
-            self.image_widget_loss.loadPixmap(fig2img(self.fig_loss, add_alpha=True))
+                self.ax_loss.xaxis.set_major_locator(MaxNLocator(integer=True))
+                mx = min((len(self.epoch) // 10 + 1) * 10, self.config.EPOCHS)
+                self.ax_loss.set_xlim([1, mx])
+                self.ax_loss.legend(fontsize=fontsize, labelcolor=qt.LabelColor.get_color("default"), frameon=False)
+                self.image_widget_loss.loadPixmap(fig2img(self.fig_loss, add_alpha=True))
+
+            # Update accuracy figure if available
+            if len(self.val_acc):
+                self.ax_acc.clear()
+                self.ax_acc.set_xlabel("Epoch", fontsize=fontsize, color=qt.LabelColor.get_color("default"))
+                if self.config.is_ultralytics():
+                    y_label = "mAP50"
+                else:
+                    y_label = "Accuracy"
+                self.ax_acc.set_ylabel(y_label, fontsize=fontsize, color=qt.LabelColor.get_color("default"))
+                self.ax_acc.tick_params(axis='both', labelsize=fontsize//2, colors=qt.LabelColor.get_color("default"))
+                self.ax_acc.spines['top'].set_visible(False)
+                self.ax_acc.spines['right'].set_visible(False)
+                self.ax_acc.spines['left'].set_color(qt.LabelColor.get_color("default"))
+                self.ax_acc.spines['bottom'].set_color(qt.LabelColor.get_color("default"))
+                self.ax_acc.patch.set_alpha(0.0)
+                self.ax_acc.grid(alpha=0.3, color=qt.LabelColor.get_color("default"), linestyle="--", linewidth=1)
+                self.ax_acc.plot(self.epoch, self.val_acc, color="green", linestyle="solid", label="val")
+                self.ax_acc.xaxis.set_major_locator(MaxNLocator(integer=True))
+                mx = min((len(self.epoch) // 10 + 1) * 10, self.config.EPOCHS)
+                self.ax_acc.set_xlim([1, mx])
+                self.ax_acc.legend(fontsize=fontsize, labelcolor=qt.LabelColor.get_color("default"), frameon=False)
+                self.image_widget_acc.loadPixmap(fig2img(self.fig_acc, add_alpha=True))
 
     def check_errors(self):
         """Check if there are any errors in the parameters."""
@@ -1384,6 +1440,7 @@ The labels are separated with line breaks."""),
         self.table_classes.clearContents()
         self.table_classes.setRowCount(0)
         self.image_widget_loss.clear()
+        self.image_widget_acc.clear()
         self.image_widget_pie.clear()
 
     def augment_setting_popup(self):
@@ -1461,8 +1518,8 @@ The labels are separated with line breaks."""),
         
     def predict_image(self):
         if not os.path.exists(self.target_logdir):
-            self.parent().error_message(self.tr(
-                '''The directory was not found.'''
+            self.popup_error(self.tr(
+                '''The directory was not found. Please select a valid log directory and try again.'''
             ))
             return
 
@@ -1584,7 +1641,7 @@ The labels are separated with line breaks."""),
 
     def export_model(self):
         if not os.path.exists(self.target_logdir):
-            self.parent().error_message(self.tr(
+            self.popup_error(self.tr(
                 '''The directory was not found.'''
             ))
             return
@@ -1607,9 +1664,7 @@ The labels are separated with line breaks."""),
 
     def export_model_to_pretrained(self):
         if not os.path.exists(self.target_logdir):
-            self.parent().error_message(self.tr(
-                '''The directory was not found.'''
-            ))
+            self.popup_error(self.tr('The directory was not found.'))
             return
 
         from aidia import PRETRAINED_DIR
@@ -1740,10 +1795,13 @@ class AITrainThread(QtCore.QThread):
                     val_loss = validator.loss.item()
                 if np.isnan(val_loss):
                     raise errors.LossGetNaNError
+
+                val_map50 = validator.metrics.box.map50
                 logs = {
                     "epoch": self.epoch + 1,
                     "loss": self.loss,
                     "val_loss": val_loss,
+                    "val_map50": val_map50,
                 }
                 self.epoch += 1
                 self.batch = 0
@@ -1763,14 +1821,15 @@ class AITrainThread(QtCore.QThread):
                 self.batch += 1
                 self.batchLogList.emit(logs)
             
-            def on_val_end(val_loss):
+            def on_val_end(val_loss, val_acc):
                 """Callback function for validation batch end."""
-                if np.isnan(val_loss):
+                if np.isnan(val_loss) or np.isnan(val_acc):
                     raise errors.LossGetNaNError
                 logs = {
                     "epoch": self.epoch + 1,
                     "loss": self.loss,
                     "val_loss": val_loss,
+                    "val_acc": val_acc,
                 }
                 self.epoch += 1
                 self.batch = 0
@@ -1799,7 +1858,7 @@ class AITrainThread(QtCore.QThread):
             self.notifyMessage.emit(self.tr("Done"))
             return
         else:
-            # set inference model
+            # Set inference model
             self.notifyMessage.emit(self.tr("Setting inference model..."))
             model.set_inference_model()
             save_dir = utils.get_dirpath_with_mkdir(self.config.log_dir, 'evaluation', 'test_images')

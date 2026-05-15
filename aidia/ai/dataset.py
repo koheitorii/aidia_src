@@ -345,7 +345,7 @@ class Dataset(object):
         Returns
         -------
         np.ndarray
-            Masks of the image. Shape is (height, width, num_classes).
+            Masks of the image. Shape is (height, width, num_classes + 1) with background and classes.
             If num_classes is 1, shape is (height, width, 2) with background and foreground.
         """
         image_info = self.image_info[image_id]
