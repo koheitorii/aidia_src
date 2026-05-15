@@ -257,7 +257,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # AI Button
         self.button_auto_annotation = QtWidgets.QPushButton(self)
-        self.button_auto_annotation.setText(self.tr("Automatic Annotation"))
+        self.button_auto_annotation.setText(self.tr("🪄 Automatic Annotation"))
         self.button_auto_annotation.clicked.connect(self.auto_annotation)
         self.button_auto_annotation.setEnabled(False)
 
@@ -2300,10 +2300,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.reset_cursor()
 
-
     def import_from_workdir(self):
         self.import_from_dir(self.work_dir)
-
 
     def scan_all_imgs(self, dirpath=None):
         number_sort = True
@@ -2360,7 +2358,6 @@ class MainWindow(QtWidgets.QMainWindow):
             if item:
                 item.setCheckState(Qt.PartiallyChecked)
 
-
     def update_sum(self, only_text=False):
         if not only_text:
             self.count_images = 0
@@ -2374,7 +2371,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.label_sum.setText(text)
         text = self.tr("[Annotations Total] {}").format(self.count_annotations)
         self.label_sum_edit.setText(text)
-
     
     def update_dicom_info(self):
         if self.dicom_data is None:
@@ -2385,13 +2381,11 @@ class MainWindow(QtWidgets.QMainWindow):
             self.label_dicom_names.setText(t1)
             self.label_dicom_values.setText(t2)
 
-
     def timer_start(self):
         self.timer.restart()   
         self.interrupt_timer.start()
         self.button_start_timer.setEnabled(False)
         self.button_stop_timer.setEnabled(True)
-
 
     def timer_stop(self):
         self.interrupt_timer.stop()
@@ -2402,15 +2396,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.button_start_timer.setEnabled(True)
         self.button_stop_timer.setEnabled(False)
 
-
     def timer_update(self):
         etime = self.timer.elapsed() / 1000
         self.update_label_timer(etime)
-    
 
     def update_label_timer(self, etime):
         self.label_timer.setText(f"{etime:.2f} [s]")
-
 
     def ai_train_popup(self):
         if self.is_submode:    
@@ -2534,20 +2525,10 @@ class MainWindow(QtWidgets.QMainWindow):
             
     def callback_ai_train_running(self, is_running):
         if is_running:
-            # self.button_ai_eval.setEnabled(False)
             self.input_is_submode.setEnabled(False)
         else:
-            # self.button_ai_eval.setEnabled(True)
             self.input_is_submode.setEnabled(True)
     
-    def callback_ai_eval_running(self, is_running):
-        if is_running:
-            self.button_ai_train.setEnabled(False)
-            self.input_is_submode.setEnabled(False)
-        else:
-            self.button_ai_train.setEnabled(True)
-            self.input_is_submode.setEnabled(True)
-
     def export_annotations(self):
         # confirm unsaved annotations
         if not self.may_continue_unsaved():

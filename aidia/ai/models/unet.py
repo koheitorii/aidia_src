@@ -9,6 +9,7 @@ class UNet(nn.Module):
     def __init__(self, num_classes):
         super(UNet, self).__init__()
         self.num_classes = num_classes
+        self.criterion = nn.BCELoss()
         
         # Encoder
         # Block 1

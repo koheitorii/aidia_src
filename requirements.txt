@@ -8,7 +8,7 @@ opencv-python==4.10.0.84
 opencv-python-headless==4.10.0.84
 pydicom
 python-gdcm
-ultralytics
+ultralytics==8.4.50
 onnx==1.16.1
 onnxruntime==1.17.1
 openpyxl

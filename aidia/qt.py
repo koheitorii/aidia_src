@@ -9,6 +9,8 @@ from qtpy import QtCore
 from qtpy import QtGui
 from qtpy import QtWidgets
 
+from aidia import image
+
 
 class DictObject(object):
     """A simple object that can be initialized with a dictionary."""
@@ -195,19 +197,32 @@ class ImageWidget(QtWidgets.QWidget):
                 self.loadPixmap(image)
         self.show()
     
-    def loadPixmap(self, image: np.ndarray):
-        byte_per_line = image[0].nbytes
-        h, w = image.shape[0:2]
-        if image.shape[2] == 4:
-            image = QtGui.QImage(image.flatten(), w, h, byte_per_line,
+    def loadPixmap(self, img: np.ndarray):
+        byte_per_line = img[0].nbytes
+        h, w = img.shape[0:2]
+        if img.shape[2] == 4:
+            img = QtGui.QImage(img.flatten(), w, h, byte_per_line,
                             QtGui.QImage.Format.Format_RGBA8888)
         else:
-            image = QtGui.QImage(image.flatten(), w, h, byte_per_line,
+            img = QtGui.QImage(img.flatten(), w, h, byte_per_line,
                             QtGui.QImage.Format.Format_RGB888)
-        self.pixmap = QtGui.QPixmap.fromImage(image)
+        self.pixmap = QtGui.QPixmap.fromImage(img)
         self.setMinimumHeight(10)
         self.setMinimumWidth(10)
         self.update()
+
+    def set_image(self, img, alpha=False):
+        """Set the image to display."""
+        if isinstance(img, str):
+            if os.path.exists(img):
+                img = image.imread(img, alpha=alpha)
+                self.loadPixmap(img)
+            else:
+                raise FileNotFoundError(f"Image file not found: {img}")
+        elif isinstance(img, np.ndarray):
+            self.loadPixmap(img)
+        else:
+            raise ValueError("Invalid image type: %s" % type(img))
     
     def clear(self):
         self.pixmap = QtGui.QPixmap()

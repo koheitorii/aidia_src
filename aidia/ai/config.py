@@ -66,10 +66,6 @@ class AIConfig(object):
             
     def build_params(self):
         self.gpu_num = torch.cuda.device_count()
-        # if self.USE_MULTI_GPUS and self.gpu_num > 1:
-        #     self.total_batchsize = self.BATCH_SIZE * self.gpu_num
-        # else:
-        #     self.total_batchsize = self.BATCH_SIZE
         self.total_batchsize = self.BATCH_SIZE
         if self.dataset_dir is not None:
             self.log_dir = os.path.join(self.dataset_dir, LOCAL_DATA_DIR_NAME, self.NAME)

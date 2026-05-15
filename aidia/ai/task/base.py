@@ -47,6 +47,7 @@ class Model(object):
         pass
     
     def convert(self):
+        """Override this method to convert the model to ONNX format."""
         pass
 
 

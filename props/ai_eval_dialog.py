@@ -750,7 +750,7 @@ class AIEvalThread(QtCore.QThread):
         self.resultsList.emit(results)
 
         self.notifyMessage.emit(self.tr("Convert model to ONNX..."))
-        if not model.convert2onnx():
+        if not model.convert():
             self.notifyMessage.emit(self.tr("Failed to convert model to ONNX."))
             return
 

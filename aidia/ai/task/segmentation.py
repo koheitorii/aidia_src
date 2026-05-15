@@ -46,15 +46,16 @@ class SegmentationModel(Model):
         
         if mode == 'train':
             # Setup optimizer and loss
-            self.optimizer = optim.Adam(model.parameters(), lr=self.config.LEARNING_RATE)
-            self.criterion = nn.BCELoss()
+            self.optimizer = optim.AdamW(model.parameters(), lr=self.config.LEARNING_RATE)
+            self.scheduler = optim.lr_scheduler.CosineAnnealingLR(self.optimizer, T_max=self.config.EPOCHS, eta_min=self.config.LEARNING_RATE * 0.01)
+            self.criterion = model.criterion
             self.model = model
             return model
         
         if mode == "test":
             if weights_path is None or not os.path.exists(weights_path):
                 raise ValueError("weights_path must be provided for test mode.")
-            checkpoint = torch.load(weights_path, map_location=self.device)
+            checkpoint = torch.load(weights_path, map_location='cpu')
             model.load_state_dict(checkpoint)
             model.eval()
             self.model = model
@@ -125,6 +126,9 @@ class SegmentationModel(Model):
             
             avg_val_loss = val_loss / val_batch_num
             on_val_end(avg_val_loss)
+            
+            # Update learning rate
+            self.scheduler.step()
             
             # Save best model
             if avg_val_loss < best_val_loss:
@@ -370,7 +374,7 @@ class SegmentationModel(Model):
         concat = image.mask2merge(src_img, pred, self.dataset.class_names, gt_mask_data, thresh)
         return concat
     
-    def convert2onnx(self):
+    def convert(self):
         """Convert the PyTorch model to ONNX format."""
         onnx_path = os.path.join(self.config.log_dir, "model.onnx")
         try:

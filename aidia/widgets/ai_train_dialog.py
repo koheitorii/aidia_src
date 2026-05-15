@@ -55,7 +55,7 @@ def clear_session():
 class ParamComponent(object):
     """Base class for AI parameter components."""
 
-    def __init__(self, type, tag, tips, validate_func=None, items=None):
+    def __init__(self, type, tag, tips, validate_func=None, items=None, maximum_width=None):
         super().__init__()
 
         minimum_width = 200
@@ -73,6 +73,8 @@ class ParamComponent(object):
             self.input_field.setPlaceholderText(tips)
             self.input_field.setToolTip(tips)
             self.input_field.setMinimumWidth(minimum_width)
+            if maximum_width is not None:
+                self.input_field.setMaximumWidth(maximum_width)
             if validate_func is not None:
                 self.input_field.textChanged.connect(validate_func)
         elif type == "combo":
@@ -110,7 +112,7 @@ class AITrainDialog(QtWidgets.QDialog):
                             )
         self.setWindowTitle("AI Workspace")
 
-        self.setMinimumSize(QtCore.QSize(1200, 900))
+        self.setMinimumSize(QtCore.QSize(1200, 600))
         self.setWindowState(Qt.WindowState.WindowMaximized)
 
         self.dataset_dir = None
@@ -160,7 +162,61 @@ class AITrainDialog(QtWidgets.QDialog):
         self.left_row_count += 1
         self.right_row_count += 1
 
-        # task selection
+        # Experiment directory name
+        def _validate(text):
+            text = text.strip().replace(" ", "_")
+            if text == "":
+                self.set_error(self.param_name)
+            else:
+                self.set_ok(self.param_name)
+                self.config.NAME = text
+                self.config.build_params()
+
+        self.param_name = ParamComponent(
+            type="text",
+            tag=self.tr("Experiment Directory Name"),
+            tips=self.tr("Set the name of the experiment directory."),
+            validate_func=_validate,
+        )
+        self.add_param_component(self.param_name)
+
+        # Select experiment directory
+        def _validate_logdir(idx):
+            idx = int(idx)
+            if idx < 0:
+                return
+            name = self.param_select_logdir.input_field.itemText(idx)
+            self.target_logdir = os.path.join(self.dataset_dir, 'aidia_data', name)
+            if name != self.config.NAME:
+                self.config.NAME = name
+                self.param_name.input_field.setText(name)
+            self.load_experiment()
+
+        self.param_select_logdir = ParamComponent(
+            type="combo",
+            tag=self.tr("Select Existing Directory"),
+            tips=self.tr("Select an existing directory."),
+            validate_func=_validate_logdir,
+        )
+        self.add_param_component(self.param_select_logdir)
+
+        # Open Log Directory button
+        self.button_open_logdir = QtWidgets.QPushButton(self.tr("Open Log Directory"))
+        self.button_open_logdir.setToolTip(self.tr("Open the selected log directory."))
+        self.button_open_logdir.setAutoDefault(False)
+        self.button_open_logdir.setMaximumWidth(200)
+        self.button_open_logdir.clicked.connect(lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.target_logdir)))
+        self._layout.addWidget(self.button_open_logdir, self.left_row_count, 2, 1, 1)
+        self.left_row_count += 1
+
+        # Add hline
+        hline = QtWidgets.QFrame()
+        hline.setFrameShape(QtWidgets.QFrame.Shape.HLine)
+        hline.setFrameShadow(QtWidgets.QFrame.Shadow.Sunken)
+        self._layout.addWidget(hline, self.left_row_count, 1, 1, 4)
+        self.left_row_count += 1
+
+        # Task selection
         def _validate(idx):
             idx = int(idx)
             self.config.TASK = TASK_LIST[idx]
@@ -180,7 +236,7 @@ If Performance Test are selected, the training test using MNIST dataset are perf
         )
         self.add_param_component(self.param_task)
 
-        # model selection
+        # Model selection
         def _validate(idx):
             idx = int(idx)
             if self.config.TASK == DET:
@@ -198,40 +254,6 @@ If Performance Test are selected, the training test using MNIST dataset are perf
             validate_func=_validate
         )
         self.add_param_component(self.param_model)
-
-        # name
-        def _validate(text):
-            text = text.strip().replace(" ", "_")
-            if text == "":
-                self.set_error(self.param_name)
-            else:
-                self.set_ok(self.param_name)
-                self.config.NAME = text
-        self.param_name = ParamComponent(
-            type="text",
-            tag=self.tr("Experiment Directory Name"),
-            tips=self.tr("Set the name of the experiment directory."),
-            validate_func=_validate,
-        )
-        self.add_param_component(self.param_name)
-
-        # select experiment directory
-        def _validate_logdir(idx):
-            idx = int(idx)
-            if idx < 0:
-                return
-            name = self.param_select_logdir.input_field.itemText(idx)
-            self.target_logdir = os.path.join(self.dataset_dir, 'aidia_data', name)
-            if name != self.config.NAME:
-                self.config.NAME = name
-                self.param_name.input_field.setText(name)
-        self.param_select_logdir = ParamComponent(
-            type="combo",
-            tag=self.tr("Select Existing Directory"),
-            tips=self.tr("Select an existing directory."),
-            validate_func=_validate_logdir,
-        )
-        self.add_param_component(self.param_select_logdir)
 
 #         # dataset idx
 #         def _validate(idx):
@@ -270,53 +292,44 @@ If Performance Test are selected, the training test using MNIST dataset are perf
         self.add_param_component(self.param_input_size)
 
         # epochs
-        def _validate(text):
-            if text.isdigit() and 0 < int(text):
-                self.set_ok(self.param_epochs)
-                self.config.EPOCHS = int(text)
-            else:
-                self.set_error(self.param_epochs)
+        def _validate(idx):
+            self.config.EPOCHS = int(self.param_epochs.input_field.itemText(idx))
         self.param_epochs = ParamComponent(
-            type="text",
+            type="combo",
             tag=self.tr("Epochs"),
             tips=self.tr("""Set the epochs.
 If you set 100, all data are trained 100 times."""),
             validate_func=_validate,
+            items=["10", "20", "50", "100", "200", "500", "1000", "2000", "5000", "10000"]
         )
         self.add_param_component(self.param_epochs)
 
         # batch size
-        def _validate(text):
-            if text.isdigit() and 0 < int(text) <= 256:
-                self.set_ok(self.param_batchsize)
-                self.config.BATCH_SIZE = int(text)
-            else:
-                self.set_error(self.param_batchsize)
+        def _validate(idx):
+            self.config.BATCH_SIZE = int(self.param_batchsize.input_field.itemText(idx))
         self.param_batchsize = ParamComponent(
-            type="text",
+            type="combo",
             tag=self.tr("Batch Size"),
             tips=self.tr("""Set the batch size.
 If you set 8, 8 samples are trained per step."""),
             validate_func=_validate,
+            items=["1", "2", "4", "8", "16", "32", "64", "128", "256"]
         )
         self.add_param_component(self.param_batchsize)
 
         # learning rate
-        def _validate(text):
-            if text.replace(".", "", 1).isdigit() and 0.0 < float(text) < 1.0:
-                self.set_ok(self.param_lr)
-                self.config.LEARNING_RATE = float(text)
-            else:
-                self.set_error(self.param_lr)
+        def _validate(idx):
+            self.config.LEARNING_RATE = float(self.param_lr.input_field.itemText(idx))
         self.param_lr = ParamComponent(
-            type="text",
+            type="combo",
             tag=self.tr("Learning Rate"),
             tips=self.tr("Set the initial learning rate."),
             validate_func=_validate,
+            items=["0.0001", "0.0005", "0.001", "0.005", "0.01", "0.05", "0.1"]
         )
         self.add_param_component(self.param_lr)
 
-        # label definition
+        # Label definition
         def _validate():
             text = self.param_labels.input_field.toPlainText()
             text = text.strip().replace(" ", "")
@@ -333,23 +346,25 @@ If you set 8, 8 samples are trained per step."""),
                 self.config.LABELS = res
         self.param_labels = ParamComponent(
             type="textbox",
-            tag=self.tr("Label Definition"),
+            tag=self.tr("Target Labels"),
             tips=self.tr("""Set target labels.
 The labels are separated with line breaks."""),
+            maximum_width=200,
             validate_func=_validate,
         )
-        self.add_param_component(self.param_labels, right=True, custom_size=(4, 1))
+        self.add_param_component(self.param_labels, right=True, custom_size=(2, 1))
 
-        # label replacement button
-        button_label_replace = QtWidgets.QPushButton(self.tr("Label Replacement"))
-        button_label_replace.setToolTip(self.tr("Open label replacement dialog."))
-        button_label_replace.setAutoDefault(False)
-        self._layout.addWidget(button_label_replace, self.right_row_count, 3, 1, 2)
-        button_label_replace.clicked.connect(self.label_replace_popup)
-        self.right_row_count += 1
-        self.button_label_replace = button_label_replace
+        # Label replacement button
+        button_replace_label = QtWidgets.QPushButton(self.tr("Label Replacement Setting"))
+        button_replace_label.setAutoDefault(False)
+        button_replace_label.setFixedWidth(200)
+        button_replace_label.clicked.connect(self.open_label_replacement_dialog)
+        self.button_replace_label = button_replace_label
 
-        # train target select
+        self._layout.addWidget(button_replace_label, self.right_row_count, 4, 1, 1, Qt.AlignmentFlag.AlignLeft)
+        self.right_row_count += 1 + 1  # add space after the button for hline
+
+        # Train target select
         def _validate(state): # check:2, empty:0
             if state == 2:
                 self.config.DIR_SPLIT = True
@@ -363,7 +378,7 @@ The labels are separated with line breaks."""),
         )
         self.add_param_component(self.param_is_dir_split, right=True)
 
-        ### add augment params ###
+        ### Add augment params ###
         self._augment_layout = QtWidgets.QVBoxLayout()
         self._augment_widget = QtWidgets.QWidget()
         self._augment_widget.setMaximumWidth(300)
@@ -373,7 +388,7 @@ The labels are separated with line breaks."""),
         title_augment.setMaximumHeight(30)
         self._augment_layout.addWidget(title_augment)
 
-        # vertical flip
+        # Vertical flip
         def _validate_vflip(state): # check:2, empty:0
             if state == 2:
                 self.config.RANDOM_VFLIP = True
@@ -387,7 +402,7 @@ The labels are separated with line breaks."""),
         )
         self.add_augment_param(self.param_vflip)
 
-        # horizontal flip
+        # Horizontal flip
         def _validate_hflip(state): # check:2, empty:0
             if state == 2:
                 self.config.RANDOM_HFLIP = True
@@ -401,7 +416,7 @@ The labels are separated with line breaks."""),
         )
         self.add_augment_param(self.param_hflip)
 
-        # rotation
+        # Rotation
         def _validate_rotate(state): # check:2, empty:0
             if state == 2:
                 if self.config.RANDOM_ROTATE == 0.0:
@@ -416,7 +431,7 @@ The labels are separated with line breaks."""),
         )
         self.add_augment_param(self.param_rotate)
 
-        # scale
+        # Scale
         def _validate_scale(state): # check:2, empty:0
             if state == 2:
                 if self.config.RANDOM_SCALE == 0.0:
@@ -431,7 +446,7 @@ The labels are separated with line breaks."""),
         )
         self.add_augment_param(self.param_scale)
 
-        # shift
+        # Shift
         def _validate_shift(state): # check:2, empty:0
             if state == 2:
                 if self.config.RANDOM_SHIFT == 0.0:
@@ -446,7 +461,7 @@ The labels are separated with line breaks."""),
         )
         self.add_augment_param(self.param_shift)
 
-        # shear
+        # Shear
         def _validate_shear(state): # check:2, empty:0
             if state == 2:
                 if self.config.RANDOM_SHEAR == 0.0:
@@ -461,7 +476,7 @@ The labels are separated with line breaks."""),
         )
         self.add_augment_param(self.param_shear)
 
-        # brightness
+        # Brightness
         def _validate_brightness(state): # check:2, empty:0
             if state == 2:
                 if self.config.RANDOM_BRIGHTNESS == 0.0:
@@ -476,7 +491,7 @@ The labels are separated with line breaks."""),
         )
         self.add_augment_param(self.param_brightness)
 
-        # contrast
+        # Contrast
         def _validate_contrast(state): # check:2, empty:0
             if state == 2:
                 if self.config.RANDOM_CONTRAST == 0.0:
@@ -491,7 +506,7 @@ The labels are separated with line breaks."""),
         )
         self.add_augment_param(self.param_contrast)
 
-        # blur
+        # Blur
         def _validate_blur(state): # check:2, empty:0
             if state == 2:
                 if self.config.RANDOM_BLUR == 0.0:
@@ -506,7 +521,7 @@ The labels are separated with line breaks."""),
         )
         self.add_augment_param(self.param_blur)
 
-        # noise
+        # Noise
         def _validate_noise(state): # check:2, empty:0
             if state == 2:
                 if self.config.RANDOM_NOISE == 0.0:
@@ -521,7 +536,7 @@ The labels are separated with line breaks."""),
         )
         self.add_augment_param(self.param_noise)
 
-        # advanced settings
+        # Advanced settings
         button_advanced = QtWidgets.QPushButton(self.tr("Advanced Settings"))
         button_advanced.setToolTip(self.tr("Open advanced data augmentation settings."))
         button_advanced.setAutoDefault(False)
@@ -529,33 +544,66 @@ The labels are separated with line breaks."""),
         self._augment_layout.addWidget(button_advanced)
         self.button_advanced = button_advanced
 
-        # update lowest row
+        # Update lowest row
         row_count = max(self.left_row_count, self.right_row_count)
 
-        # train button
-        self.button_train = QtWidgets.QPushButton(self.tr("Train"))
+        # Train button
+        self.button_train = QtWidgets.QPushButton(self.tr("🚀 Train"))
         self.button_train.setAutoDefault(False)
-        self.button_train.setMinimumHeight(64)
-        self.button_train.setStyleSheet("font-size: 20px;")
+        self.button_train.setMinimumHeight(80)
+        self.button_train.setStyleSheet("""
+            QPushButton {
+                font-size: 24px;
+                font-weight: bold;
+                color: white;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                           stop:0 #4CAF50, stop:1 #45a049);
+                border: 3px solid #3d8b40;
+                border-radius: 12px;
+                padding: 10px;
+                text-align: center;
+            }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                           stop:0 #5CBF60, stop:1 #55b059);
+                border: 3px solid #4d9b50;
+            }
+            QPushButton:pressed {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                                           stop:0 #3d8b40, stop:1 #357a35);
+                padding-top: 12px;
+                padding-bottom: 8px;
+            }
+            QPushButton:disabled {
+                background: #cccccc;
+                border: 3px solid #999999;
+                color: #666666;
+            }
+        """)
+        self.button_train.setCursor(Qt.CursorShape.PointingHandCursor)
         self.button_train.clicked.connect(self.train)
         self._layout.addWidget(self.button_train, row_count, 1, 1, 4)
         row_count += 1
 
         # Loss graph
         self.image_widget_loss = qt.ImageWidget(self)
-        self.image_widget_loss.setMinimumHeight(800)
+        self.image_widget_loss.setMinimumHeight(400)
         self._layout.addWidget(self.image_widget_loss, row_count, 1, 1, 4)
         row_count += 1
 
         # Progress bar
         self.progress = QtWidgets.QProgressBar(self)
-        self.progress.setStyleSheet("""QProgressBar {
-    border: 2px solid grey;
-    border-radius: 5px;
-    text-align: center; }
-QProgressBar::chunk {
-    background-color: #05B8CC;
-    width: 20px; }""")
+        self.progress.setStyleSheet("""
+            QProgressBar {
+                border: 2px solid grey;
+                border-radius: 5px;
+                text-align: center;
+            }
+            QProgressBar::chunk {
+                background-color: #05B8CC;
+                width: 20px;
+            }
+        """)
         self.progress.setMaximum(100)
         self.progress.setValue(0)
         self._layout.addWidget(self.progress, row_count, 1, 1, 4)
@@ -623,12 +671,6 @@ QProgressBar::chunk {
         title_utility.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         self._utility_layout.addWidget(title_utility)
 
-        self.button_open_logdir = QtWidgets.QPushButton(self.tr("Open Log Directory"))
-        self.button_open_logdir.setToolTip(self.tr("Open the selected log directory."))
-        self.button_open_logdir.setAutoDefault(False)
-        self.button_open_logdir.clicked.connect(lambda: QtGui.QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(self.target_logdir)))
-        self._utility_layout.addWidget(self.button_open_logdir)
-
         # Prediction settings group box
         self.prediction_group = QtWidgets.QGroupBox(self.tr("Prediction"))
         self.prediction_layout = QtWidgets.QVBoxLayout(self.prediction_group)
@@ -680,19 +722,19 @@ QProgressBar::chunk {
         # Add prediction group to utility layout
         self._utility_layout.addWidget(self.prediction_group)
 
-        # export model button
-        self.button_export_model = QtWidgets.QPushButton(self.tr("Export ONNX"))
-        self.button_export_model.setAutoDefault(False)
-        self.button_export_model.clicked.connect(self.export_model)
-        self._utility_layout.addWidget(self.button_export_model)
+        # Export model button
+        # self.button_export_model = QtWidgets.QPushButton(self.tr("Export ONNX"))
+        # self.button_export_model.setAutoDefault(False)
+        # self.button_export_model.clicked.connect(self.export_model)
+        # self._utility_layout.addWidget(self.button_export_model)
 
-        # export model to pretrained button
+        # Export model to pretrained button
         self.button_export_model_to_pretrained = QtWidgets.QPushButton(self.tr("Export for Auto Annotation"))
         self.button_export_model_to_pretrained.setAutoDefault(False)
         self.button_export_model_to_pretrained.clicked.connect(self.export_model_to_pretrained)
         self._utility_layout.addWidget(self.button_export_model_to_pretrained)
 
-        # connect AI prediction thread
+        # Connect AI prediction thread
         self.ai_pred = AIPredThread(self)
         self.ai_pred.notifyMessage.connect(self.update_pred_status)
         self.ai_pred.progressValue.connect(self.update_pred_progress)
@@ -759,13 +801,30 @@ QProgressBar::chunk {
         self.param_model.input_field.setCurrentText(self.config.MODEL)
         self.param_name.input_field.setText(self.config.NAME)
         # self.param_dataset.input_field.setCurrentIndex(int(self.config.DATASET_NUM) - 1)
+
+        # Input size - use combo box
         if self.config.INPUT_SIZE in [int(self.param_input_size.input_field.itemText(i)) for i in range(self.param_input_size.input_field.count())]:
             self.param_input_size.input_field.setCurrentText(str(self.config.INPUT_SIZE))
         else:
             self.param_input_size.input_field.setCurrentIndex(0)  # Reset to first item if not found
-        self.param_epochs.input_field.setText(str(self.config.EPOCHS))
-        self.param_batchsize.input_field.setText(str(self.config.BATCH_SIZE))
-        self.param_lr.input_field.setText(str(self.config.LEARNING_RATE))
+
+        # Epochs - use combo box
+        if str(self.config.EPOCHS) in [self.param_epochs.input_field.itemText(i) for i in range(self.param_epochs.input_field.count())]:
+            self.param_epochs.input_field.setCurrentText(str(self.config.EPOCHS))
+        else:
+            self.param_epochs.input_field.setCurrentIndex(5)  # Default to index 5 (value "100")
+        
+        # Batch size - use combo box
+        if str(self.config.BATCH_SIZE) in [self.param_batchsize.input_field.itemText(i) for i in range(self.param_batchsize.input_field.count())]:
+            self.param_batchsize.input_field.setCurrentText(str(self.config.BATCH_SIZE))
+        else:
+            self.param_batchsize.input_field.setCurrentIndex(3)  # Default to index 3 (value "8")
+        
+        # Learning rate - use combo box
+        if str(self.config.LEARNING_RATE) in [self.param_lr.input_field.itemText(i) for i in range(self.param_lr.input_field.count())]:
+            self.param_lr.input_field.setCurrentText(str(self.config.LEARNING_RATE))
+        else:
+            self.param_lr.input_field.setCurrentIndex(2)  # Default to index 2 (value "0.001")
 
         # Label definition
         if len(self.config.LABELS) > 0:
@@ -792,6 +851,14 @@ QProgressBar::chunk {
         self.update_augment_availability()
         self.update_logdir_list()
 
+        # Reset status and progress
+        self.load_experiment()
+
+        self.exec_()
+        if os.path.exists(os.path.join(dataset_dir, 'aidia_data')):
+            self.config.save(config_path)
+    
+    def load_experiment(self):
         # Load dataset information
         dataset_json_path = os.path.join(self.config.log_dir, 'dataset.json')
         if os.path.exists(dataset_json_path):
@@ -801,9 +868,11 @@ QProgressBar::chunk {
             except Exception as e:
                 aidia_logger.error(e)
 
-        self.exec_()
-        if os.path.exists(os.path.join(dataset_dir, 'aidia_data')):
-            self.config.save(config_path)
+        # Load loss graph
+        self.image_widget_loss.clear()
+        loss_graph_path = os.path.join(self.config.log_dir, "loss.png")
+        if os.path.exists(loss_graph_path):
+            self.image_widget_loss.set_image(loss_graph_path, alpha=True)
     
     ### Callbacks ###
     def ai_finished(self):
@@ -824,6 +893,7 @@ QProgressBar::chunk {
             self.reset_state()
             self.aiRunning.emit(False)
             self.text_status.setText(self.tr("Terminated training."))
+            self.popup_error(self.tr("Training was failed. Please check if the dataset is correct and try again."))
             return
         
         # Display elapsed time
@@ -854,6 +924,7 @@ QProgressBar::chunk {
             except Exception as e:
                 aidia_logger.error(e)
                 self.text_status.setText(self.tr("Failed to convert to ONNX model."))
+                self.popup_error(self.tr("Failed to convert to ONNX model. Please check the model and try again."))
             else:
                 shutil.move(onnx_path, os.path.join(self.config.log_dir, "model.onnx"))
 
@@ -905,7 +976,7 @@ QProgressBar::chunk {
         self.update_augment_availability()
         self.button_train.setEnabled(True)
 
-        self.button_label_replace.setEnabled(True)
+        self.button_replace_label.setEnabled(True)
         self.button_advanced.setEnabled(True)
         # self.button_stop.setEnabled(False)
 
@@ -958,7 +1029,7 @@ QProgressBar::chunk {
             self.checkbox_show_conf.setEnabled(True)
         self.button_pred.setEnabled(True)
         self.button_pred_dir.setEnabled(True)
-        self.button_export_model.setEnabled(True)
+        # self.button_export_model.setEnabled(True)
         self.button_export_model_to_pretrained.setEnabled(True)
     
     def disable_utility(self):
@@ -969,7 +1040,7 @@ QProgressBar::chunk {
         self.checkbox_show_conf.setEnabled(False)
         self.button_pred.setEnabled(False)
         self.button_pred_dir.setEnabled(False)
-        self.button_export_model.setEnabled(False)
+        # self.button_export_model.setEnabled(False)
         self.button_export_model_to_pretrained.setEnabled(False)
     
     def disable_params(self):
@@ -977,7 +1048,7 @@ QProgressBar::chunk {
         for obj in self.param_objects.values():
             obj.input_field.setEnabled(False)
             obj.tag.setStyleSheet(qt.LabelColor.get_style("disabled"))
-        self.button_label_replace.setEnabled(False)
+        self.button_replace_label.setEnabled(False)
         self.button_advanced.setEnabled(False)
         self.button_train.setEnabled(False)
         
@@ -988,7 +1059,7 @@ QProgressBar::chunk {
         self.checkbox_show_conf.setEnabled(False)
         self.button_pred.setEnabled(False)
         self.button_pred_dir.setEnabled(False)
-        self.button_export_model.setEnabled(False)
+        # self.button_export_model.setEnabled(False)
         self.button_export_model_to_pretrained.setEnabled(False)
 
     def closeEvent(self, event):
@@ -1004,23 +1075,10 @@ QProgressBar::chunk {
             # self.reset_state()
             self.enable_params_by_task(self.config.TASK)
     
-    def label_replace_popup(self):
+    def open_label_replacement_dialog(self):
         """Open label replacement dialog."""
         dialog = AILabelReplaceDialog(self)
         result = dialog.popup(self.config.REPLACE_DICT)
-        
-        if result == QtWidgets.QDialog.DialogCode.Accepted:
-            self.config.REPLACE_DICT = dialog.replace_dict
-            if self.config.REPLACE_DICT:
-                self.text_status.setText(
-                    self.tr("Label replacement dictionary updated with {} rules.").format(
-                        len(self.config.REPLACE_DICT)
-                    )
-                )
-            else:
-                self.text_status.setText(self.tr("Label replacement dictionary cleared."))
-        else:
-            self.text_status.setText(self.tr("Label replacement cancelled."))
   
     def add_param_component(self, obj:ParamComponent, right=False, custom_size=None):
         """Add a parameter component to the layout."""
@@ -1077,6 +1135,7 @@ QProgressBar::chunk {
         train_per_class = dataset_info["train_per_class"]
         val_per_class = dataset_info["val_per_class"]
         test_per_class = dataset_info["test_per_class"]
+        path_dataset = dataset_info.get("path_dataset", "")
 
         # Set train and validation steps for progress tracking
         self.train_steps = dataset_info["train_steps"]
@@ -1088,6 +1147,12 @@ QProgressBar::chunk {
         
         # Dataset overview section
         html.append("<div style='margin-bottom: 15px;'>")
+        if path_dataset:
+            html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Directory')}:</b> <span style='font-size: 11px;'>{path_dataset}</span></p>")
+        # Submode information
+        submode_status = self.tr("ON") if self.config.SUBMODE else self.tr("OFF")
+        submode_color = "#27ae60" if self.config.SUBMODE else "#95a5a6"
+        html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Submode')}:</b> <span style='color: {submode_color}; font-weight: bold;'>{submode_status}</span></p>")
         # html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Dataset Number')}:</b> <span style='color: #3498db; font-weight: bold;'>{dataset_num}</span></p>")
         html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Number of Data')}:</b> <span style='color: #2ecc71; font-weight: bold;'>{num_images}</span></p>")
         # html.append(f"<p style='margin: 3px 0;'><b>{self.tr('Number of Shapes')}:</b> <span style='color: #2ecc71; font-weight: bold;'>{num_shapes}</span></p>")
@@ -1173,6 +1238,10 @@ QProgressBar::chunk {
     def popup_error(self, text):
         """Popup error message."""
         self.parent().error_message(text)
+    
+    def popup_info(self, text):
+        """Popup information message."""
+        self.parent().info_message(text)
 
     def update_batch(self, value):
         """Update batch status."""
@@ -1290,6 +1359,7 @@ QProgressBar::chunk {
             answer = self.may_continue(self.tr("'{}' already exists. Overwrite?").format(os.path.basename(self.config.log_dir)))
             if not answer:
                 self.text_status.setText(self.tr("Training was cancelled."))
+                self.popup_info(self.tr("Training was cancelled."))
                 return
             else:
                 shutil.rmtree(self.config.log_dir, ignore_errors=True)
@@ -1324,9 +1394,6 @@ QProgressBar::chunk {
         if result == QtWidgets.QDialog.DialogCode.Accepted:
             self.update_augment_checkboxes()
             self.update_augment_availability()
-            self.text_status.setText(self.tr("Augmentation settings updated."))
-        else:
-            self.text_status.setText(self.tr("Augmentation settings unchanged."))
 
     def update_augment_checkboxes(self):
         """Update augmentation checkbox states based on config values."""
@@ -1399,10 +1466,10 @@ QProgressBar::chunk {
             ))
             return
 
-        # load config
+        # Load config
         config_path = os.path.join(self.target_logdir, "config.json")
         if not os.path.exists(config_path):
-            self.text_status.setText(self.tr("Config file was not found."))
+            self.popup_error(self.tr("Config file was not found. Please check the log directory and try again."))
             return
         
         config = AIConfig(self.dataset_dir)
@@ -1411,13 +1478,13 @@ QProgressBar::chunk {
         config.SHOW_CONF = self.show_conf
 
         if config.TASK not in [SEG, DET]:
-            self.text_status.setText(self.tr("Not implemented function."))
+            self.popup_error(self.tr("Not implemented function."))
             return
         
         # check onnx model
         onnx_path = os.path.join(self.target_logdir, "model.onnx")
         if not os.path.exists(onnx_path):
-            self.text_status.setText(self.tr("The ONNX model was not found."))
+            self.popup_error(self.tr("The ONNX model was not found. Please check the log directory and try again."))
             return
         
         # target image file
@@ -1457,7 +1524,7 @@ QProgressBar::chunk {
         # load config
         config_path = os.path.join(self.target_logdir, "config.json")
         if not os.path.exists(config_path):
-            self.text_status.setText(self.tr("Config file was not found."))
+            self.popup_error(self.tr("Config file was not found. Please check the log directory and try again."))
             return
         
         config = AIConfig(self.dataset_dir)
@@ -1466,13 +1533,13 @@ QProgressBar::chunk {
         config.SHOW_CONF = self.show_conf
 
         if config.TASK not in [SEG, DET]:
-            self.text_status.setText(self.tr("Not implemented function."))
+            self.popup_error(self.tr("Not implemented function."))
             return
         
         # check onnx model
         onnx_path = os.path.join(self.target_logdir, "model.onnx")
         if not os.path.exists(onnx_path):
-            self.text_status.setText(self.tr("The ONNX model was not found."))
+            self.popup_error(self.tr("The ONNX model was not found. Please check the log directory and try again."))
             return
         
         # target data directory
@@ -1492,7 +1559,7 @@ QProgressBar::chunk {
         self._result_dir = os.path.join(self.target_logdir, 'predict_images', utils.get_basename(target_path))
         
         if not len(os.listdir(target_path)):
-            self.text_status.setText(self.tr("The Directory is empty."))
+            self.popup_error(self.tr("The directory is empty. Please select a directory with images and try again."))
             return
 
         # AI run
@@ -1536,7 +1603,7 @@ QProgressBar::chunk {
         cd = CopyDataDialog(self, self.target_logdir, target_path, only_model=True)
         cd.popup()
 
-        self.text_status.setText(self.tr("Export data to {}").format(target_path))
+        self.popup_info(self.tr("Model exported!"))
 
     def export_model_to_pretrained(self):
         if not os.path.exists(self.target_logdir):
@@ -1552,7 +1619,7 @@ QProgressBar::chunk {
         cd = CopyDataDialog(self, self.target_logdir, PRETRAINED_DIR, only_model=True)
         cd.popup()
 
-        self.text_status.setText(self.tr("Export data to {}").format(PRETRAINED_DIR))
+        self.popup_info(self.tr("Model registered!"))
         self.parent().update_ai_select()
 
 
@@ -1769,7 +1836,7 @@ class AITrainThread(QtCore.QThread):
                 return
 
             self.notifyMessage.emit(self.tr("Convert model to ONNX..."))
-            if not model.convert2onnx():
+            if not model.convert():
                 self.notifyMessage.emit(self.tr("Failed to convert model to ONNX."))
                 return
 
