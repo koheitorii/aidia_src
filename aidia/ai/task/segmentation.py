@@ -109,7 +109,8 @@ class SegmentationModel(Model):
         
         # Initialize torchmetrics Accuracy (ignoring class 0 - background)
         val_accuracy = torchmetrics.Accuracy(
-            task='binary',
+            task='multiclass',
+            num_classes=self.config.num_classes + 1,  # +1 for background class
             ignore_index=0,  # ignore background class
             average='macro'
         ).to(self.device)
